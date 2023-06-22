@@ -6,6 +6,7 @@ ScanMeister.init().then(() => {
 
     // scanner.scan().pipe(fs.createWriteStream('./output.png'));
 
-    ScanMeister.scan({deviceName:ScanMeister.devices[0].name})
+    const opts = {deviceName:ScanMeister.devices[0].name};
+    ScanMeister.scan(opts).pipe(fs.createWriteStream('./output.png'));
 
 });
