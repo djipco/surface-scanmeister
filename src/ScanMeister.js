@@ -1,4 +1,5 @@
 import {spawn} from 'child_process'
+import { Scanner } from './Scanner.js';
 
 class ScanMeister {
 
@@ -34,86 +35,95 @@ class ScanMeister {
 
         // End handler
         scanimage.stdout.once('end', () => {
+
+            let results = [];
+            let devices = [];
+
             if (buffer) {
-                return resolve(buffer.split('\n').filter(Boolean).map(line => JSON.parse(line)));
-            } else {
-                return resolve([]);
+                results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
             }
+
+            results.forEach(r => {
+              devices.push(new Scanner(r))
+            });
+
+            resolve(devices);
+
         });
 
     });
 
   }
 
-  scan(options = {}) {
+  // scan(options = {}) {
 
-    // Prepare args array
-    const args = [];
+  //   // Prepare args array
+  //   const args = [];
 
-    // Device name
-    const devices = this.devices.map(dev => dev.name);
-    if (devices.includes(options.deviceName)) {
-      args.push(`--device-name=${options.deviceName}`);
-    }
+  //   // Device name
+  //   const devices = this.devices.map(dev => dev.name);
+  //   if (devices.includes(options.deviceName)) {
+  //     args.push(`--device-name=${options.deviceName}`);
+  //   }
 
-    // File format
-    if (["png"].includes(options.format)) {
-      args.push('--format=' + options.format);
-    } else {
-      args.push('--format=png');
-    }
+  //   // File format
+  //   if (["png"].includes(options.format)) {
+  //     args.push('--format=' + options.format);
+  //   } else {
+  //     args.push('--format=png');
+  //   }
 
-    // Scanning mode
-    if (["Color"].includes(options.mode)) {
-      args.push('--mode=' + options.mode);
-    } else {
-      args.push('--mode=Color');
-    }
+  //   // Scanning mode
+  //   if (["Color"].includes(options.mode)) {
+  //     args.push('--mode=' + options.mode);
+  //   } else {
+  //     args.push('--mode=Color');
+  //   }
 
-    // Scanning bit depth
-    if ([8, 16].includes(options.mode)) {
-      args.push('--depth=' + options.depth);
-    } else {
-      args.push('--depth=8');
-    }
+  //   // Scanning bit depth
+  //   if ([8, 16].includes(options.mode)) {
+  //     args.push('--depth=' + options.depth);
+  //   } else {
+  //     args.push('--depth=8');
+  //   }
 
-    // Scanning resolution
-    if ([4800,2400,1200,600,300,150,100,75].includes(options.resolution)) {
-      args.push('--resolution=' + options.resolution);
-    } else {
-      args.push('--resolution=100');
-    }
+  //   // Scanning resolution
+  //   if ([4800,2400,1200,600,300,150,100,75].includes(options.resolution)) {
+  //     args.push('--resolution=' + options.resolution);
+  //   } else {
+  //     args.push('--resolution=100');
+  //   }
 
-    // Brightness (-100...100)
-    // Contrast (-100...100)
-    // Lamp off time
+  //   // Brightness (-100...100)
+  //   // Contrast (-100...100)
+  //   // Lamp off time
 
-    // Lamp off scan
-    if (!!options.lampOffScan) {
-      args.push('--lamp-off-scan=yes');
-    } else {
-      args.push('--lamp-off-scan=no');
-    }
+  //   // Lamp off scan
+  //   if (!!options.lampOffScan) {
+  //     args.push('--lamp-off-scan=yes');
+  //   } else {
+  //     args.push('--lamp-off-scan=no');
+  //   }
 
-    // Initiate scanning
-    const scanimage = spawn(
-      'scanimage', 
-      args,
-      { detached: true }
-    );
+  //   // Initiate scanning
+  //   const scanimage = spawn(
+  //     'scanimage', 
+  //     args,
+  //     { detached: true }
+  //   );
     
-    // Report errors if any
-    scanimage.stderr.on('data', data => {
-      console.error( `stderr: ${ data }` );
-    });
+  //   // Report errors if any
+  //   scanimage.stderr.on('data', data => {
+  //     console.error( `stderr: ${ data }` );
+  //   });
 
-    scanimage.stdout.on('end', () => {
-      console.log( `Done: ${options.deviceName}` );
-    });
+  //   scanimage.stdout.on('end', () => {
+  //     console.log( `Done: ${options.deviceName}` );
+  //   });
     
-    return scanimage.stdout;
+  //   return scanimage.stdout;
     
-  }
+  // }
 
 }
 
