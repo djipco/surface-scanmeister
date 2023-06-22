@@ -10,7 +10,7 @@ ScanMeister.init().then(() => {
         // ScanMeister.scan(opts).pipe(fs.createWriteStream(`image${dev.index}.png`));
         // console.log("called " + dev.index);
 
-        scanner.scan().pipe(fs.createWriteStream(`image${dev.index}.png`));
+        scanner.scan().pipe(fs.createWriteStream(`image${scanner.index}.png`));
     });
 
 });
