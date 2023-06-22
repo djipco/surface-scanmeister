@@ -47,20 +47,8 @@ class ScanMeister {
 
   scan(options = {}) {
 
-    // Assign defaults and override with requested params
-    // const defaults = {
-    //   format: 'png',
-    //   mode: 'Color',
-    //   depth: 8,
-    //   resolution: 100,
-    //   brightness: 0,
-    //   contrast: 0,
-    //   "lamp-off-time": 15,
-    //   "lamp-off-scan": "no"
-    // }
-
     // Prepare args array
-    args = [];
+    const args = [];
 
     // Device name
     const devices = this.devices.map(dev => dev.name);
