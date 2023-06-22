@@ -1,4 +1,4 @@
-export class ScanMeister {
+class ScanMeister {
 
   constructor() {
     this.devices = [];
@@ -61,6 +61,13 @@ export class ScanMeister {
   }
 
 }
+
+// Export singleton instance class. The 'constructor' is nulled so that it cannot be used to 
+// instantiate a new object or extend it. However, it is not freezed so it remains extensible 
+// (properties can be added at will).
+const sm = new ScanMeister();
+sm.constructor = null;
+export {sm as ScanMeister};
 
 
 // const options = {
