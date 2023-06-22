@@ -7,7 +7,7 @@ class ScanMeister {
   }
 
   async init() {
-    this.devices = await this.updateDevices();
+    await this.updateDevices();
   }
 
   async updateDevices() {
