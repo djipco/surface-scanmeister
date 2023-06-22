@@ -1,3 +1,5 @@
+const {spawn} = require('child_process');
+
 class ScanMeister {
 
   constructor() {
@@ -19,7 +21,7 @@ class ScanMeister {
         const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
 
         // Spawn scanimage process to retrieve list
-        let scanimage = processes.spawn(
+        let scanimage = spawn(
             'scanimage',
             ['--formatted-device-list=' + format]
         );
@@ -55,7 +57,7 @@ class ScanMeister {
         args.push('--device-name=' + this.device.name);
     }
 
-    let scanimage = processes.spawn('scanimage', args);
+    let scanimage = spawn('scanimage', args);
     return scanimage.stdout;
     
   }
