@@ -96,6 +96,11 @@ class ScanMeister {
     }
 
     const scanimage = spawn('scanimage', args);
+    
+    scanimage.stderr.on( 'data', ( data ) => {
+      console.error( `stderr: ${ data }` );
+  } );
+    
     console.log("spawned")
     return scanimage.stdout;
     
