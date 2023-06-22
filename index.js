@@ -1,4 +1,4 @@
-import { ScanMeister } from "./ScanMeister.js";
+import { ScanMeister } from "./src/ScanMeister.js";
 
 ScanMeister.init().then(() => {
 
