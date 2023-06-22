@@ -95,7 +95,8 @@ class ScanMeister {
       args.push('--lamp-off-scan=no');
     }
 
-    let scanimage = spawn('scanimage', args);
+    const scanimage = spawn('scanimage', args);
+    console.log("spawned")
     return scanimage.stdout;
     
   }
