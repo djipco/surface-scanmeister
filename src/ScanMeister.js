@@ -45,16 +45,66 @@ class ScanMeister {
 
   }
 
-  scan(device, options = {}) {
+  scan(options = {}) {
 
-    // Get file format
-    const format = options.format || 'png';
+    // Assign defaults and override with requested params
+    // const defaults = {
+    //   format: 'png',
+    //   mode: 'Color',
+    //   depth: 8,
+    //   resolution: 100,
+    //   brightness: 0,
+    //   contrast: 0,
+    //   "lamp-off-time": 15,
+    //   "lamp-off-scan": "no"
+    // }
 
-    // Start building args array
-    let args = ['--format=' + format];
+    // Prepare args array
+    args = [];
 
-    if (this.device) {
-        args.push('--device-name=' + this.device.name);
+    // Device name
+    const devices = this.devices.map(dev => dev.name);
+    if (devices.includes(options.deviceName)) {
+      args.push(`--device-name='${options.deviceName}'`);
+    }
+
+    // File format
+    if (["png"].includes(options.format)) {
+      args.push('--format=' + options.format);
+    } else {
+      args.push('--format=png');
+    }
+
+    // Scanning mode
+    if (["Color"].includes(options.mode)) {
+      args.push('--mode=' + options.mode);
+    } else {
+      args.push('--mode=Color');
+    }
+
+    // Scanning bit depth
+    if ([8, 16].includes(options.mode)) {
+      args.push('--depth=' + options.depth);
+    } else {
+      args.push('--depth=8');
+    }
+
+    // Scanning resolution
+    if ([4800,2400,1200,600,300,150,100,75].includes(options.resolution)) {
+      args.push('--resolution=' + options.resolution);
+    } else {
+      args.push('--resolution=100');
+    }
+
+    // Brightness (-100...100)
+    // Contrast (-100...100)
+    // Lamp off time
+
+    // Lamp off scan
+    if (!!options.lampOffScan) {
+      args.push('--lamp-off-scan=yes');
+    } else {
+      args.push('--lamp-off-scan=no');
     }
 
     let scanimage = spawn('scanimage', args);
