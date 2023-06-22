@@ -1,3 +1,4 @@
+import {spawn} from 'child_process'
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js"
 
 export class Scanner extends EventEmitter {
