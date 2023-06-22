@@ -53,7 +53,7 @@ class ScanMeister {
     // Device name
     const devices = this.devices.map(dev => dev.name);
     if (devices.includes(options.deviceName)) {
-      args.push(`--device-name='${options.deviceName}'`);
+      args.push(`--device-name=${options.deviceName}`);
     }
 
     // File format
@@ -95,13 +95,18 @@ class ScanMeister {
       args.push('--lamp-off-scan=no');
     }
 
-    const scanimage = spawn('scanimage', args);
+    // Initiate scanning
+    const scanimage = spawn(
+      'scanimage', 
+      args,
+      { detached: true }
+    );
     
+    // Report errors if any
     scanimage.stderr.on( 'data', ( data ) => {
       console.error( `stderr: ${ data }` );
-  } );
+    });
     
-    console.log("spawned")
     return scanimage.stdout;
     
   }
