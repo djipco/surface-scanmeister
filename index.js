@@ -1,4 +1,5 @@
 import { ScanMeister } from "./src/ScanMeister.js";
+import fs from "fs"
 
 ScanMeister.init().then(() => {
 
