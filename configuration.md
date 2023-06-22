@@ -181,3 +181,24 @@ sudo apt install -y nodejs
 ### sane-scan-image-wrapper
 
 This is the wrapper module we are using. Just get it from npm.
+
+# Git
+
+Ask for credentials to be stored locally:
+
+```
+git config credential.helper store
+```
+
+Clone repo:
+
+```
+git clone https://github.com/djipco/surface-scanmeister
+```
+Enter credentials (once).
+
+Update from repo:
+
+```
+git pull https://github.com/djipco/surface-scanmeister
+```
