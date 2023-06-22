@@ -3,6 +3,7 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 export class Scanner extends EventEmitter {
 
   constructor(options) {
+    super();
     this.name = options.name || "";
     this.vendor = options.vendor || "";
     this.model = options.model || "";
