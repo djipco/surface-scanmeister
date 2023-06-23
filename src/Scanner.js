@@ -10,12 +10,20 @@ export class Scanner extends EventEmitter {
     this.model = options.model || "";
     this.type = options.type || "";
     this.index = options.index || "";
+    this.scanning = false;
   }
 
   scan(options = {}) {
 
     console.log("scan");
-    
+
+    // Ignore if already scanning
+    if (this.scanning) {
+      console.warn("Already scanning. Ignoring.");
+      return;
+    };
+    this.scanning = true;
+
     // Prepare args array
     const args = [];
 
@@ -77,6 +85,7 @@ export class Scanner extends EventEmitter {
     });
 
     scanimage.stdout.on('end', () => {
+      this.scanning = false;
       this.emit("scancompleted", {target: this});
     });
     
