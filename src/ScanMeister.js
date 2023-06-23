@@ -1,6 +1,7 @@
 import {spawn} from 'child_process';
 import osc from "osc";
 import { Scanner } from './Scanner.js';
+import fs from "fs"
 // import {Preferences} from "./Preferences.js";
 
 class ScanMeister {
