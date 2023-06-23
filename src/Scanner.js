@@ -14,6 +14,8 @@ export class Scanner extends EventEmitter {
 
   scan(options = {}) {
 
+    console.log("scan");
+    
     // Prepare args array
     const args = [];
 
@@ -67,6 +69,7 @@ export class Scanner extends EventEmitter {
       args,
       { detached: true }
     );
+    this.emit("scanstarted", {target: this});
     
     // Report errors if any
     scanimage.stderr.on('data', data => {
@@ -74,7 +77,7 @@ export class Scanner extends EventEmitter {
     });
 
     scanimage.stdout.on('end', () => {
-      this.emit("scancomplete", {target: this});
+      this.emit("scancompleted", {target: this});
     });
     
     return scanimage.stdout;

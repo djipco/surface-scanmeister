@@ -8,6 +8,9 @@ class ScanMeister {
   constructor() {
     this.callbacks = {};
     this.devices = [];
+    this.commands = [
+      "scan"
+    ]
   }
 
   async init() {
@@ -86,9 +89,9 @@ class ScanMeister {
 
   onOscMessage(message, timetag, info) {
 
-    console.log(message);
+    const segments = message.address.split("/").slice(1);
 
-    // const segments = message.address.split("/").slice(1);
+    // Check
     // if (segments[0] === "system") {
     //   this.onOscSystemMessage(message, timetag, info)
     //   return;
@@ -96,36 +99,17 @@ class ScanMeister {
     //   return;
     // }
 
-    // // Check if command is supported (case-insensitive) and trigger it if it is.
-    // const index = this.commands.findIndex(command => {
-    //   return command.toLowerCase() === segments[2].toLowerCase();
-    // });
+    // Filter out invalid commands
+    const command = segments[0].toLowerCase()
+    if (!this.commands.includes(command)) return;
 
-    // const time = timetag ? timetag.native : 0
+    // Fetch device index
+    const index = segments[1];
 
-    // if (index >= 0) {
-    //   const command = this.commands[index];
-    //   const channel = segments[1];
-    //   this[`on${command}`](channel, segments[2], message.args, time);
-    //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
-    // }
-
-  }
-
-  onOscSystemMessage(message, timetag, info) {
-
-    // const segments = message.address.split("/").slice(1);
-
-    // // Check if command is supported (case-insensitive) and trigger it if it is.
-    // const index = this.commands.findIndex(command => {
-    //   return command.toLowerCase() === segments[1].toLowerCase();
-    // });
-
-    // if (index >= 0) {
-    //   const command = this.commands[index];
-    //   this[`on${command}`](segments[2], message.args);
-    //   this.emit("data", {command: command, args: message.args});
-    // }
+    // Execute command
+    if (command === "scan") {
+      this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
+    }
 
   }
 
