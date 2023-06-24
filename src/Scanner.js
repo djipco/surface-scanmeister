@@ -46,11 +46,6 @@ export class Scanner extends EventEmitter {
       return;
     }
 
-    // Make sure target dir exists
-    if (fs.existsSync(path)) {
-      // Do something
-    }
-
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.name}...`);
