@@ -1,0 +1,16 @@
+import { format } from "date-fns";
+
+export function getTimeStampString() {
+  return format(new Date(), "[yyyy-MM-dd'T'HH:mm:ss]")
+}
+export function logError(text) {
+  console.error(getTimeStampString(), text);
+}
+
+export function logWarn(text) {
+  console.warn(getTimeStampString(), text);
+}
+
+export function logInfo(text) {
+  console.info(getTimeStampString(), text);
+}

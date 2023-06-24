@@ -1,17 +1,30 @@
 import {spawn} from 'child_process';
 import osc from "osc";
-import { Scanner } from './Scanner.js';
+import {Scanner} from './Scanner.js';
 import fs from "fs"
-// import {Preferences} from "./Preferences.js";
 
 class ScanMeister {
 
+  #commands = [
+    "scan"
+  ];
+  #version = "0.0.1";
+  #devices = []
+
   constructor() {
     this.callbacks = {};
-    this.devices = [];
-    this.commands = [
-      "scan"
-    ]
+  }
+
+  get version() {
+    return this.#version;
+  }
+
+  get devices() {
+    return this.#devices;
+  }
+
+  get commands() {
+    return this.#commands;
   }
 
   async init() {
@@ -46,43 +59,47 @@ class ScanMeister {
 
   async updateDevices() {
 
-    this.devices = await new Promise((resolve, reject) => {
+    this.#devices = await new Promise((resolve, reject) => {
 
-        // Resulting string buffer
-        let buffer = '';
+      // Resulting string buffer
+      let buffer = '';
 
-        // Format for device list
-        const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
+      // Format for device list
+      const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
 
-        // Spawn scanimage process to retrieve list
-        let scanimage = spawn(
-            'scanimage',
-            ['--formatted-device-list=' + format]
-        );
+      // Spawn scanimage process to retrieve list
+      let scanimage = spawn(
+          'scanimage',
+          ['--formatted-device-list=' + format]
+      );
 
-        // Error handler
-        scanimage.stdout.once('error', reject); 
+      scanimage.on('error', error => {
+        reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
+      });
 
-        // Data handler
-        scanimage.stdout.on('data', chunk => buffer += chunk.toString());
+      // Error handler
+      scanimage.stdout.once('error', reject);
 
-        // End handler
-        scanimage.stdout.once('end', () => {
+      // Data handler
+      scanimage.stdout.on('data', chunk => buffer += chunk.toString());
 
-            let results = [];
-            let devices = [];
+      // End handler
+      scanimage.stdout.once('end', () => {
 
-            if (buffer) {
-                results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
-            }
+        let results = [];
+        let devices = [];
 
-            results.forEach(r => {
-              devices.push(new Scanner(r))
-            });
+        if (buffer) {
+            results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
+        }
 
-            resolve(devices);
-
+        results.forEach(r => {
+          devices.push(new Scanner(r))
         });
+
+        resolve(devices);
+
+      });
 
     });
 
@@ -138,50 +155,35 @@ class ScanMeister {
 
   }
 
+  sendOscMessage(address, args) {
+    // if (!this.port.socket) return;
+    // this.port.send({address: address, args: args});
+  }
+
   destroy() {
 
-    this.port.off("error", this.callbacks.onOscError);
-    this.callbacks.onOscError = null;
+    if (this.port) {
+      this.port.off("error", this.callbacks.onOscError);
+      this.callbacks.onOscError = null;
 
-    this.port.off("message", this.callbacks.onOscMessage);
-    this.callbacks.onOscMessage = null;
+      this.port.off("message", this.callbacks.onOscMessage);
+      this.callbacks.onOscMessage = null;
 
-    this.port.off("bundle", this.callbacks.onOscBundle);
-    this.callbacks.onOscBundle = null;
+      this.port.off("bundle", this.callbacks.onOscBundle);
+      this.callbacks.onOscBundle = null;
+
+      this.port = null;
+    }
+
+    this.devices.forEach(device => device.destroy());
 
   }
 
 }
 
-// Export singleton instance class. The 'constructor' is nulled so that it cannot be used to 
-// instantiate a new object or extend it. However, it is not freezed so it remains extensible 
+// Export singleton instance class. The 'constructor' is nulled so that it cannot be used to
+// instantiate a new object or extend it. However, it is not freezed so it remains extensible
 // (properties can be added at will).
 const sm = new ScanMeister();
 sm.constructor = null;
 export {sm as ScanMeister};
-
-
-
-
-//     // Currently supported commands
-//     this.commands = [
-//       "NoteOn",
-//       "NoteOff",
-//       "ControlChange",
-//       "Notification",
-//       "Ui"
-//     ];
-
-
-
-
-
-
-
-//   sendOscMessage(address, args) {
-
-//     if (!this.port.socket) return;
-
-//     this.port.send({address: address, args: args});
-//     // console.log(address, args);
-//   }
