@@ -1,18 +1,29 @@
 import {spawn} from 'child_process';
+import fs from "fs";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
-import fs from "fs"
+import {config} from "../config.js";
+import {logInfo, logWarn} from "./Utils.js";
 
 class ScanMeister {
 
-  #commands = [
-    "scan"
-  ];
   #version = "0.0.1";
-  #devices = []
+  #devices = [];
+  #callbacks = {}
+  #oscCommands = ["scan"];
+  #oscPort;
 
   constructor() {
-    this.callbacks = {};
+
+    // Instantiate osc.js UDPPort
+    this.#oscPort = new osc.UDPPort({
+      localAddress: config.get("osc.local.address"),
+      localPort: config.get("osc.local.port"),
+      remoteAddress: config.get("osc.remote.address"),
+      remotePort: config.get("osc.remote.port"),
+      metadata: true
+    });
+
   }
 
   get version() {
@@ -23,8 +34,8 @@ class ScanMeister {
     return this.#devices;
   }
 
-  get commands() {
-    return this.#commands;
+  get oscCommands() {
+    return this.#oscCommands;
   }
 
   async init() {
@@ -32,29 +43,107 @@ class ScanMeister {
     // Retrieve device list (scanners)
     await this.updateDevices();
 
-    // Instantiate osc.js UDPPort
-    this.port = new osc.UDPPort({
-      localAddress: "0.0.0.0",
-      localPort: 8000,
-      metadata: true,
-      // remoteAddress: prefs.device.address,
-      // remotePort: prefs.device.port
-    });
-
-    // OSC callback
-    this.callbacks.onOscError = error => { console.warn(error) };
-    this.port.on("error", this.callbacks.onOscError);
-
-    this.callbacks.onOscMessage = this.onOscMessage.bind(this);
-    this.port.on("message", this.callbacks.onOscMessage);
-
-    this.callbacks.onOscBundle = this.onOscBundle.bind(this);
-    this.port.on("bundle", this.callbacks.onOscBundle);
-
-    // Start listening for inbound OSC messages
-    this.port.open();
+    // Add OSC callback and start listening for inbound OSC messages
+    this.#addOScCallbacks();
+    this.#oscPort.open();
     await new Promise(resolve => this.port.once("ready", resolve));
 
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
+
+  }
+
+  #addOScCallbacks() {
+    this.#callbacks.onOscError = this.#onOscError.bind(this);
+    this.#oscPort.on("error", this.#callbacks.onOscError);
+    this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
+    this.#oscPort.on("message", this.#callbacks.onOscMessage);
+    this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
+    this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
+  }
+
+  #onOscError(error) {
+    logWarn(error);
+  }
+
+  #removeOscCallbacks() {
+
+    if (this.#oscPort) {
+
+      if (this.#callbacks.onOscError) {
+        this.#oscPort.off("error", this.#callbacks.onOscError);
+      }
+      this.#callbacks.onOscError = null;
+
+      if (this.#callbacks.onOscMessage) {
+        this.#oscPort.off("message", this.#callbacks.onOscMessage);
+      }
+      this.#callbacks.onOscMessage = null;
+
+      if (this.#callbacks.onOscBundle) {
+        this.#oscPort.off("bundle", this.#callbacks.onOscBundle);
+      }
+      this.#callbacks.onOscBundle = null;
+
+    }
+
+  }
+
+  #onOscMessage(message, timetag, info) {
+
+    const segments = message.address.split("/").slice(1);
+
+    // Check
+    // if (segments[0] === "system") {
+    //   this.onOscSystemMessage(message, timetag, info)
+    //   return;
+    // } else if (segments[0] !== "midi") {
+    //   return;
+    // }
+
+    // Filter out invalid commands
+    const command = segments[0].toLowerCase()
+    if (!this.oscCommands.includes(command)) return;
+
+    // Fetch device index
+    const index = segments[1];
+
+    // Execute command
+    if (command === "scan") {
+      this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
+    }
+
+  }
+
+  #onOscBundle(bundle, timetag, info) {
+
+    // console.log("tag", timetag);
+
+    // const segments = message.address.split("/").slice(1);
+    // if (segments[0] !== "midi") return;
+    //
+    // // Check if command is supported (case-insensitive) and trigger it if it is.
+    // const index = this.oscCommands.findIndex(command => {
+    //   return command.toLowerCase() === segments[2].toLowerCase();
+    // });
+    //
+    // if (index >= 0) {
+    //   const command = this.oscCommands[index];
+    //   const channel = segments[1];
+    //
+    //   const time = osc.ntpToJSTime(timetag.raw[0], timetag.raw[1]);
+    //
+    //   this[`on${command}`](channel, segments[2], message.args, time);
+    //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
+    // }
+
+  }
+
+  sendOscMessage(address, args) {
+    // if (!this.#oscPort.socket) return;
+    // this.#oscPort.send({address: address, args: args});
   }
 
   async updateDevices() {
@@ -69,8 +158,8 @@ class ScanMeister {
 
       // Spawn scanimage process to retrieve list
       let scanimage = spawn(
-          'scanimage',
-          ['--formatted-device-list=' + format]
+        'scanimage',
+        ['--formatted-device-list=' + format]
       );
 
       scanimage.on('error', error => {
@@ -90,7 +179,7 @@ class ScanMeister {
         let devices = [];
 
         if (buffer) {
-            results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
+          results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
         }
 
         results.forEach(r => {
@@ -105,78 +194,10 @@ class ScanMeister {
 
   }
 
-  onOscMessage(message, timetag, info) {
-
-    const segments = message.address.split("/").slice(1);
-
-    // Check
-    // if (segments[0] === "system") {
-    //   this.onOscSystemMessage(message, timetag, info)
-    //   return;
-    // } else if (segments[0] !== "midi") {
-    //   return;
-    // }
-
-    // Filter out invalid commands
-    const command = segments[0].toLowerCase()
-    if (!this.commands.includes(command)) return;
-
-    // Fetch device index
-    const index = segments[1];
-
-    // Execute command
-    if (command === "scan") {
-      this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
-    }
-
-  }
-
-  onOscBundle(bundle, timetag, info) {
-
-    // console.log("tag", timetag);
-
-    // const segments = message.address.split("/").slice(1);
-    // if (segments[0] !== "midi") return;
-    //
-    // // Check if command is supported (case-insensitive) and trigger it if it is.
-    // const index = this.commands.findIndex(command => {
-    //   return command.toLowerCase() === segments[2].toLowerCase();
-    // });
-    //
-    // if (index >= 0) {
-    //   const command = this.commands[index];
-    //   const channel = segments[1];
-    //
-    //   const time = osc.ntpToJSTime(timetag.raw[0], timetag.raw[1]);
-    //
-    //   this[`on${command}`](channel, segments[2], message.args, time);
-    //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
-    // }
-
-  }
-
-  sendOscMessage(address, args) {
-    // if (!this.port.socket) return;
-    // this.port.send({address: address, args: args});
-  }
-
   destroy() {
-
-    if (this.port) {
-      this.port.off("error", this.callbacks.onOscError);
-      this.callbacks.onOscError = null;
-
-      this.port.off("message", this.callbacks.onOscMessage);
-      this.callbacks.onOscMessage = null;
-
-      this.port.off("bundle", this.callbacks.onOscBundle);
-      this.callbacks.onOscBundle = null;
-
-      this.port = null;
-    }
-
     this.devices.forEach(device => device.destroy());
-
+    this.#removeOscCallbacks();
+    this.#oscPort = null;
   }
 
 }
