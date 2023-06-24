@@ -95,14 +95,6 @@ class ScanMeister {
 
     const segments = message.address.split("/").slice(1);
 
-    // Check
-    // if (segments[0] === "system") {
-    //   this.onOscSystemMessage(message, timetag, info)
-    //   return;
-    // } else if (segments[0] !== "midi") {
-    //   return;
-    // }
-
     // Filter out invalid commands
     const command = segments[0].toLowerCase()
     if (!this.oscCommands.includes(command)) return;
@@ -114,8 +106,8 @@ class ScanMeister {
     if (command === "scan") {
       // this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
       const options = {
-        // outputFile: config.get("paths.scansDir") + `/image${index}.png`
-        outputFile: `image${index}.png`
+        outputFile: config.get("paths.scansDir") + `/scanner{index}.png`
+        // outputFile: `scanner${index}.png`
       }
       this.devices[index].scan(options);
     }
