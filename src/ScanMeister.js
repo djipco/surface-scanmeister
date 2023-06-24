@@ -106,7 +106,7 @@ class ScanMeister {
     if (command === "scan") {
       // this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
       const options = {
-        outputFile: config.get("paths.scansDir") + `/scanner{index}.png`
+        outputFile: config.get("paths.scansDir") + `/scanner${index}.png`
         // outputFile: `scanner${index}.png`
       }
       this.devices[index].scan(options);
