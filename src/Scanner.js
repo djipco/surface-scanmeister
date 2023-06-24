@@ -99,8 +99,11 @@ export class Scanner extends EventEmitter {
     }
 
     // Scan to file (instead of stdout)
-    if (options.path) {
-      args.push('--output-file=' + options.path)
+    // if (options.path) {
+    //   args.push('--output-file=' + options.path)
+    // }
+    if (options.outputFile) {
+      args.push('--output-file=' + options.outputFile)
     }
 
     // Initiate scanning
