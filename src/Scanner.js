@@ -153,6 +153,7 @@ export class Scanner extends EventEmitter {
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("scancompleted", {target: this});
+    logInfo(`Scan completed on ${this.name}...`);
   }
 
   scanToFile(path, options = {}) {
