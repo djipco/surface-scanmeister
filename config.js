@@ -7,7 +7,7 @@ convict.addFormat(ipaddress);
 const config = convict({
 
   paths: {
-    scans_dir: {
+    scansDir: {
       doc: 'Path to directory where scans should be saved',
       format: String,
       default: '../scans'

@@ -1,6 +1,7 @@
 import {spawn} from 'child_process'
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js"
 import {logError, logInfo, logWarn} from "./Utils.js";
+import fs from "fs";
 
 export class Scanner extends EventEmitter {
 
@@ -43,6 +44,11 @@ export class Scanner extends EventEmitter {
     if (this.scanning) {
       logWarn(`Already scanning on device ${this.name}. Ignoring.`)
       return;
+    }
+
+    // Make sure target dir exists
+    if (fs.existsSync(path)) {
+      // Do something
     }
 
     // Start scan
@@ -112,6 +118,7 @@ export class Scanner extends EventEmitter {
     this.#addScanImageCallbacks();
 
     // If not scanning to file, return stdout for further handling
+    // e.g.: this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
     if (!options.path) return this.#scanimage.stdout;
 
   }
@@ -153,7 +160,7 @@ export class Scanner extends EventEmitter {
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("scancompleted", {target: this});
-    logInfo(`Scan completed on ${this.name}...`);
+    logInfo(`Scan completed on ${this.name}`);
   }
 
   scanToFile(path, options = {}) {
