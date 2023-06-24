@@ -46,7 +46,7 @@ class ScanMeister {
     // Add OSC callback and start listening for inbound OSC messages
     this.#addOScCallbacks();
     this.#oscPort.open();
-    await new Promise(resolve => this.port.once("ready", resolve));
+    await new Promise(resolve => this.#oscPort.once("ready", resolve));
 
     logInfo(
       `Listening for OSC on ` +
