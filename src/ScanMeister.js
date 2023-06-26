@@ -40,6 +40,8 @@ class ScanMeister {
 
   async init() {
 
+    await this.updateDevices2();
+
     // Retrieve device list (scanners)
     await this.updateDevices();
 
