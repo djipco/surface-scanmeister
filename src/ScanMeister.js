@@ -236,21 +236,21 @@ class ScanMeister {
         let results = [];
 
         if (buffer) {
-          results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n')[0]);
+          results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n'));
         }
 
         console.log(results);
 
-        // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
-        const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
-
-
-        results.map(input => {
-          console.log(input);
-          const match = input.match(re);
-          console.log(match);
-          // console.log("port", match[1], "dev", match[2]);
-        })
+        // // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
+        // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
+        //
+        //
+        // results.map(input => {
+        //   console.log(input);
+        //   const match = input.match(re);
+        //   console.log(match);
+        //   // console.log("port", match[1], "dev", match[2]);
+        // })
 
 
 
