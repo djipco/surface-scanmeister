@@ -45,7 +45,7 @@ class ScanMeister {
 
     // Display device in console
     this.devices.forEach(device => {
-      logInfo(device)
+      logInfo(`${device.vendor} ${device.model} ${device.name} (#${device.index})`)
     });
 
     // Add OSC callback and start listening for inbound OSC messages
