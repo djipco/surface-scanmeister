@@ -233,13 +233,16 @@ class ScanMeister {
       // End handler
       usbDev.stdout.once('end', () => {
 
-        let results = [];
+        let descriptors = [];
 
+        // Only keep descriptor blocks if the match the correct product
         if (buffer) {
-          results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n'));
+          descriptors = buffer.split('\n\n').filter(text => text.includes("Product=CanoScan"));
         }
+        console.log(descriptors);
+        descriptors.map(text => text.split('\n')[0])
 
-        console.log(results);
+        console.log(descriptors);
 
         // // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
         // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
