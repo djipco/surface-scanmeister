@@ -240,7 +240,8 @@ class ScanMeister {
           descriptors = buffer.split('\n\n').filter(text => text.includes("Product=CanoScan"));
         }
         console.log(descriptors);
-        descriptors.map(text => text.split('\n')[0])
+
+        descriptors = descriptors.map(text => text.split('\n')[0])
 
         console.log(descriptors);
 
