@@ -44,7 +44,7 @@ class ScanMeister {
     await this.updateDevices();
 
     // Add OSC callback and start listening for inbound OSC messages
-    this.#addOScCallbacks();
+    this.#addOscCallbacks();
     this.#oscPort.open();
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
 
@@ -55,7 +55,7 @@ class ScanMeister {
 
   }
 
-  #addOScCallbacks() {
+  #addOscCallbacks() {
     this.#callbacks.onOscError = this.#onOscError.bind(this);
     this.#oscPort.on("error", this.#callbacks.onOscError);
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
@@ -159,7 +159,7 @@ class ScanMeister {
         ['--formatted-device-list=' + format]
       );
 
-      scanimage.on('error', error => {
+      scanimage.once('error', error => {
         reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
       });
 
@@ -179,10 +179,7 @@ class ScanMeister {
           results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
         }
 
-        results.forEach(r => {
-          devices.push(new Scanner(r))
-        });
-
+        results.forEach(r => devices.push(new Scanner(r)));
         resolve(devices);
 
       });
