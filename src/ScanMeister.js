@@ -3,7 +3,7 @@ import fs from "fs";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
-import {logInfo, logWarn} from "./Utils.js";
+import {logError, logInfo, logWarn} from "./Utils.js";
 
 class ScanMeister {
 
@@ -126,7 +126,11 @@ class ScanMeister {
         outputFile: config.get("paths.scansDir") + `/scanner${index}.png`
         // outputFile: `scanner${index}.png`
       }
-      this.devices[index].scan(options);
+      if (this.devices[index]) {
+        this.devices[index].scan(options);
+      } else {
+        logError("No device matches the index requested via OSC");
+      }
     }
 
   }
