@@ -48,10 +48,10 @@ class ScanMeister {
       logInfo("No devices found.")
     } else {
 
-      let message = "The following devices have been found:\n";
+      let message = "The following devices have been found:";
 
       this.devices.forEach(device => {
-        message += `\t${device.vendor} ${device.model} ${device.name} (#${device.index})\n`
+        message += `\n\t${device.vendor} ${device.model} ${device.name} (#${device.index})`
       });
 
       logInfo(message);
