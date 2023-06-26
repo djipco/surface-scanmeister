@@ -238,9 +238,7 @@ class ScanMeister {
         let devices = [];
 
         if (buffer) {
-          results = buffer.split('\n\n').map(input => {
-            return input.split('\n')[0];
-          });
+          results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n')[0]);
         }
 
         console.log(results);
