@@ -1,9 +1,8 @@
 import {spawn} from 'child_process';
-import fs from "fs";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
-import {logError, logInfo, logWarn} from "./Utils.js";
+import {logInfo, logWarn} from "./Utils.js";
 
 class ScanMeister {
 
@@ -235,7 +234,6 @@ class ScanMeister {
       usbDev.stdout.once('end', () => {
 
         let results = [];
-        let devices = [];
 
         if (buffer) {
           results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n')[0]);
@@ -248,8 +246,10 @@ class ScanMeister {
 
 
         results.map(input => {
+          console.log(input);
           const match = input.match(re);
-          console.log("port", match[1], "dev", match[2]);
+          console.log(match);
+          // console.log("port", match[1], "dev", match[2]);
         })
 
 
