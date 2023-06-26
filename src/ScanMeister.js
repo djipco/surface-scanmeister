@@ -44,7 +44,7 @@ class ScanMeister {
     await this.updateDevices();
 
     //
-    if (this.devices.length() < 1) {
+    if (this.devices.length < 1) {
       logInfo("No devices found.")
     } else {
 
