@@ -250,19 +250,14 @@ class ScanMeister {
         const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
 
 
-        // descriptors.map(input => {
-        //   console.log(input);
-        //   const match = input.match(re);
-        //   console.log(match);
-        //   // console.log("port", match[1], "dev", match[2]);
-        // })
-
         descriptors.forEach(desc => {
           const match = desc.match(re);
-          console.log(match);
+          const port = parseInt(match[1]);
+          const deviceNumber = parseInt(match[2]);
+          console.log(port, deviceNumber);
         });
 
-
+        resolve();
 
       });
 
