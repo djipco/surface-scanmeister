@@ -129,7 +129,7 @@ class ScanMeister {
       if (this.devices[index]) {
         this.devices[index].scan(options);
       } else {
-        logError("No device matches the index requested via OSC");
+        logError("No device matches the index requested via OSC: " + message.address);
       }
     }
 

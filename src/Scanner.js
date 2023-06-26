@@ -150,7 +150,7 @@ export class Scanner extends EventEmitter {
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("error", error);
-    logError(Buffer.from(error, "utf-8"));
+    logError("prout" + Buffer.from(error, "utf-8"));
   }
 
   #onScanImageEnd() {
