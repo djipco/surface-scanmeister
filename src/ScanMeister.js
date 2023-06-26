@@ -43,10 +43,22 @@ class ScanMeister {
     // Retrieve device list (scanners)
     await this.updateDevices();
 
+    //
+    if (this.devices.length() < 1) {
+      logInfo("No devices found.")
+    } else {
+
+      let message = "The following devices have been found:\n";
+
+      this.devices.forEach(device => {
+        message += `\t${device.vendor} ${device.model} ${device.name} (#${device.index})\n`
+      });
+
+      logInfo(message);
+
+    }
+
     // Display device in console
-    this.devices.forEach(device => {
-      logInfo(`${device.vendor} ${device.model} ${device.name} (#${device.index})`)
-    });
 
     // Add OSC callback and start listening for inbound OSC messages
     this.#addOscCallbacks();
