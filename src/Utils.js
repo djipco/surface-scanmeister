@@ -10,7 +10,8 @@ export function logError(text) {
 }
 
 export function logWarn(text) {
-  console.warn(getTimeStampString(), text);
+  // console.warn(getTimeStampString(), text);
+  console.error(getTimeStampString(), '\x1b[93m' + text + '\x1b[0m');
 }
 
 export function logInfo(text) {
