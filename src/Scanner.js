@@ -149,8 +149,8 @@ export class Scanner extends EventEmitter {
     this.#removeScanImageCallbacks();
     this.#scanimage = null;
     this.#scanning = false;
-    this.emit("error", error);
-    logWarn("Error: " + Buffer.from(error, "utf-8"));
+    this.emit("warning", error);
+    logWarn("Warning: " + Buffer.from(error, "utf-8"));
   }
 
   #onScanImageEnd() {

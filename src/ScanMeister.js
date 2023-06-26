@@ -129,7 +129,7 @@ class ScanMeister {
       if (this.devices[index]) {
         this.devices[index].scan(options);
       } else {
-        logError("No device matches the index requested via OSC: " + message.address);
+        logWarn("Warning: no device matches the index requested via OSC: " + message.address);
       }
     }
 
@@ -202,6 +202,46 @@ class ScanMeister {
 
         results.forEach(r => devices.push(new Scanner(r)));
         resolve(devices);
+
+      });
+
+    });
+
+  }
+
+  async updateDevices2() {
+
+    this.#devices = await new Promise((resolve, reject) => {
+
+      // Resulting string buffer
+      let buffer = '';
+
+      // Spawn scanimage process to retrieve list
+      let usbDev = spawn('usb-devices');
+
+      // usbDev.once('error', error => {
+      //   reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
+      // });
+
+      // Error handler
+      // usbDev.stdout.once('error', reject);
+
+      // Data handler
+      usbDev.stdout.on('data', chunk => buffer += chunk.toString());
+
+      // End handler
+      usbDev.stdout.once('end', () => {
+
+        let results = [];
+        let devices = [];
+
+        if (buffer) {
+          results = buffer.split('\n\n').map(input => {
+            return input.split('\n')[0];
+          });
+        }
+
+        console.log(results);
 
       });
 
