@@ -235,13 +235,16 @@ class ScanMeister {
 
         let descriptors = [];
 
-        // Only keep descriptor blocks if the match the correct product
+        // Only keep descriptor blocks if it matches the correct product (CanoScan)
         if (buffer) {
-          descriptors = buffer.split('\n\n').filter(text => text.includes("Product=CanoScan"));
+          descriptors = buffer
+            .split('\n\n')
+            .filter(text => text.includes("Product=CanoScan"))
+            .map(text => text.split('\n')[0]);
         }
-        console.log(descriptors);
+        // console.log(descriptors);
 
-        descriptors = descriptors.map(text => text.split('\n')[0])
+        // descriptors = descriptors.map(text => text.split('\n')[0])
 
         console.log(descriptors);
 
