@@ -235,29 +235,32 @@ class ScanMeister {
 
         let descriptors = [];
 
-        // Only keep descriptor blocks if it matches the correct product (CanoScan)
+        // Filter descriptors to only include the correct product and the first line of data (the
+        // only one relevant to us)
         if (buffer) {
           descriptors = buffer
             .split('\n\n')
             .filter(text => text.includes("Product=CanoScan"))
             .map(text => text.split('\n')[0]);
         }
-        // console.log(descriptors);
-
-        // descriptors = descriptors.map(text => text.split('\n')[0])
 
         console.log(descriptors);
 
-        // // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
-        // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
-        //
-        //
-        // results.map(input => {
+        // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
+        const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/
+
+
+        // descriptors.map(input => {
         //   console.log(input);
         //   const match = input.match(re);
         //   console.log(match);
         //   // console.log("port", match[1], "dev", match[2]);
         // })
+
+        descriptors.forEach(desc => {
+          const match = desc.match(re);
+          console.log(match);
+        });
 
 
 
