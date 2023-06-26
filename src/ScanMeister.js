@@ -43,6 +43,11 @@ class ScanMeister {
     // Retrieve device list (scanners)
     await this.updateDevices();
 
+    // Display device in console
+    this.devices.forEach(device => {
+      logInfo(device)
+    });
+
     // Add OSC callback and start listening for inbound OSC messages
     this.#addOscCallbacks();
     this.#oscPort.open();
