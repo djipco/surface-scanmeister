@@ -241,7 +241,16 @@ class ScanMeister {
           results = buffer.split('\n\n').filter(Boolean).map(input => input.split('\n')[0]);
         }
 
-        console.log(results);
+
+        const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
+
+
+        results.map(input => {
+          const match = input.match(re);
+          console.log("port", match[1], "dev", match[2]);
+        })
+
+
 
       });
 
