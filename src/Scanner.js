@@ -2,6 +2,7 @@ import {spawn} from 'child_process';
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import fs from "fs";
+import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
@@ -119,18 +120,40 @@ export class Scanner extends EventEmitter {
       args.push('--output-file=' + options.outputFile)
     }
 
-    // Initiate scanning
-    this.#scanimage = spawn(
-      'scanimage',
-      args,
-      {detached: true}
-    );
 
-    this.#addScanImageCallbacks();
+
+
+
+    // Initiate scanning
+    // this.#scanimage = spawn(
+    //   'scanimage',
+    //   args,
+    //   {detached: true}
+    // );
+
+    // this.#addScanImageCallbacks();
 
     // If not scanning to file, return stdout for further handling
     // e.g.: this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
-    if (!options.path) return this.#scanimage.stdout;
+    // if (!options.path) return this.#scanimage.stdout;
+
+
+    const scanImageSpawner = new Spawner();
+
+    scanImageSpawner.execute(
+      "scanimage",
+      args,
+      {
+        detached: true,
+        sucessCallback: this.#onScanImageEnd.bind(this),
+        errorCallback: this.#onScanImageError.bind(this)
+      }
+    );
+
+
+
+
+
 
   }
 
@@ -172,11 +195,6 @@ export class Scanner extends EventEmitter {
     this.#scanning = false;
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
-  }
-
-  scanToFile(path, options = {}) {
-    options.outputFile = path;
-    return this.scan(options);
   }
 
   destroy() {
