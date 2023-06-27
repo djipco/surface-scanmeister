@@ -231,55 +231,6 @@ class ScanMeister {
 
     return new Promise((resolve, reject) => {
 
-      // Resulting string buffer
-      // let buffer = '';
-
-      // // Spawn scanimage process to retrieve physical ports information
-      // let usbDev = spawn('usb-devices');
-      //
-      // usbDev.once('error', error => {
-      //   usbDev.removeAllListeners();
-      //   reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
-      // });
-      //
-      // // usbDev.stderr.on('data', (data) => {
-      // //   console.error(`child stderr:\n${data}`);
-      // // });
-      //
-      // // Error handler
-      // usbDev.stdout.once('error', reject);
-      //
-      // // Data handler
-      // usbDev.stdout.on('data', chunk => buffer += chunk.toString());
-      //
-      // // End handler
-      // usbDev.stdout.once('end', () => {
-      //
-      //   let descriptors = [];
-      //
-      //   // Filter descriptors to only include the correct product and the first line of data (the
-      //   // only one relevant to us)
-      //   if (buffer) {
-      //     descriptors = buffer
-      //       .split('\n\n')
-      //       .filter(text => text.includes("Product=CanoScan"))
-      //       .map(text => text.split('\n')[0]);
-      //   }
-      //
-      //   const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
-      //
-      //   descriptors = descriptors.map(descriptor => {
-      //     const match = descriptor.match(re);
-      //     const bus = match[1].padStart(3, '0')
-      //     const port = parseInt(match[2]);
-      //     const device = match[3].padStart(3, '0')
-      //     return {bus, device, port};
-      //   });
-      //
-      //   resolve(descriptors);
-      //
-      // });
-
       const callback = data => {
 
           let descriptors = [];
@@ -308,7 +259,11 @@ class ScanMeister {
       };
 
       const usbDevicesSpawner = new Spawner();
-      usbDevicesSpawner.execute("usb-devices", [], {callback});
+      usbDevicesSpawner.execute(
+        "usb-devices",
+        [],
+        {sucessCallback: callback, errorCallback: reject}
+      );
 
     });
 
