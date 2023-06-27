@@ -49,7 +49,6 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessEnd() {
-    console.log(this.#buffer);
     this.#callbacks.onProcessUserSuccess(this.#buffer);
     this.emit("complete", this.#buffer);
     this.removeAllListeners();

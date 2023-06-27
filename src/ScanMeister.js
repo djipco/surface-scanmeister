@@ -4,6 +4,7 @@ import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
 import {logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
+import {tr} from "date-fns/locale";
 
 class ScanMeister {
 
@@ -57,7 +58,7 @@ class ScanMeister {
 
     // Log found devices to console
     this.devices.forEach(device => {
-      logInfo(`\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`)
+      logInfo(`\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`, true)
     });
 
 
@@ -211,8 +212,6 @@ class ScanMeister {
         });
 
         devices.sort((a, b) => a.port - b.port);
-
-        devices.forEach(d => console.log(d.bus, d.device, d.port));
         resolve(devices);
 
       });
