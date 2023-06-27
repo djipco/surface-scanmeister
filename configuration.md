@@ -147,7 +147,7 @@ usb-devices
 * Create a folder to mount the remote directory to:
 
 ```sh
-mkdir /home/surface/scans_remote
+mkdir /home/surface/scans
 ```
 
 Edit `fstab` so changes kick in at boot:
@@ -171,7 +171,7 @@ sudo mount -a
 If needed, you can mount and unmount manuall: 
 
 ```
-sudo umount /home/surface/scans_remote
+sudo umount /home/surface/scans
 ```
 
 # Node
@@ -207,10 +207,10 @@ git clone https://github.com/djipco/surface-scanmeister
 ```
 Enter credentials (once).
 
-Update from repo:
+Update from repo (put it in folder called `code`):
 
 ```
-git pull https://github.com/djipco/surface-scanmeister
+git pull https://github.com/djipco/surface-scanmeister code
 ```
 
 # Start at boot
