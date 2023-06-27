@@ -56,7 +56,7 @@ export class Scanner extends EventEmitter {
 
     // Ignore if already scanning
     if (this.scanning) {
-      logWarn(`Already scanning on device ${this.name}. Ignoring.`)
+      logWarn(`Already scanning on device ${this.description}. Ignoring.`)
       return;
     }
 
