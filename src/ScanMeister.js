@@ -217,7 +217,7 @@ class ScanMeister {
 
         devices.sort((a, b) => a.port - b.port);
 
-        console.log(devices);
+        devices.forEach(d => console.log(d));
         resolve(devices);
 
       });
