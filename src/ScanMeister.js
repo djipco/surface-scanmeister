@@ -167,7 +167,7 @@ class ScanMeister {
 
     // Get ports through command `usb-devices`
     const ports = await this.getUsbDeviceDescriptors();
-    console.log(ports);
+    console.log("prout", ports);
 
     // Get scanners through command `scanimage`
     this.#devices = await new Promise((resolve, reject) => {
@@ -218,7 +218,7 @@ class ScanMeister {
 
   async getUsbDeviceDescriptors() {
 
-    await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
       // Resulting string buffer
       let buffer = '';
@@ -259,8 +259,6 @@ class ScanMeister {
           const device = match[3].padStart(3, '0')
           return {bus, device, port};
         });
-
-        console.log(descriptors);
 
         resolve(descriptors);
 
