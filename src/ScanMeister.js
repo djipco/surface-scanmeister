@@ -308,7 +308,7 @@ class ScanMeister {
       };
 
       const usbDevicesSpawner = new Spawner();
-      usbDevicesSpawner.execute("usb-devices", [], callback);
+      usbDevicesSpawner.execute("usb-devices", [], {callback});
 
     });
 
