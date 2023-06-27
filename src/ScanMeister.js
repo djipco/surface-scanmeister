@@ -49,9 +49,8 @@ class ScanMeister {
 
       let message = `${this.devices.length} scanners have been detected:`;
 
-      this.devices.forEach((device, index) => {
-        message += `\n  ${(index+1)}. ${device.vendor} ${device.model}` +
-                   `on port ${device.port} (${device.name})`
+      this.devices.forEach(device => {
+        message += `\n Port ${device.port}: ${device.vendor} ${device.model} (${device.name})`
       });
 
       logInfo(message);
@@ -208,6 +207,9 @@ class ScanMeister {
           r.port = dd.port;
           devices.push(new Scanner(r))
         });
+
+        devices.sort((a, b) => a.port > b.port);
+
         resolve(devices);
 
       });
