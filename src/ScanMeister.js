@@ -213,7 +213,7 @@ class ScanMeister {
           devices.push(new Scanner(r))
         });
 
-        devices.sort((a, b) => a.port < b.port);
+        devices.sort((a, b) => a.port > b.port);
 
         resolve(devices);
 
