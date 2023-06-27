@@ -44,7 +44,9 @@ class ScanMeister {
 
     // Log found devices to console
     if (this.devices.length < 1) {
-      logInfo("No device found.")
+
+      logInfo("No device found.");
+
     } else {
 
       let message = `${this.devices.length} scanners have been detected:`;
@@ -163,9 +165,12 @@ class ScanMeister {
 
   async updateDevices() {
 
-    // Get ports through command `usb-devices`
+    // Get ports through command `usb-devices` (exit if none is found)
     const deviceDescriptors = await this.getUsbDeviceDescriptors();
-    console.log(deviceDescriptors);
+    if (deviceDescriptors.length === 0) {
+      this.#devices = [];
+      return;
+    }
 
     // Get scanners through command `scanimage`
     this.#devices = await new Promise((resolve, reject) => {
@@ -208,7 +213,7 @@ class ScanMeister {
           devices.push(new Scanner(r))
         });
 
-        devices.sort((a, b) => a.port > b.port);
+        devices.sort((a, b) => a.port < b.port);
 
         resolve(devices);
 
