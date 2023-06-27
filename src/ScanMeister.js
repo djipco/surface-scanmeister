@@ -176,7 +176,7 @@ class ScanMeister {
   }
 
   #onOscError(error) {
-    logWarn(error);
+    logWarn("Warning: " + error);
   }
 
   #removeOscCallbacks() {
@@ -219,7 +219,10 @@ class ScanMeister {
       // Find scanner by port
       const scanner = this.getDeviceByPort(port);
       if (!scanner) {
-        logWarn("Warning: no device matches the port requested via OSC: " + message.address);
+        logWarn(
+          "Warning: unabled to execute command. No device matches the requested port: " +
+          message.address
+        );
         return;
       }
 

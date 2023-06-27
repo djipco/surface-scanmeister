@@ -41,7 +41,7 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
   get type() { return this.#type; }
   get description() {
-    return `${this.vendor} ${this.model} (${this.name}), port ${this.port}`
+    return `${this.vendor} ${this.model}, ${this.name}, port ${this.port}`
   }
 
   get bus() { return this.#bus; }
@@ -171,7 +171,7 @@ export class Scanner extends EventEmitter {
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("scancompleted", {target: this});
-    logInfo(`Scan completed on ${this.name}`);
+    logInfo(`Scan completed on ${this.description}`);
   }
 
   scanToFile(path, options = {}) {
