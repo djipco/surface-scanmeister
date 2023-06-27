@@ -14,7 +14,8 @@ export class Spawner extends EventEmitter {
   execute(command, parameters = [], options = {}) {
 
     // Save user-defined callback
-    this.#callbacks.onProcessEndUser = options.callback;
+    this.#callbacks.onProcessUserSuccess = options.sucessCallback();
+    this.#callbacks.onProcessUserError = options.errorCallback();
 
     // Execute command
     this.#process = spawn(command, parameters, options);
@@ -36,6 +37,7 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessError(error) {
+    this.#callbacks.onProcessUserError();
     this.removeAllListeners();
     this.#buffer = null;
     this.#process = null;
@@ -47,7 +49,7 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessEnd() {
-    this.#callbacks.onProcessEndUser();
+    this.#callbacks.onProcessUserSuccess();
     this.emit("complete", this.#buffer);
     this.removeAllListeners();
     this.#buffer = null;
@@ -56,7 +58,8 @@ export class Spawner extends EventEmitter {
 
   removeAllListeners() {
 
-    this.#callbacks.onProcessEndUser = null;
+    this.#callbacks.onProcessUserSuccess = null;
+    this.#callbacks.onProcessUserError = null;
 
     this.#process.off('error', this.#callbacks.onProcessError);
     this.#process.stdout.off('error', this.#callbacks.onProcessError);
