@@ -256,6 +256,7 @@ class ScanMeister {
             const device = match[3].padStart(3, '0')
             return {bus, device, port};
           });
+          console.log(descriptors);
           resolve(descriptors);
 
       };
