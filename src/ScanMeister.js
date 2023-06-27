@@ -207,7 +207,7 @@ class ScanMeister {
     });
 
     const ports = await this.getUsbDeviceDescriptors();
-    console.log(ports);
+    // console.log(ports);
 
   }
 
@@ -261,7 +261,8 @@ class ScanMeister {
           const port = parseInt(match[2]);
           const deviceNumber = match[3].padStart(3, '0')
           // console.log(`${bus}:${deviceNumber}`, port);
-          return {bus, port, deviceNumber};
+          console.log({bus, deviceNumber, port});
+          return {bus, deviceNumber, port};
         })
 
         resolve(descriptors);
