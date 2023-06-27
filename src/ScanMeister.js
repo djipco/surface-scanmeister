@@ -55,9 +55,7 @@ class ScanMeister {
     await this.#updateScannerList(shd);
 
     // Log scanners to console
-    this.devices.forEach(device => {
-      logInfo(`\tPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`, true)
-    });
+    this.devices.forEach(device => logInfo(`\t${device.description}`, true));
 
     // Add OSC callbacks and start listening for inbound OSC messages
     this.#addOscCallbacks();
@@ -222,6 +220,7 @@ class ScanMeister {
       const scanner = this.getDeviceByPort(port);
       if (!scanner) {
         logWarn("Warning: no device matches the port requested via OSC: " + message.address);
+        return;
       }
 
       const options = {
@@ -263,7 +262,6 @@ class ScanMeister {
   }
 
   getDeviceByPort(port) {
-    this.devices.forEach(d => console.log(d.port, d.name));
     return this.devices.find(device => device.port === port);
   }
 

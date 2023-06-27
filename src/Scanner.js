@@ -40,6 +40,9 @@ export class Scanner extends EventEmitter {
   get vendor() { return this.#vendor; }
   get model() { return this.#model; }
   get type() { return this.#type; }
+  get description() {
+    return `${this.vendor} ${this.model} (${this.name}), port ${this.port}`
+  }
 
   get bus() { return this.#bus; }
   get device() { return this.#device; }
@@ -58,7 +61,7 @@ export class Scanner extends EventEmitter {
 
     // Start scan
     this.#scanning = true;
-    logInfo(`Initiating scan on ${this.name}...`);
+    logInfo(`Initiating scan on ${this.description}...`);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
