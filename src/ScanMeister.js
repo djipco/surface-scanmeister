@@ -144,7 +144,7 @@ class ScanMeister {
 
       // Initiate scanning
       const scanImageSpawner = new Spawner();
-      const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
+      const format = '{"name":"%d","vendor":"%v","model":"%m","type":"%t","index":"%i"}%n'
       scanImageSpawner.execute(
         "scanimage",
         ['--formatted-device-list=' + format],

@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 import {ScanMeister} from "./src/ScanMeister.js";
 import {exit} from 'node:process';
 import {logError, logInfo} from "./src/Utils.js";
