@@ -123,8 +123,8 @@ class ScanMeister {
         let devices = [];
 
         if (data) {
-          // results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
-          results = data.split('\n').map(line => JSON.parse(line));
+          results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+          // results = data.split('\n').map(line => JSON.parse(line));
         }
 
         results.forEach(r => {
