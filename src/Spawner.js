@@ -4,7 +4,7 @@ import {spawn} from "child_process";
 export class Spawner extends EventEmitter {
 
   #process;
-  #buffer;
+  #buffer = "";
   #callbacks = {};
 
   constructor() {
@@ -43,7 +43,7 @@ export class Spawner extends EventEmitter {
     this.#removeAllListeners();
     this.emit("error", Buffer.from(error, "utf-8"));
     this.#process = null;
-    this.#buffer = null;
+    this.#buffer = "";
   }
 
   #onProcessData(data) {
@@ -56,7 +56,7 @@ export class Spawner extends EventEmitter {
     }
     this.emit("complete", this.#buffer);
     this.#removeAllListeners();
-    this.#buffer = null;
+    this.#buffer = "";
     this.#process = null;
   }
 
