@@ -13,7 +13,7 @@ export class Spawner extends EventEmitter {
 
   execute(command, parameters = [], options = {}) {
 
-    // Save user-defined callback
+    // Save user-defined callbacks
     this.#callbacks.onProcessUserSuccess = options.sucessCallback;
     this.#callbacks.onProcessUserError = options.errorCallback;
 

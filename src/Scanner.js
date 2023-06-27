@@ -102,7 +102,21 @@ export class Scanner extends EventEmitter {
     }
 
     // Brightness (-100...100)
+    this.options.brightness = parseInt(this.options.brightness);
+    if (this.options.brightness) {
+      args.push('--brightness=' + options.brightness);
+    } else {
+      args.push('--brightness=0');
+    }
+
     // Contrast (-100...100)
+    this.options.contrast = parseInt(this.options.contrast);
+    if (this.options.contrast) {
+      args.push('--contrast=' + options.contrast);
+    } else {
+      args.push('--contrast=0');
+    }
+
     // Lamp off time
 
     // Lamp off scan
@@ -113,9 +127,6 @@ export class Scanner extends EventEmitter {
     }
 
     // Scan to file (instead of stdout)
-    // if (options.path) {
-    //   args.push('--output-file=' + options.path)
-    // }
     if (options.outputFile) {
       args.push('--output-file=' + options.outputFile)
     }

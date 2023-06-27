@@ -7,7 +7,7 @@ import {Spawner} from "./Spawner.js";
 
 class ScanMeister {
 
-  #version = "0.0.2";
+  #version = "0.1.0";
   #devices = [];
   #callbacks = {}
   #oscCommands = ["scan"];
@@ -124,7 +124,6 @@ class ScanMeister {
 
         if (data) {
           results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
-          // results = data.split('\n').map(line => JSON.parse(line));
         }
 
         results.forEach(r => {
