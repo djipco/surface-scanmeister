@@ -10,7 +10,7 @@ const config = convict({
     scansDir: {
       doc: 'Path to directory where scans should be saved',
       format: String,
-      default: '/home/surface/scans_remote'
+      default: '/home/surface/surface-scanmeister'
     }
   },
 
