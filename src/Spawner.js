@@ -39,9 +39,9 @@ export class Spawner extends EventEmitter {
   #onProcessError(error) {
     this.#callbacks.onProcessUserError();
     this.removeAllListeners();
-    this.#buffer = null;
-    this.#process = null;
     this.emit("error", Buffer.from(error, "utf-8"));
+    this.#process = null;
+    this.#buffer = null;
   }
 
   #onProcessData(data) {
@@ -49,7 +49,7 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessEnd() {
-    this.#callbacks.onProcessUserSuccess();
+    this.#callbacks.onProcessUserSuccess(this.#buffer);
     this.emit("complete", this.#buffer);
     this.removeAllListeners();
     this.#buffer = null;
