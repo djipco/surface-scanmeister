@@ -208,14 +208,16 @@ class ScanMeister {
         }
 
         results.forEach(r => {
-          console.log(r);
           const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
           r.port = dd.port;
+          r.device = dd.device;
+          r.bus = dd.bus;
           devices.push(new Scanner(r))
         });
 
         devices.sort((a, b) => a.port - b.port);
 
+        console.log(devices);
         resolve(devices);
 
       });
