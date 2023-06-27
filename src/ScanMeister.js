@@ -40,35 +40,36 @@ class ScanMeister {
 
   async init() {
 
-    // Retrieve device list (scanners)
-    await this.updateDevices();
+    // Retrieve list of ports with physically connected scanners
+    const deviceDescriptors = await this.getUsbDeviceDescriptors();
 
-    // // Log found devices to console
-    // if (this.devices.length < 1) {
     //
-    //   logInfo("No scanner found.");
-    //
-    // } else {
-    //
-    //   let message = `${this.devices.length} scanners have been detected:`;
-    //
-    //   this.devices.forEach(device => {
-    //     message += `\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`
-    //   });
-    //
-    //   logInfo(message);
-    //
-    // }
-    //
-    // // Add OSC callback and start listening for inbound OSC messages
-    // this.#addOscCallbacks();
-    // this.#oscPort.open();
-    // await new Promise(resolve => this.#oscPort.once("ready", resolve));
-    //
-    // logInfo(
-    //   `Listening for OSC on ` +
-    //   config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    // );
+    if (deviceDescriptors.length === 0) {
+      this.#devices = [];
+      logInfo("No scanner found.");
+      return;
+    } else {
+      logInfo(`${deviceDescriptors.length} scanners have been detected:`);
+    }
+
+    // Create actual Scanner objects
+    await this.updateDevices(deviceDescriptors);
+
+    // Log found devices to console
+    this.devices.forEach(device => {
+      logInfo(`\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`)
+    });
+
+
+    // Add OSC callback and start listening for inbound OSC messages
+    this.#addOscCallbacks();
+    this.#oscPort.open();
+    await new Promise(resolve => this.#oscPort.once("ready", resolve));
+
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
 
   }
 
@@ -164,17 +165,7 @@ class ScanMeister {
     // this.#oscPort.send({address: address, args: args});
   }
 
-  async updateDevices() {
-
-    // Get physical port information through Linux `usb-devices` command (exit if none is found)
-    const deviceDescriptors = await this.getUsbDeviceDescriptors();
-
-    if (deviceDescriptors.length === 0) {
-      this.#devices = [];
-      return;
-    }
-
-    console.log(deviceDescriptors);
+  async updateDevices(deviceDescriptors) {
 
     // Get scanners list through Linux `scanimage` command
     this.#devices = await new Promise((resolve, reject) => {
