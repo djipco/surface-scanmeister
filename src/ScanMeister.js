@@ -50,7 +50,7 @@ class ScanMeister {
       let message = `${this.devices.length} scanners have been detected:`;
 
       this.devices.forEach((device, index) => {
-        message += `\n  ${index+1}. ${device.vendor} ${device.model}` +
+        message += `\n  ${(index+1)}. ${device.vendor} ${device.model}` +
                    `on port ${device.port} (${device.name})`
       });
 
