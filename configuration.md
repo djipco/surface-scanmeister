@@ -26,6 +26,8 @@ sudo sane-find-scanner -q
 
 # scanimage
 
+Th `scanimage` command. isinstalled by default in Raspbian.
+
 ### List available devices
 
 ```scanimage --list-devices```
@@ -125,6 +127,14 @@ scanimage \
 
 Devices are in `/dev/bus/usb`.
 
+# USB Physical Ports
+
+`scanimage` does not provide physical port information. This information can be fetched with `usb-devices` (also installedc by default). This is what the code uses to figure which device is on which port:
+
+```
+usb-devices
+```
+
 # Configure Access to Shared Folder
 
 **On Windows:**
@@ -201,4 +211,18 @@ Update from repo:
 
 ```
 git pull https://github.com/djipco/surface-scanmeister
+```
+
+# Start at boot
+
+In Terminal:
+
+```bash
+crontab -e
+```
+
+Insert:
+
+```
+@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
