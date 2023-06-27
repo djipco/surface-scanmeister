@@ -3,10 +3,11 @@ import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
 import {logInfo, logWarn} from "./Utils.js";
+import {Spawner} from "./Spawner.js";
 
 class ScanMeister {
 
-  #version = "0.0.1";
+  #version = "0.0.2";
   #devices = [];
   #callbacks = {}
   #oscCommands = ["scan"];
@@ -14,7 +15,7 @@ class ScanMeister {
 
   constructor() {
 
-    // Instantiate osc.js UDPPort
+    // Instantiate OSC UDP port
     this.#oscPort = new osc.UDPPort({
       localAddress: config.get("osc.local.address"),
       localPort: config.get("osc.local.port"),
@@ -165,14 +166,14 @@ class ScanMeister {
 
   async updateDevices() {
 
-    // Get ports through command `usb-devices` (exit if none is found)
+    // Get physical port information through Linux `usb-devices` command (exit if none is found)
     const deviceDescriptors = await this.getUsbDeviceDescriptors();
     if (deviceDescriptors.length === 0) {
       this.#devices = [];
       return;
     }
 
-    // Get scanners through command `scanimage`
+    // Get scanners list through Linux `scanimage` command
     this.#devices = await new Promise((resolve, reject) => {
 
       // Resulting string buffer
@@ -231,48 +232,83 @@ class ScanMeister {
     return new Promise((resolve, reject) => {
 
       // Resulting string buffer
-      let buffer = '';
+      // let buffer = '';
 
-      // Spawn scanimage process to retrieve list
-      let usbDev = spawn('usb-devices');
-
+      // // Spawn scanimage process to retrieve physical ports information
+      // let usbDev = spawn('usb-devices');
+      //
       // usbDev.once('error', error => {
+      //   usbDev.removeAllListeners();
       //   reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
       // });
-
-      // Error handler
+      //
+      // // usbDev.stderr.on('data', (data) => {
+      // //   console.error(`child stderr:\n${data}`);
+      // // });
+      //
+      // // Error handler
       // usbDev.stdout.once('error', reject);
+      //
+      // // Data handler
+      // usbDev.stdout.on('data', chunk => buffer += chunk.toString());
+      //
+      // // End handler
+      // usbDev.stdout.once('end', () => {
+      //
+      //   let descriptors = [];
+      //
+      //   // Filter descriptors to only include the correct product and the first line of data (the
+      //   // only one relevant to us)
+      //   if (buffer) {
+      //     descriptors = buffer
+      //       .split('\n\n')
+      //       .filter(text => text.includes("Product=CanoScan"))
+      //       .map(text => text.split('\n')[0]);
+      //   }
+      //
+      //   const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+      //
+      //   descriptors = descriptors.map(descriptor => {
+      //     const match = descriptor.match(re);
+      //     const bus = match[1].padStart(3, '0')
+      //     const port = parseInt(match[2]);
+      //     const device = match[3].padStart(3, '0')
+      //     return {bus, device, port};
+      //   });
+      //
+      //   resolve(descriptors);
+      //
+      // });
 
-      // Data handler
-      usbDev.stdout.on('data', chunk => buffer += chunk.toString());
+      const callback = data => {
 
-      // End handler
-      usbDev.stdout.once('end', () => {
+          let descriptors = [];
 
-        let descriptors = [];
+          // Discard unrelated devices and only keep first line (the only one relevant to us)
+          if (data) {
+            descriptors = data
+              .split('\n\n')
+              .filter(text => text.includes("Product=CanoScan"))
+              .map(text => text.split('\n')[0]);
+          }
 
-        // Filter descriptors to only include the correct product and the first line of data (the
-        // only one relevant to us)
-        if (buffer) {
-          descriptors = buffer
-            .split('\n\n')
-            .filter(text => text.includes("Product=CanoScan"))
-            .map(text => text.split('\n')[0]);
-        }
+          // Regex to extract bus, port and device number
+          const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
 
-        const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+          // Return list with bus, port and device number
+          descriptors = descriptors.map(descriptor => {
+            const match = descriptor.match(re);
+            const bus = match[1].padStart(3, '0')
+            const port = parseInt(match[2]);
+            const device = match[3].padStart(3, '0')
+            return {bus, device, port};
+          });
+          resolve(descriptors);
 
-        descriptors = descriptors.map(descriptor => {
-          const match = descriptor.match(re);
-          const bus = match[1].padStart(3, '0')
-          const port = parseInt(match[2]);
-          const device = match[3].padStart(3, '0')
-          return {bus, device, port};
-        });
+      };
 
-        resolve(descriptors);
-
-      });
+      const usbDevicesSpawner = new Spawner();
+      usbDevicesSpawner.execute("usb-devices", [], callback);
 
     });
 
