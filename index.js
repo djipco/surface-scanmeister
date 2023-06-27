@@ -1,6 +1,6 @@
 import {ScanMeister} from "./src/ScanMeister.js";
 import {logError, logInfo} from "./src/Utils.js";
-import * as process from "node:process";
+import process from 'node:process';
 
 // Start ScanMeister
 logInfo(`Starting ScanMeister v${ScanMeister.version}...`)
