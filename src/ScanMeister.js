@@ -245,6 +245,8 @@ class ScanMeister {
               .map(text => text.split('\n')[0]);
           }
 
+          console.log(descriptors);
+
           // Regex to extract bus, port and device number
           const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
 
