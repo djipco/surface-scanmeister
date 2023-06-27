@@ -4,7 +4,6 @@ import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
 import {logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
-import {tr} from "date-fns/locale";
 
 class ScanMeister {
 
