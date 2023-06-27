@@ -1,17 +1,26 @@
 import {ScanMeister} from "./src/ScanMeister.js";
-import {exit} from 'node:process';
 import {logError, logInfo} from "./src/Utils.js";
+import * as process from "node:process";
 
 // Start ScanMeister
 logInfo(`Starting ScanMeister v${ScanMeister.version}...`)
 
 ScanMeister.init()
   .then(() => {
-    logInfo(`ScanMeister v${ScanMeister.version} successfully started`)
+    logInfo(`ScanMeister v${ScanMeister.version} successfully started`);
+    process.on('SIGINT', onExit);  // CTRL+C
+    process.on('SIGQUIT', onExit); // Keyboard quit
+    process.on('SIGTERM', onExit); // `kill` command
   })
   .catch(error => {
     logError(error);
     logError("Exiting...")
     ScanMeister.destroy();
-    exit(1);
+    process.exit(1);
   });
+
+function onExit() {
+  ScanMeister.destroy();
+  logInfo("Exiting...");
+  process.exit();
+}
