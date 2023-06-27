@@ -1,3 +1,9 @@
+#To Do
+* Install `winston`for logging
+* send OSC (to report on status)
+* Send file via netcat (if TD team fixes the issue)
+* Clarify the inbound OSC schema
+
 # Raspbian
 
 * Use **Raspberry Pi Imager.app** to create brand new boot medium for the Raspberry Pi 2 Model B.
