@@ -202,3 +202,17 @@ Update from repo:
 ```
 git pull https://github.com/djipco/surface-scanmeister
 ```
+
+# Start at boot
+
+In Terminal:
+
+```bash
+crontab -e
+`
+
+Insert:
+
+```
+@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
+```
