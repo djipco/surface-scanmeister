@@ -40,10 +40,9 @@ class ScanMeister {
 
   async init() {
 
-    // Retrieve list of ports with physically connected scanners
+    // Retrieve list of ports with physically connected scanners and log it to console
     const deviceDescriptors = await this.getUsbDeviceDescriptors();
 
-    //
     if (deviceDescriptors.length === 0) {
       this.#devices = [];
       logInfo("No scanner found.");
@@ -52,14 +51,13 @@ class ScanMeister {
       logInfo(`${deviceDescriptors.length} scanners have been detected:`);
     }
 
-    // Create actual Scanner objects
+    // Fetch info and create actual Scanner objects
     await this.updateDevices(deviceDescriptors);
 
-    // Log found devices to console
+    // Log scanners to console
     this.devices.forEach(device => {
-      logInfo(`\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`, true)
+      logInfo(`\tPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`, true)
     });
-
 
     // Add OSC callback and start listening for inbound OSC messages
     this.#addOscCallbacks();
@@ -231,7 +229,7 @@ class ScanMeister {
           if (data) {
             descriptors = data
               .split('\n\n')
-              .filter(text => text.includes("Product=CanoScan"))
+              .filter(text => text.includes(config.get('devices.filterString')))
               .map(text => text.split('\n')[0]);
           }
 

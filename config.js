@@ -39,6 +39,14 @@ const config = convict({
         default: '8000'
       }
     }
+  },
+
+  devices: {
+    filterString: {
+      doc: 'String used to find appropriate devices inside usb-devices command output',
+      format: String,
+      default: 'Product=CanoScan'
+    }
   }
 
 });

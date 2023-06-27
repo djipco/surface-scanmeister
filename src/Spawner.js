@@ -37,8 +37,10 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessError(error) {
-    this.#callbacks.onProcessUserError();
-    this.removeAllListeners();
+    if (typeof this.#callbacks.onProcessUserError === 'function') {
+      this.#callbacks.onProcessUserError();
+    }
+    this.#removeAllListeners();
     this.emit("error", Buffer.from(error, "utf-8"));
     this.#process = null;
     this.#buffer = null;
@@ -49,14 +51,16 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessEnd() {
-    this.#callbacks.onProcessUserSuccess(this.#buffer);
+    if (typeof this.#callbacks.onProcessUserSuccess === 'function') {
+      this.#callbacks.onProcessUserSuccess(this.#buffer);
+    }
     this.emit("complete", this.#buffer);
-    this.removeAllListeners();
+    this.#removeAllListeners();
     this.#buffer = null;
     this.#process = null;
   }
 
-  removeAllListeners() {
+  #removeAllListeners() {
 
     this.#callbacks.onProcessUserSuccess = null;
     this.#callbacks.onProcessUserError = null;
@@ -72,6 +76,11 @@ export class Spawner extends EventEmitter {
     this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
     this.#callbacks.onProcessEnd = null;
 
+  }
+
+  destroy() {
+    this.#removeAllListeners();
+    this.removeListener();
   }
 
 }
