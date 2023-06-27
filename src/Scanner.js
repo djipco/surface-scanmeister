@@ -1,5 +1,5 @@
-import {spawn} from 'child_process'
-import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js"
+import {spawn} from 'child_process';
+import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import fs from "fs";
 
