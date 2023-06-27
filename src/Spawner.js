@@ -49,9 +49,9 @@ export class Spawner extends EventEmitter {
   #onProcessEnd() {
     this.#callbacks.onProcessEndUser();
     this.emit("complete", this.#buffer);
+    this.removeAllListeners();
     this.#buffer = null;
     this.#process = null;
-    this.removeAllListeners();
   }
 
   removeAllListeners() {
