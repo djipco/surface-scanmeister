@@ -118,23 +118,25 @@ class ScanMeister {
     this.#devices = await new Promise((resolve, reject) => {
 
       const successCallback = data => {
-          let results = [];
-          let devices = [];
 
-          if (data) {
-            results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
-          }
+        console.log(data);
+        let results = [];
+        let devices = [];
 
-          results.forEach(r => {
-            const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-            r.port = dd.port;
-            r.device = dd.device;
-            r.bus = dd.bus;
-            devices.push(new Scanner(r))
-          });
+        if (data) {
+          results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+        }
 
-          devices.sort((a, b) => a.port - b.port);
-          resolve(devices);
+        results.forEach(r => {
+          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+          r.port = dd.port;
+          r.device = dd.device;
+          r.bus = dd.bus;
+          devices.push(new Scanner(r))
+        });
+
+        devices.sort((a, b) => a.port - b.port);
+        resolve(devices);
       }
 
       const errorCallback = error => {
