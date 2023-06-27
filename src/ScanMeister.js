@@ -213,20 +213,22 @@ class ScanMeister {
     if (!this.oscCommands.includes(command)) return;
 
     // Fetch device index
-    const index = segments[1];
+    const port = segments[1];
 
     // Execute command
     if (command === "scan") {
-      // this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
+
+      // Find scanner by port
+      const scanner = this.getDeviceByPort(port);
+      if (!scanner) {
+        logWarn("Warning: no device matches the port requested via OSC: " + message.address);
+      }
+
       const options = {
-        outputFile: config.get("paths.scansDir") + `/scanner${index}.png`
-        // outputFile: `scanner${index}.png`
+        outputFile: config.get("paths.scansDir") + `/scanner${port}.png`
       }
-      if (this.devices[index]) {
-        this.devices[index].scan(options);
-      } else {
-        logWarn("Warning: no device matches the index requested via OSC: " + message.address);
-      }
+      scanner.scan(options);
+      // scanner.scan().pipe(fs.createWriteStream(`image${port}.png`));
     }
 
   }
@@ -258,6 +260,10 @@ class ScanMeister {
   sendOscMessage(address, args) {
     // if (!this.#oscPort.socket) return;
     // this.#oscPort.send({address: address, args: args});
+  }
+
+  getDeviceByPort(port) {
+    return this.devices.find(device => device.port === port);
   }
 
   destroy() {
