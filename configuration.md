@@ -209,7 +209,7 @@ In Terminal:
 
 ```bash
 crontab -e
-`
+```
 
 Insert:
 
