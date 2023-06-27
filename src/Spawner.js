@@ -14,8 +14,8 @@ export class Spawner extends EventEmitter {
   execute(command, parameters = [], options = {}) {
 
     // Save user-defined callback
-    this.#callbacks.onProcessUserSuccess = options.sucessCallback();
-    this.#callbacks.onProcessUserError = options.errorCallback();
+    this.#callbacks.onProcessUserSuccess = options.sucessCallback;
+    this.#callbacks.onProcessUserError = options.errorCallback;
 
     // Execute command
     this.#process = spawn(command, parameters, options);

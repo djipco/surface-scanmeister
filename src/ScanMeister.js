@@ -176,57 +176,57 @@ class ScanMeister {
 
     console.log(deviceDescriptors);
 
-    // // Get scanners list through Linux `scanimage` command
-    // this.#devices = await new Promise((resolve, reject) => {
-    //
-    //   // Resulting string buffer
-    //   let buffer = '';
-    //
-    //   // Format for device list
-    //   const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
-    //
-    //   // Spawn scanimage process to retrieve list
-    //   let scanimage = spawn(
-    //     'scanimage',
-    //     ['--formatted-device-list=' + format]
-    //   );
-    //
-    //   scanimage.once('error', error => {
-    //     reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
-    //   });
-    //
-    //   // Error handler
-    //   scanimage.stdout.once('error', reject);
-    //
-    //   // Data handler
-    //   scanimage.stdout.on('data', chunk => buffer += chunk.toString());
-    //
-    //   // End handler
-    //   scanimage.stdout.once('end', () => {
-    //
-    //     let results = [];
-    //     let devices = [];
-    //
-    //     if (buffer) {
-    //       results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
-    //     }
-    //
-    //     results.forEach(r => {
-    //       const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-    //       r.port = dd.port;
-    //       r.device = dd.device;
-    //       r.bus = dd.bus;
-    //       devices.push(new Scanner(r))
-    //     });
-    //
-    //     devices.sort((a, b) => a.port - b.port);
-    //
-    //     devices.forEach(d => console.log(d.bus, d.device, d.port));
-    //     resolve(devices);
-    //
-    //   });
-    //
-    // });
+    // Get scanners list through Linux `scanimage` command
+    this.#devices = await new Promise((resolve, reject) => {
+
+      // Resulting string buffer
+      let buffer = '';
+
+      // Format for device list
+      const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
+
+      // Spawn scanimage process to retrieve list
+      let scanimage = spawn(
+        'scanimage',
+        ['--formatted-device-list=' + format]
+      );
+
+      scanimage.once('error', error => {
+        reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
+      });
+
+      // Error handler
+      scanimage.stdout.once('error', reject);
+
+      // Data handler
+      scanimage.stdout.on('data', chunk => buffer += chunk.toString());
+
+      // End handler
+      scanimage.stdout.once('end', () => {
+
+        let results = [];
+        let devices = [];
+
+        if (buffer) {
+          results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
+        }
+
+        results.forEach(r => {
+          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+          r.port = dd.port;
+          r.device = dd.device;
+          r.bus = dd.bus;
+          devices.push(new Scanner(r))
+        });
+
+        devices.sort((a, b) => a.port - b.port);
+
+        devices.forEach(d => console.log(d.bus, d.device, d.port));
+        resolve(devices);
+
+      });
+
+    });
 
   }
 
@@ -257,7 +257,6 @@ class ScanMeister {
             const device = match[3].padStart(3, '0')
             return {bus, device, port};
           });
-          console.log(descriptors);
           resolve(descriptors);
 
       };
