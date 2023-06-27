@@ -173,6 +173,8 @@ class ScanMeister {
       return;
     }
 
+    console.log(deviceDescriptors);
+
     // Get scanners list through Linux `scanimage` command
     this.#devices = await new Promise((resolve, reject) => {
 
