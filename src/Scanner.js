@@ -37,6 +37,7 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
   get type() { return this.#type; }
   get index() { return this.#index; }
+  get port() { return this.#port; }
   get scanning() { return this.#scanning; }
   get options() { return this.#options; }
 
