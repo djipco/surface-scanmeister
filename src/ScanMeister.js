@@ -167,7 +167,7 @@ class ScanMeister {
 
     // Get ports through command `usb-devices`
     const deviceDescriptors = await this.getUsbDeviceDescriptors();
-    console.log(usbDeviceDescriptors);
+    console.log(deviceDescriptors);
 
     // Get scanners through command `scanimage`
     this.#devices = await new Promise((resolve, reject) => {
