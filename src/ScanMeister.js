@@ -40,26 +40,26 @@ class ScanMeister {
 
   async init() {
 
-    // Retrieve list of ports with physically connected scanners and log it to console
-    const deviceDescriptors = await this.getUsbDeviceDescriptors();
+    // Retrieve list of objects describing scanner ports and device numbers
+    const shd = await this.#getScannerHardwareDescriptors();
 
-    if (deviceDescriptors.length === 0) {
+    if (shd.length === 0) {
       this.#devices = [];
       logInfo("No scanner found.");
       return;
     } else {
-      logInfo(`${deviceDescriptors.length} scanners have been detected:`);
+      logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
     }
 
-    // Fetch info and create actual Scanner objects
-    await this.updateDevices(deviceDescriptors);
+    // Use `scanimage` and the scanner hardware descriptors to build list of Scanner objects
+    await this.#updateScannerList(shd);
 
     // Log scanners to console
     this.devices.forEach(device => {
       logInfo(`\tPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`, true)
     });
 
-    // Add OSC callback and start listening for inbound OSC messages
+    // Add OSC callbacks and start listening for inbound OSC messages
     this.#addOscCallbacks();
     this.#oscPort.open();
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
@@ -68,6 +68,103 @@ class ScanMeister {
       `Listening for OSC on ` +
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
+
+  }
+
+  async #getScannerHardwareDescriptors() {
+
+    return new Promise((resolve, reject) => {
+
+      const callback = data => {
+
+          let descriptors = [];
+
+          // Discard unrelated devices and only keep first line (the only one relevant to us)
+          if (data) {
+            descriptors = data
+              .split('\n\n')
+              .filter(text => text.includes(config.get('devices.filterString')))
+              .map(text => text.split('\n')[0]);
+          }
+
+          // Regex to extract bus, port and device number
+          const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+
+          // Return list with bus, port and device number
+          descriptors = descriptors.map(descriptor => {
+            const match = descriptor.match(re);
+            const bus = match[1].padStart(3, '0')
+            const port = parseInt(match[2]);
+            const device = match[3].padStart(3, '0')
+            return {bus, device, port};
+          });
+          resolve(descriptors);
+
+      };
+
+      const usbDevicesSpawner = new Spawner();
+
+      usbDevicesSpawner.execute(
+        "usb-devices",
+        [],
+        {sucessCallback: callback, errorCallback: reject}
+      );
+
+    });
+
+  }
+
+  async #updateScannerList(deviceDescriptors) {
+
+    // Get scanners list through Linux `scanimage` command
+    this.#devices = await new Promise((resolve, reject) => {
+
+      // Resulting string buffer
+      let buffer = '';
+
+      // Format for device list
+      const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
+
+      // Spawn scanimage process to retrieve list
+      let scanimage = spawn(
+        'scanimage',
+        ['--formatted-device-list=' + format]
+      );
+
+      scanimage.once('error', error => {
+        reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
+      });
+
+      // Error handler
+      scanimage.stdout.once('error', reject);
+
+      // Data handler
+      scanimage.stdout.on('data', chunk => buffer += chunk.toString());
+
+      // End handler
+      scanimage.stdout.once('end', () => {
+
+        let results = [];
+        let devices = [];
+
+        if (buffer) {
+          results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
+        }
+
+        results.forEach(r => {
+          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+          r.port = dd.port;
+          r.device = dd.device;
+          r.bus = dd.bus;
+          devices.push(new Scanner(r))
+        });
+
+        devices.sort((a, b) => a.port - b.port);
+        resolve(devices);
+
+      });
+
+    });
 
   }
 
@@ -161,103 +258,6 @@ class ScanMeister {
   sendOscMessage(address, args) {
     // if (!this.#oscPort.socket) return;
     // this.#oscPort.send({address: address, args: args});
-  }
-
-  async updateDevices(deviceDescriptors) {
-
-    // Get scanners list through Linux `scanimage` command
-    this.#devices = await new Promise((resolve, reject) => {
-
-      // Resulting string buffer
-      let buffer = '';
-
-      // Format for device list
-      const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
-
-      // Spawn scanimage process to retrieve list
-      let scanimage = spawn(
-        'scanimage',
-        ['--formatted-device-list=' + format]
-      );
-
-      scanimage.once('error', error => {
-        reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
-      });
-
-      // Error handler
-      scanimage.stdout.once('error', reject);
-
-      // Data handler
-      scanimage.stdout.on('data', chunk => buffer += chunk.toString());
-
-      // End handler
-      scanimage.stdout.once('end', () => {
-
-        let results = [];
-        let devices = [];
-
-        if (buffer) {
-          results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
-        }
-
-        results.forEach(r => {
-          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-          r.port = dd.port;
-          r.device = dd.device;
-          r.bus = dd.bus;
-          devices.push(new Scanner(r))
-        });
-
-        devices.sort((a, b) => a.port - b.port);
-        resolve(devices);
-
-      });
-
-    });
-
-  }
-
-  async getUsbDeviceDescriptors() {
-
-    return new Promise((resolve, reject) => {
-
-      const callback = data => {
-
-          let descriptors = [];
-
-          // Discard unrelated devices and only keep first line (the only one relevant to us)
-          if (data) {
-            descriptors = data
-              .split('\n\n')
-              .filter(text => text.includes(config.get('devices.filterString')))
-              .map(text => text.split('\n')[0]);
-          }
-
-          // Regex to extract bus, port and device number
-          const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
-
-          // Return list with bus, port and device number
-          descriptors = descriptors.map(descriptor => {
-            const match = descriptor.match(re);
-            const bus = match[1].padStart(3, '0')
-            const port = parseInt(match[2]);
-            const device = match[3].padStart(3, '0')
-            return {bus, device, port};
-          });
-          resolve(descriptors);
-
-      };
-
-      const usbDevicesSpawner = new Spawner();
-
-      usbDevicesSpawner.execute(
-        "usb-devices",
-        [],
-        {sucessCallback: callback, errorCallback: reject}
-      );
-
-    });
-
   }
 
   destroy() {

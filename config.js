@@ -42,8 +42,8 @@ const config = convict({
   },
 
   devices: {
-    filterString: {
-      doc: 'String used to find appropriate devices inside usb-devices command output',
+    filter: {
+      doc: 'String used to find appropriate devices inside the `usb-devices` command output',
       format: String,
       default: 'Product=CanoScan'
     }
