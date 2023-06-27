@@ -166,8 +166,8 @@ class ScanMeister {
   async updateDevices() {
 
     // Get ports through command `usb-devices`
-    const ports = await this.getUsbDeviceDescriptors();
-    console.log("prout", ports);
+    const usbDeviceDescriptors = await this.getUsbDeviceDescriptors();
+    console.log(usbDeviceDescriptors);
 
     // Get scanners through command `scanimage`
     this.#devices = await new Promise((resolve, reject) => {
@@ -205,7 +205,9 @@ class ScanMeister {
         }
 
         results.forEach(r => {
-          r.port = ports.find(p => r.name.endsWith(`${p.bus}:${p.device}`)).port;
+          const udd = usbDeviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+          console.log(udd);
+          r.port = udd.port;
           devices.push(new Scanner(r))
         });
         resolve(devices);
