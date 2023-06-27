@@ -220,8 +220,8 @@ class ScanMeister {
       const scanner = this.getDeviceByPort(port);
       if (!scanner) {
         logWarn(
-          "Warning: unabled to execute command. No device matches the requested port: " +
-          message.address
+          "Warning: unable to execute OSC command. No device connected to specified port (" +
+          message.address + ")"
         );
         return;
       }
