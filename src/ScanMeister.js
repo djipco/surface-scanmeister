@@ -50,7 +50,7 @@ class ScanMeister {
       let message = "The following devices have been found:";
 
       this.devices.forEach(device => {
-        message += `\n\t${device.vendor} ${device.model} ${device.name} on port ${device.port}`
+        message += `\n  ${device.index}. ${device.vendor} ${device.model} on port ${device.port} (${device.name})`
       });
 
       logInfo(message);
@@ -166,7 +166,7 @@ class ScanMeister {
   async updateDevices() {
 
     // Get ports through command `usb-devices`
-    const usbDeviceDescriptors = await this.getUsbDeviceDescriptors();
+    const deviceDescriptors = await this.getUsbDeviceDescriptors();
     console.log(usbDeviceDescriptors);
 
     // Get scanners through command `scanimage`
@@ -205,9 +205,8 @@ class ScanMeister {
         }
 
         results.forEach(r => {
-          const udd = usbDeviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-          console.log(udd);
-          r.port = udd.port;
+          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+          r.port = dd.port;
           devices.push(new Scanner(r))
         });
         resolve(devices);
