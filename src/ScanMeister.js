@@ -165,6 +165,11 @@ class ScanMeister {
 
   async updateDevices() {
 
+    // Get ports through command `usb-devices`
+    const ports = await this.getUsbDeviceDescriptors();
+    // console.log(ports);
+
+    // Get scanners through command `scanimage`
     this.#devices = await new Promise((resolve, reject) => {
 
       // Resulting string buffer
@@ -206,14 +211,11 @@ class ScanMeister {
 
     });
 
-    const ports = await this.getUsbDeviceDescriptors();
-    // console.log(ports);
-
   }
 
   async getUsbDeviceDescriptors() {
 
-    this.#devices = await new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
 
       // Resulting string buffer
       let buffer = '';
@@ -247,21 +249,11 @@ class ScanMeister {
 
         const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
 
-        // descriptors.forEach(desc => {
-        //   const match = desc.match(re);
-        //   const bus = match[1].padStart(3, '0')
-        //   const port = parseInt(match[2]);
-        //   const deviceNumber = match[3].padStart(3, '0')
-        //   console.log(`${bus}:${deviceNumber}`, port);
-        // });
-
         descriptors = descriptors.map(descriptor => {
           const match = descriptor.match(re);
           const bus = match[1].padStart(3, '0')
           const port = parseInt(match[2]);
           const deviceNumber = match[3].padStart(3, '0')
-          // console.log(`${bus}:${deviceNumber}`, port);
-          console.log({bus, deviceNumber, port});
           return {bus, deviceNumber, port};
         })
 
