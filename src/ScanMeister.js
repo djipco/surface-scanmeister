@@ -117,50 +117,41 @@ class ScanMeister {
     // Get scanners list through Linux `scanimage` command
     this.#devices = await new Promise((resolve, reject) => {
 
-      // Resulting string buffer
-      let buffer = '';
+      const successCallback = data => {
+          let results = [];
+          let devices = [];
 
-      // Format for device list
+          if (data) {
+            results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+          }
+
+          results.forEach(r => {
+            const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
+            r.port = dd.port;
+            r.device = dd.device;
+            r.bus = dd.bus;
+            devices.push(new Scanner(r))
+          });
+
+          devices.sort((a, b) => a.port - b.port);
+          resolve(devices);
+      }
+
+      const errorCallback = error => {
+        reject(error);
+      }
+
+      // Initiate scanning
+      const scanImageSpawner = new Spawner();
       const format = '{"name":"%d", "vendor":"%v", "model":"%m", "type":"%t", "index":"%i"} %n'
-
-      // Spawn scanimage process to retrieve list
-      let scanimage = spawn(
-        'scanimage',
-        ['--formatted-device-list=' + format]
-      );
-
-      scanimage.once('error', error => {
-        reject(`Error: '${error.syscall}' yielded error code '${error.code}' (${error.errno})`)
-      });
-
-      // Error handler
-      scanimage.stdout.once('error', reject);
-
-      // Data handler
-      scanimage.stdout.on('data', chunk => buffer += chunk.toString());
-
-      // End handler
-      scanimage.stdout.once('end', () => {
-
-        let results = [];
-        let devices = [];
-
-        if (buffer) {
-          results = buffer.split('\n').filter(Boolean).map(line => JSON.parse(line));
+      scanImageSpawner.execute(
+        "scanimage",
+        ['--formatted-device-list=' + format],
+        {
+          sucessCallback: successCallback,
+          errorCallback: errorCallback
         }
-
-        results.forEach(r => {
-          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-          r.port = dd.port;
-          r.device = dd.device;
-          r.bus = dd.bus;
-          devices.push(new Scanner(r))
-        });
-
-        devices.sort((a, b) => a.port - b.port);
-        resolve(devices);
-
-      });
+      );
 
     });
 
