@@ -260,6 +260,8 @@ class ScanMeister {
           return {bus, device, port};
         });
 
+        console.log(descriptors);
+
         resolve(descriptors);
 
       });
