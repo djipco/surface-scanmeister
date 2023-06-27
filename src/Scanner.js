@@ -11,6 +11,7 @@ export class Scanner extends EventEmitter {
   #model;
   #type;
   #index;
+  #port;
   #scanning = false;
   #scanimage;
 
@@ -28,6 +29,7 @@ export class Scanner extends EventEmitter {
     this.#model = options.model;
     this.#type = options.type;
     this.#index = options.index;
+    this.#port = options.port;
   }
 
   get name() { return this.#name; }
