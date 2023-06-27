@@ -20,7 +20,7 @@ ScanMeister.init()
   });
 
 function onExit() {
-  ScanMeister.destroy();
   logInfo("Exiting...");
+  ScanMeister.destroy();
   process.exit();
 }

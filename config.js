@@ -36,7 +36,7 @@ const config = convict({
       port: {
         doc: 'Remote port to send OSC to',
         format: 'port',
-        default: '8000'
+        default: '10000'
       }
     }
   },

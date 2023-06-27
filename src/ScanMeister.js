@@ -67,6 +67,8 @@ class ScanMeister {
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
 
+    this.sendOscMessage("/system/ready");
+
   }
 
   async #getScannerHardwareDescriptors() {
@@ -251,10 +253,23 @@ class ScanMeister {
 
   }
 
-  sendOscMessage(address, args) {
-    // if (!this.#oscPort.socket) return;
-    // this.#oscPort.send({address: address, args: args});
+  sendOscMessage(address, args = []) {
+    if (!this.#oscPort.socket) {
+      logWarn("Warning: impossible to send OSC, no socket available.")
+      return;
+    }
+    this.#oscPort.send({address: address, args: args});
   }
+
+  // oscPort.send({
+  //    address: "/carrier/frequency",
+  //    args: [
+  //      {
+  //        type: "f",
+  //        value: 440
+  //      }
+  //    ]
+  //  });
 
   getDeviceByPort(port) {
     return this.devices.find(device => device.port === port);
