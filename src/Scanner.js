@@ -10,8 +10,11 @@ export class Scanner extends EventEmitter {
   #vendor;
   #model;
   #type;
-  #index;
+
+  #bus;
+  #device;
   #port;
+
   #scanning = false;
   #scanimage;
 
@@ -28,7 +31,8 @@ export class Scanner extends EventEmitter {
     this.#vendor = options.vendor;
     this.#model = options.model;
     this.#type = options.type;
-    this.#index = options.index;
+    this.#bus = options.bus;
+    this.#device = options.device;
     this.#port = options.port;
   }
 
@@ -36,8 +40,11 @@ export class Scanner extends EventEmitter {
   get vendor() { return this.#vendor; }
   get model() { return this.#model; }
   get type() { return this.#type; }
-  get index() { return this.#index; }
+
+  get bus() { return this.#bus; }
+  get device() { return this.#device; }
   get port() { return this.#port; }
+
   get scanning() { return this.#scanning; }
   get options() { return this.#options; }
 

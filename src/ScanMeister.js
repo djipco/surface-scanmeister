@@ -45,14 +45,14 @@ class ScanMeister {
     // Log found devices to console
     if (this.devices.length < 1) {
 
-      logInfo("No device found.");
+      logInfo("No scanner found.");
 
     } else {
 
       let message = `${this.devices.length} scanners have been detected:`;
 
       this.devices.forEach(device => {
-        message += `\n   Port ${device.port}: ${device.vendor} ${device.model} (${device.name})`
+        message += `\nPort ${device.port}: ${device.vendor} ${device.model} (${device.name})`
       });
 
       logInfo(message);
@@ -208,6 +208,7 @@ class ScanMeister {
         }
 
         results.forEach(r => {
+          console.log(r);
           const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
           r.port = dd.port;
           devices.push(new Scanner(r))
