@@ -213,7 +213,7 @@ class ScanMeister {
     if (!this.oscCommands.includes(command)) return;
 
     // Fetch device index
-    const port = segments[1];
+    const port = parseInt(segments[1]);
 
     // Execute command
     if (command === "scan") {
