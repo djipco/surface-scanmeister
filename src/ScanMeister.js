@@ -263,6 +263,7 @@ class ScanMeister {
   }
 
   getDeviceByPort(port) {
+    this.devices.forEach(d => console.log(d.port, d.name));
     return this.devices.find(device => device.port === port);
   }
 
