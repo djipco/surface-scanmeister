@@ -67,7 +67,7 @@ class ScanMeister {
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
 
-    this.sendOscMessage("/system/ready");
+    this.sendOscMessage("/system/ready", [{type: "f", value: 100}]);
 
   }
 
