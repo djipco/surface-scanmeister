@@ -247,7 +247,7 @@ class ScanMeister {
         console.log(descriptors);
 
         // const re = /Port=\s*(\d*).*Dev#=\s*(\d*)/gm;
-        const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/g
+        const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
 
 
         descriptors.forEach(desc => {
