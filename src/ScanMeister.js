@@ -83,7 +83,7 @@ class ScanMeister {
           if (data) {
             descriptors = data
               .split('\n\n')
-              .filter(text => text.includes(config.get('devices.filterString')))
+              .filter(text => text.includes(config.get('devices.filter')))
               .map(text => text.split('\n')[0]);
           }
 
