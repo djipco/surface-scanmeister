@@ -26,7 +26,7 @@ sudo sane-find-scanner -q
 
 # scanimage
 
-Th `scanimage` command. isinstalled by default in Raspbian.
+Th `scanimage` command is installed by default in Raspbian.
 
 ### List available devices
 
@@ -125,11 +125,11 @@ scanimage \
 
 ### Devices
 
-Devices are in `/dev/bus/usb`.
+USB devices are in `/dev/bus/usb`.
 
 # USB Physical Ports
 
-`scanimage` does not provide physical port information. This information can be fetched with `usb-devices` (also installedc by default). This is what the code uses to figure which device is on which port:
+`scanimage` does not provide physical port information. This information can be fetched with `usb-devices` (also installed by default). This is what the code uses to figure which device is on which port:
 
 ```
 usb-devices
@@ -147,7 +147,7 @@ usb-devices
 * Create a folder to mount the remote directory to:
 
 ```sh
-mkdir /home/surface/scans_remote
+mkdir /home/surface/scans
 ```
 
 Edit `fstab` so changes kick in at boot:
@@ -159,7 +159,7 @@ sudo nano /etc/fstab
 Add the following line:
 
 ```sh
-//10.0.0.132/Users/surface/project/scans /home/surface/scans_remote cifs username=pi,password=pipipi 0 0
+//10.0.0.132/Users/surface/project/scans /home/surface/scans cifs username=pi,password=pipipi,uid=1000,gid=1000 0 0
 ```
 
 Mount everything that's in `/etc/fstab`:
@@ -171,7 +171,7 @@ sudo mount -a
 If needed, you can mount and unmount manuall: 
 
 ```
-sudo umount /home/surface/scans_remote
+sudo umount /home/surface/scans
 ```
 
 # Node
@@ -207,10 +207,10 @@ git clone https://github.com/djipco/surface-scanmeister
 ```
 Enter credentials (once).
 
-Update from repo:
+Update from repo (put it in folder called `code`):
 
 ```
-git pull https://github.com/djipco/surface-scanmeister
+git pull https://github.com/djipco/surface-scanmeister code
 ```
 
 # Start at boot
