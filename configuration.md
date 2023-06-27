@@ -26,6 +26,8 @@ sudo sane-find-scanner -q
 
 # scanimage
 
+Th `scanimage` command. isinstalled by default in Raspbian.
+
 ### List available devices
 
 ```scanimage --list-devices```
@@ -124,6 +126,14 @@ scanimage \
 ### Devices
 
 Devices are in `/dev/bus/usb`.
+
+# USB Physical Ports
+
+`scanimage` does not provide physical port information. This information can be fetched with `usb-devices` (also installedc by default). This is what the code uses to figure which device is on which port:
+
+```
+usb-devices
+```
 
 # Configure Access to Shared Folder
 
