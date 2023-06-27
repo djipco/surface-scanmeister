@@ -120,24 +120,7 @@ export class Scanner extends EventEmitter {
       args.push('--output-file=' + options.outputFile)
     }
 
-
-
-
-
     // Initiate scanning
-    // this.#scanimage = spawn(
-    //   'scanimage',
-    //   args,
-    //   {detached: true}
-    // );
-
-    // this.#addScanImageCallbacks();
-
-    // If not scanning to file, return stdout for further handling
-    // e.g.: this.devices[index].scan().pipe(fs.createWriteStream(`image${index}.png`));
-    // if (!options.path) return this.#scanimage.stdout;
-
-
     const scanImageSpawner = new Spawner();
 
     scanImageSpawner.execute(
@@ -150,47 +133,16 @@ export class Scanner extends EventEmitter {
       }
     );
 
-
-
-
-
-
-  }
-
-  #addScanImageCallbacks() {
-    this.#callbacks.onScanImageError = this.#onScanImageError.bind(this);
-    this.#callbacks.onScanImageEnd = this.#onScanImageEnd.bind(this);
-    this.#scanimage.once('error', this.#callbacks.onScanImageError);
-    this.#scanimage.stderr.once('data', this.#callbacks.onScanImageError);
-    this.#scanimage.stdout.once('end', this.#callbacks.onScanImageEnd);
-  }
-
-  #removeScanImageCallbacks() {
-
-    if (this.#callbacks.onScanImageError) {
-      this.#scanimage.off('error', this.#callbacks.onScanImageError);
-      this.#scanimage.stderr.off('data', this.#callbacks.onScanImageError);
-    }
-
-    if (this.#callbacks.onScanImageEnd) {
-      this.#scanimage.stdout.off('end', this.#callbacks.onScanImageEnd);
-    }
-
-    this.#callbacks.onScanImageError = null;
-    this.#callbacks.onScanImageEnd = null;
-
   }
 
   #onScanImageError(error) {
-    this.#removeScanImageCallbacks();
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("warning", error);
-    logWarn("Warning: " + Buffer.from(error, "utf-8"));
+    logWarn("Warning: " + error);
   }
 
   #onScanImageEnd() {
-    this.#removeScanImageCallbacks();
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("scancompleted", {target: this});
@@ -198,7 +150,6 @@ export class Scanner extends EventEmitter {
   }
 
   destroy() {
-    this.#removeScanImageCallbacks();
   }
 
 }
