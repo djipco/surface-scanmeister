@@ -67,7 +67,7 @@ class ScanMeister {
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
 
-    this.sendOscMessage("/system/ready", [{type: "f", value: 100}]);
+    this.sendOscMessage("/system/ready", [{type: "i", value: 1}]);
 
   }
 
@@ -276,6 +276,7 @@ class ScanMeister {
   }
 
   destroy() {
+    this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
     this.devices.forEach(device => device.destroy());
     this.#removeOscCallbacks();
     this.#oscPort = null;
