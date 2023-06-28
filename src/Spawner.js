@@ -26,7 +26,7 @@ export class Spawner extends EventEmitter {
     this.#process.stdout.once('error', this.#callbacks.onProcessError);
     // this.#process.stderr.once('data', this.#callbacks.onProcessError);
 
-    this.#process.stderr.on('data', data => console.log(Buffer.from(data)));
+    this.#process.stderr.on('data', data => console.log(Buffer.from(data, "utf-8")));
 
     // Data handler
     this.#callbacks.onProcessData = this.#onProcessData.bind(this);
