@@ -64,7 +64,7 @@ class ScanMeister {
     this.devices.forEach(device => logInfo(`\t${device.description}`, true));
 
     // Send status via OSC
-    this.sendOscMessage("/system/ready", [{type: "i", value: 1}]);
+    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
     logInfo(
       `Listening for OSC on ` +
@@ -203,6 +203,8 @@ class ScanMeister {
 
   #onOscMessage(message, timetag, info) {
 
+    console.log(message);
+
     const segments = message.address.split("/").slice(1);
 
     // Filter out invalid commands
@@ -279,7 +281,7 @@ class ScanMeister {
     if (this.#oscPort) {
 
       // Broadcast system status (and leave enough time for the message to be sent)
-      this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
+      this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
 
       this.#oscPort.close();
