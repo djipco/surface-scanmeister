@@ -126,6 +126,9 @@ export class Scanner extends EventEmitter {
       args.push('--lamp-off-scan=no');
     }
 
+    // Ask to report progress stdout
+    args.push('--progress');
+
     // Scan to file (instead of stdout)
     if (options.outputFile) {
       args.push('--output-file=' + options.outputFile)
