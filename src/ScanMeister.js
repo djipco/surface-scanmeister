@@ -172,9 +172,9 @@ class ScanMeister {
     this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
   }
 
-  #onOscError(error) {
-    logError("Error: " + error);
-    this.destroy();
+  async #onOscError(error) {
+    logError(error);
+    await this.destroy();
     logError("Exiting");
   }
 
@@ -273,10 +273,7 @@ class ScanMeister {
   async destroy() {
 
     // Destroy devices and remove callbacks
-    this.devices.forEach(device => {
-      this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
-      device.destroy();
-    });
+    this.devices.forEach(device => device.destroy());
     this.#removeOscCallbacks();
 
     if (this.#oscPort) {
