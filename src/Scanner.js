@@ -104,7 +104,7 @@ export class Scanner extends EventEmitter {
     if (this.options.resolutions.includes(options.resolution)) {
       args.push('--resolution=' + options.resolution);
     } else {
-      args.push('--resolution=100');
+      args.push('--resolution=75');
     }
 
     // Brightness (-100...100)
@@ -134,7 +134,7 @@ export class Scanner extends EventEmitter {
 
     // Ask to report progress on stderr
     args.push('--progress');
-    args.push('--preview');
+    // args.push('--preview');
     args.push('--buffer-size=32'); // default is 32KB
 
     // Scan to file (instead of stdout)
