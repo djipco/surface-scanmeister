@@ -279,7 +279,10 @@ class ScanMeister {
   async destroy() {
 
     // Destroy devices and remove callbacks
-    this.devices.forEach(device => device.destroy());
+    this.devices.forEach(device => {
+      this.sendOscMessage(`/scanner${device.port}/ready`, [{type: "i", value: 0}]);
+      device.destroy();
+    });
     this.#removeOscCallbacks();
 
     // Broadcast system status (and leave enough time for the message to be sent)
