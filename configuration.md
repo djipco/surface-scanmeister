@@ -1,8 +1,8 @@
 # To Do
 * Install `winston`for logging
-* send OSC (to report on status)
-* Send file via netcat (if TD team fixes the issue)
-* Clarify the inbound OSC schema
+* ~~send OSC (to report on status)~~
+* Send file via netcat (if TD team fixes the issue, we need to check new version)
+* Clarify the inbound and outbound OSC schema
 
 # Raspbian
 
