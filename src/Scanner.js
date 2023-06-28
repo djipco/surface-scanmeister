@@ -132,8 +132,9 @@ export class Scanner extends EventEmitter {
       args.push('--lamp-off-scan=no');
     }
 
-    // Ask to report progress stdout
+    // Ask to report progress on stderr
     args.push('--progress');
+    args.push('--buffer-size=256');
 
     // Scan to file (instead of stdout)
     if (options.outputFile) {
@@ -157,6 +158,7 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageStderr(data) {
+    // When called with the --progress switch, scanimage reports progress on stderr
     const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
     this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: progress}]);
   }
