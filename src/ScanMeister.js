@@ -2,7 +2,7 @@ import {spawn} from 'child_process';
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
-import {logInfo, logWarn} from "./Utils.js";
+import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
 
 class ScanMeister {
@@ -173,7 +173,9 @@ class ScanMeister {
   }
 
   #onOscError(error) {
-    logWarn("Warning: " + error);
+    logError("Error: " + error);
+    this.destroy();
+    logError("Exiting");
   }
 
   #removeOscCallbacks() {
@@ -277,12 +279,16 @@ class ScanMeister {
     });
     this.#removeOscCallbacks();
 
-    // Broadcast system status (and leave enough time for the message to be sent)
-    this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
-    await new Promise(resolve => setTimeout(resolve, 25));
+    if (this.#oscPort) {
 
-    this.#oscPort.close();
-    this.#oscPort = null;
+      // Broadcast system status (and leave enough time for the message to be sent)
+      this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
+      await new Promise(resolve => setTimeout(resolve, 25));
+
+      this.#oscPort.close();
+      this.#oscPort = null;
+
+    }
 
   }
 
