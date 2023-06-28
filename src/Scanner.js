@@ -134,7 +134,7 @@ export class Scanner extends EventEmitter {
 
     // Ask to report progress on stderr
     args.push('--progress');
-    args.push('--buffer-size=256');
+    args.push('--buffer-size=32');
 
     // Scan to file (instead of stdout)
     if (options.outputFile) {
