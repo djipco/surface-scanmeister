@@ -215,9 +215,9 @@ class ScanMeister {
     const port = parseInt(segments[1]);
 
     // Execute command
-    if (command === "scan" && message.args[1] === 1) {
+    if (command === "scan" /*&& message.args[1] === 1*/) {
 
-      console.log("scan", message.args[1]);
+      console.log("scan", message.args);
 
       // Find scanner by port
       const scanner = this.getDeviceByPort(port);
