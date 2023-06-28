@@ -215,7 +215,7 @@ class ScanMeister {
     const port = parseInt(segments[1]);
 
     // Execute command
-    if (command === "scan" /*&& message.args[1] === 1*/) {
+    if (command === "scan" && message.args[0].value === 1) {
 
       console.log("scan", message.args);
 
