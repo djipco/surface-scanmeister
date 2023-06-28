@@ -68,7 +68,7 @@ export class Scanner extends EventEmitter {
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
-    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 1}]);
+    // this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 1}]);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
