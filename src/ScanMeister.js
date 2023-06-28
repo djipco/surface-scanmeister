@@ -275,8 +275,9 @@ class ScanMeister {
     return this.devices.find(device => device.port === port);
   }
 
-  destroy() {
+  async destroy() {
     this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
+    await new Promise(resolve => setTimeout(resolve, 100));
     this.devices.forEach(device => device.destroy());
     this.#removeOscCallbacks();
     this.#oscPort.close();
