@@ -276,12 +276,18 @@ class ScanMeister {
   }
 
   async destroy() {
-    this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Destroy devices and remove callbacks
     this.devices.forEach(device => device.destroy());
     this.#removeOscCallbacks();
+
+    // Broadcast system status (and leave enough time for the message to be sent)
+    this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     this.#oscPort.close();
-    // this.#oscPort = null;
+    this.#oscPort = null;
+
   }
 
 }

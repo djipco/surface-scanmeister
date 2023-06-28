@@ -12,10 +12,10 @@ ScanMeister.init()
     process.on('SIGQUIT', onExit); // Keyboard quit
     process.on('SIGTERM', onExit); // `kill` command
   })
-  .catch(error => {
+  .catch(async error => {
     logError(error);
     logError("Exiting...")
-    ScanMeister.destroy();
+    await ScanMeister.destroy();
     process.exit(1);
   });
 
