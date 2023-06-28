@@ -143,21 +143,22 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     const scanImageSpawner = new Spawner();
 
-    scanImageSpawner.addListener("stderr", data => {
-      const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
-      this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: progress}]);
-    })
-
     scanImageSpawner.execute(
       "scanimage",
       args,
       {
         detached: true,
         sucessCallback: this.#onScanImageEnd.bind(this),
-        errorCallback: this.#onScanImageError.bind(this)
+        errorCallback: this.#onScanImageError.bind(this),
+        stderrCallback: this.#onScanImageStderr.bind(this)
       }
     );
 
+  }
+
+  #onScanImageStderr(data) {
+    const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
+    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: progress}]);
   }
 
   #onScanImageError(error) {

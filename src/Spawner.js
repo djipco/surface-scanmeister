@@ -16,6 +16,7 @@ export class Spawner extends EventEmitter {
     // Save user-defined callbacks
     this.#callbacks.onProcessUserSuccess = options.sucessCallback;
     this.#callbacks.onProcessUserError = options.errorCallback;
+    this.#callbacks.onProcessUserStderr = options.stderrCallback;
 
     // Execute command
     this.#process = spawn(command, parameters, options);
@@ -30,7 +31,7 @@ export class Spawner extends EventEmitter {
 
     // TO FINALIZE !!!!!!
     this.#process.stderr.on('data', data => {
-      this.emit("stderr", data.toString());
+      this.#callbacks.onProcessUserStderr(data.toString());
     });
 
     // Data handler
