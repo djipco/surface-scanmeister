@@ -203,7 +203,7 @@ class ScanMeister {
 
   #onOscMessage(message, timetag, info) {
 
-    console.log(message);
+
 
     const segments = message.address.split("/").slice(1);
 
@@ -215,7 +215,9 @@ class ScanMeister {
     const port = parseInt(segments[1]);
 
     // Execute command
-    if (command === "scan") {
+    if (command === "scan" && message.args[1] === 1) {
+
+      console.log("scan", message.args[1]);
 
       // Find scanner by port
       const scanner = this.getDeviceByPort(port);
