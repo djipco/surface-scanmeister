@@ -24,7 +24,7 @@ const config = convict({
       port: {
         doc: 'Local port to listen on for OSC',
         format: 'port',
-        default: '8000'
+        default: 8000
       }
     },
     remote: {
@@ -36,7 +36,7 @@ const config = convict({
       port: {
         doc: 'Remote port to send OSC to',
         format: 'port',
-        default: '10000'
+        default: 10000
       }
     }
   },
@@ -46,6 +46,11 @@ const config = convict({
       doc: 'String used to find appropriate devices inside the `usb-devices` command output',
       format: String,
       default: 'Product=CanoScan'
+    },
+    resolution: {
+      doc: 'The default scanning resolution to use in DPI',
+      format: 'int',
+      default: 75
     }
   }
 

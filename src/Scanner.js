@@ -1,8 +1,8 @@
 import {spawn} from 'child_process';
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
-import fs from "fs";
 import {Spawner} from "./Spawner.js";
+import {config} from "../config.js";
 
 export class Scanner extends EventEmitter {
 
@@ -104,7 +104,7 @@ export class Scanner extends EventEmitter {
     if (this.options.resolutions.includes(options.resolution)) {
       args.push('--resolution=' + options.resolution);
     } else {
-      args.push('--resolution=75');
+      args.push('--resolution=' + config.get("devices.resolution"));
     }
 
     // Brightness (-100...100)
