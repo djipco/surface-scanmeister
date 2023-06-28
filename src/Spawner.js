@@ -14,11 +14,11 @@ export class Spawner extends EventEmitter {
   execute(command, parameters = [], options = {}) {
 
     // Save user-defined callbacks
-    this.#callbacks.onProcessUserSuccess = options.sucessCallback;
-    this.#callbacks.onProcessUserError = options.errorCallback;
-    this.#callbacks.onProcessUserStderr = options.stderrCallback;
+    this.#callbacks.onProcessSuccessUser = options.sucessCallback;
+    this.#callbacks.onProcessErrorUser = options.errorCallback;
+    this.#callbacks.onProcessStderrUser = options.stderrCallback;
 
-    // Execute command
+    // Execute command and store resulting process object
     this.#process = spawn(command, parameters, options);
 
     // Add error handlers
@@ -26,27 +26,31 @@ export class Spawner extends EventEmitter {
     this.#process.once('error', this.#callbacks.onProcessError);
     this.#process.stdout.once('error', this.#callbacks.onProcessError);
 
-
-    // this.#process.stderr.once('data', this.#callbacks.onProcessError);
-
-    // TO FINALIZE !!!!!!
-    this.#process.stderr.on('data', data => {
-      this.#callbacks.onProcessUserStderr(data.toString());
-    });
-
-    // Data handler
+    // Add data handlers
     this.#callbacks.onProcessData = this.#onProcessData.bind(this);
     this.#process.stdout.on('data', this.#callbacks.onProcessData);
+    this.#callbacks.onProcessStderr = this.#onProcessStderr.bind(this);
+    this.#process.stderr.on('data', this.#callbacks.onProcessStderr);
 
-    // Completion handler
+    // Add completion handler
     this.#callbacks.onProcessEnd = this.#onProcessEnd.bind(this);
     this.#process.stdout.once('end', this.#callbacks.onProcessEnd);
 
   }
 
+  #onProcessStderr(data) {
+
+    if (typeof this.#callbacks.onProcessStderrUser === 'function') {
+      this.#callbacks.onProcessStderrUser(data.toString());
+    }
+
+    this.emit("stderr", data.toString());
+
+  }
+
   #onProcessError(error) {
-    if (typeof this.#callbacks.onProcessUserError === 'function') {
-      this.#callbacks.onProcessUserError();
+    if (typeof this.#callbacks.onProcessErrorUser === 'function') {
+      this.#callbacks.onProcessErrorUser();
     }
     this.#removeAllListeners();
     this.emit("error", Buffer.from(error, "utf-8"));
@@ -59,8 +63,8 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessEnd() {
-    if (typeof this.#callbacks.onProcessUserSuccess === 'function') {
-      this.#callbacks.onProcessUserSuccess(this.#buffer);
+    if (typeof this.#callbacks.onProcessSuccessUser === 'function') {
+      this.#callbacks.onProcessSuccessUser(this.#buffer);
     }
     this.emit("complete", this.#buffer);
     this.#removeAllListeners();
@@ -70,16 +74,20 @@ export class Spawner extends EventEmitter {
 
   #removeAllListeners() {
 
-    this.#callbacks.onProcessUserSuccess = null;
-    this.#callbacks.onProcessUserError = null;
+    // Remove reference to user callbacks
+    this.#callbacks.onProcessSuccessUser = null;
+    this.#callbacks.onProcessErrorUser = null;
+    this.#callbacks.onProcessStderrUser = null;
 
     this.#process.off('error', this.#callbacks.onProcessError);
     this.#process.stdout.off('error', this.#callbacks.onProcessError);
-    this.#process.stderr.off('data', this.#callbacks.onProcessError);
     this.#callbacks.onProcessError = null;
 
     this.#process.stdout.off('data', this.#callbacks.onProcessData);
     this.#callbacks.onProcessData = null;
+
+    this.#process.stderr.off('data', this.#callbacks.onProcessStderr);
+    this.#callbacks.onProcessStderr = null
 
     this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
     this.#callbacks.onProcessEnd = null;

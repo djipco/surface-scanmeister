@@ -159,9 +159,18 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageStderr(data) {
+
+    let [prefix, percentage] = data.split(": ");
+
     // When called with the --progress switch, scanimage reports progress on stderr
-    const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
-    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: progress}]);
+    if (prefix !== "Progress") {
+      this.emit("error", data);
+      logError("Error: " + data);
+    } else {
+      percentage = parseFloat(percentage.slice(0, -1)) / 100;
+      this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: percentage}]);
+    }
+
   }
 
   #onScanImageError(error) {
