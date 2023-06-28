@@ -19,8 +19,8 @@ ScanMeister.init()
     process.exit(1);
   });
 
-function onExit() {
+async function onExit() {
   logInfo("Exiting...");
-  ScanMeister.destroy();
+  await ScanMeister.destroy();
   process.exit();
 }
