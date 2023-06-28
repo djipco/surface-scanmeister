@@ -279,7 +279,8 @@ class ScanMeister {
     this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
     this.devices.forEach(device => device.destroy());
     this.#removeOscCallbacks();
-    this.#oscPort = null;
+    this.#oscPort.close();
+    // this.#oscPort = null;
   }
 
 }
