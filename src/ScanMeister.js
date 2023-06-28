@@ -40,6 +40,12 @@ class ScanMeister {
 
   async init() {
 
+    // Add OSC callbacks and start listening for inbound OSC messages (must be done before creating
+    // scanner objects)
+    this.#addOscCallbacks();
+    this.#oscPort.open();
+    await new Promise(resolve => this.#oscPort.once("ready", resolve));
+
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
@@ -57,22 +63,8 @@ class ScanMeister {
     // Log scanners to console
     this.devices.forEach(device => logInfo(`\t${device.description}`, true));
 
-    // Add OSC callbacks and start listening for inbound OSC messages
-    this.#addOscCallbacks();
-    this.#oscPort.open();
-    await new Promise(resolve => this.#oscPort.once("ready", resolve));
-
     // Send status via OSC
     this.sendOscMessage("/system/ready", [{type: "i", value: 1}]);
-    this.devices.forEach(device => {
-      this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
-      device.addListener('scanstarted', () => {
-        this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 1}]);
-      });
-      device.addListener('scancompleted', () => {
-        this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
-      });
-    });
 
     logInfo(
       `Listening for OSC on ` +
@@ -144,7 +136,7 @@ class ScanMeister {
           r.port = dd.port;
           r.device = dd.device;
           r.bus = dd.bus;
-          devices.push(new Scanner(r))
+          devices.push(new Scanner(this.#oscPort, r))
         });
 
         devices.sort((a, b) => a.port - b.port);

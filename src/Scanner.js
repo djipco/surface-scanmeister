@@ -15,6 +15,7 @@ export class Scanner extends EventEmitter {
   #bus;
   #device;
   #port;
+  #oscPort;
 
   #scanning = false;
   #scanimage;
@@ -26,8 +27,9 @@ export class Scanner extends EventEmitter {
     depths: [8, 16]
   }
 
-  constructor(options = {}) {
+  constructor(oscPort, options = {}) {
     super();
+    this.#oscPort = oscPort;
     this.#name = options.name;
     this.#vendor = options.vendor;
     this.#model = options.model;
@@ -35,6 +37,9 @@ export class Scanner extends EventEmitter {
     this.#bus = options.bus;
     this.#device = options.device;
     this.#port = options.port;
+
+    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 0}]);
+
   }
 
   get name() { return this.#name; }
@@ -63,6 +68,7 @@ export class Scanner extends EventEmitter {
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
+    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 1}]);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
@@ -139,7 +145,7 @@ export class Scanner extends EventEmitter {
 
     scanImageSpawner.addListener("stderr", data => {
       const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
-      console.log(progress);
+      this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: progress}]);
     })
 
     scanImageSpawner.execute(
@@ -164,11 +170,21 @@ export class Scanner extends EventEmitter {
   #onScanImageEnd() {
     this.#scanimage = null;
     this.#scanning = false;
+    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
 
+  sendOscMessage(address, args = []) {
+    if (!this.#oscPort.socket) {
+      logWarn("Warning: impossible to send OSC, no socket available.")
+      return;
+    }
+    this.#oscPort.send({address: address, args: args});
+  }
+
   destroy() {
+    this.sendOscMessage(`/scanner${this.port}/scanning`, [{type: "f", value: 0}]);
     this.removeListener();
   }
 
