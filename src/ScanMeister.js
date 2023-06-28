@@ -62,12 +62,23 @@ class ScanMeister {
     this.#oscPort.open();
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
 
+    // Send status via OSC
+    this.sendOscMessage("/system/ready", [{type: "i", value: 1}]);
+    this.devices.forEach(device => {
+      this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
+      device.addListener('scanstarted', () => {
+        this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 1}]);
+      });
+      device.addListener('scancompleted', () => {
+        this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
+      });
+    });
+
     logInfo(
       `Listening for OSC on ` +
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
 
-    this.sendOscMessage("/system/ready", [{type: "i", value: 1}]);
 
   }
 
@@ -260,16 +271,6 @@ class ScanMeister {
     }
     this.#oscPort.send({address: address, args: args});
   }
-
-  // oscPort.send({
-  //    address: "/carrier/frequency",
-  //    args: [
-  //      {
-  //        type: "f",
-  //        value: 440
-  //      }
-  //    ]
-  //  });
 
   getDeviceByPort(port) {
     return this.devices.find(device => device.port === port);

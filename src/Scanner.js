@@ -161,6 +161,7 @@ export class Scanner extends EventEmitter {
   }
 
   destroy() {
+    this.removeListener();
   }
 
 }
