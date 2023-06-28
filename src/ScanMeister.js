@@ -283,7 +283,7 @@ class ScanMeister {
 
     // Broadcast system status (and leave enough time for the message to be sent)
     this.sendOscMessage("/system/ready", [{type: "i", value: 0}]);
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 25));
 
     this.#oscPort.close();
     this.#oscPort = null;
