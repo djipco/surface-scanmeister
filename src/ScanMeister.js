@@ -173,6 +173,7 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
+    console.log("COucou", error);
     logError(error);
     await this.destroy();
     logError("Exiting");
@@ -203,8 +204,6 @@ class ScanMeister {
 
   #onOscMessage(message, timetag, info) {
 
-
-
     const segments = message.address.split("/").slice(1);
 
     // Filter out invalid commands
@@ -216,8 +215,6 @@ class ScanMeister {
 
     // Execute command
     if (command === "scan" && message.args[0].value === 1) {
-
-      console.log("scan", message.args);
 
       // Find scanner by port
       const scanner = this.getDeviceByPort(port);
