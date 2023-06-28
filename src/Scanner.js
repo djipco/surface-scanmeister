@@ -137,6 +137,11 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     const scanImageSpawner = new Spawner();
 
+    scanImageSpawner.addListener("stderr", data => {
+      const progress = parseFloat(data.split(" ")[1].slice(0, -1)) / 100;
+      console.log(progress);
+    })
+
     scanImageSpawner.execute(
       "scanimage",
       args,
