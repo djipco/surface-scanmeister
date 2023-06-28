@@ -280,7 +280,7 @@ class ScanMeister {
 
     // Destroy devices and remove callbacks
     this.devices.forEach(device => {
-      this.sendOscMessage(`/scanner${device.port}/ready`, [{type: "i", value: 0}]);
+      this.sendOscMessage(`/scanner${device.port}/scanning`, [{type: "i", value: 0}]);
       device.destroy();
     });
     this.#removeOscCallbacks();
