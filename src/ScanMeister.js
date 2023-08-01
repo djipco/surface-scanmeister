@@ -157,11 +157,19 @@ class ScanMeister {
           r.parent = dd.parent;
           r.device = dd.device;
           r.port = dd.port;
-          console.log(dd.parent, dd.port);
-          r.physicalPort = hub.ports.find(
+
+          const foundPort = hub.ports.find(
             port => port.parent === dd.parent && port.number === dd.port
-          ).physical;
-          scanners.push(new Scanner(this.#oscPort, r));
+          );
+
+          if (foundPort) {
+            r.physicalPort = foundPort.physical;
+            scanners.push(new Scanner(this.#oscPort, r));
+          } else {
+            logWarn(`Cannot find matching port for parent ${dd.parent} and number ${dd.port}`);
+          }
+
+
         });
 
         scanners.sort((a, b) => a.physicalPort - b.physicalPort);
