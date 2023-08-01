@@ -15,6 +15,7 @@ export class Scanner extends EventEmitter {
   #bus;
   #device;
   #port;
+  #physicalPort;
   #oscPort;
 
   #scanning = false;
@@ -34,9 +35,12 @@ export class Scanner extends EventEmitter {
     this.#vendor = options.vendor;
     this.#model = options.model;
     this.#type = options.type;
-    this.#bus = options.bus;
+
     this.#device = options.device;
+    this.#bus = options.bus;
     this.#port = options.port;
+
+    this.#physicalPort = options.physicalPort;
 
     this.sendOscMessage(`/device/${this.port}/scanning`, [{type: "i", value: 0}]);
     this.sendOscMessage(`/device/${this.port}/progress`, [{type: "f", value: 0}]);
@@ -48,12 +52,13 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
   get type() { return this.#type; }
   get description() {
-    return `${this.vendor} ${this.model}, ${this.name}, port ${this.port}`
+    return `${this.vendor} ${this.model}, ${this.name}, physical port ${this.port}`
   }
 
   get bus() { return this.#bus; }
   get device() { return this.#device; }
   get port() { return this.#port; }
+  get physicalPort() { return this.#physicalPort; }
 
   get scanning() { return this.#scanning; }
   get options() { return this.#options; }

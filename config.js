@@ -51,7 +51,12 @@ const config = convict({
       doc: 'The default scanning resolution to use in DPI',
       format: 'int',
       default: 75
-    }
+    },
+    hub: {
+      doc: 'The model of the USB hub to properly map software ports with hardware ports',
+      format: String,
+      default: "Atolla"
+    },
   }
 
 });

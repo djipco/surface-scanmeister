@@ -4,6 +4,7 @@ import {Scanner} from './Scanner.js';
 import {config} from "../config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
+import {hubs} from "../hubs.js"
 
 class ScanMeister {
 
@@ -71,9 +72,13 @@ class ScanMeister {
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
     );
 
-
   }
 
+  /*
+   T:  Bus=01 Lev=04 Prnt=11 Port=02 Cnt=01 Dev#= 13 Spd=480 MxCh= 0
+   S:  Manufacturer=Canon
+   S:  Product=CanoScan
+   */
   async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
@@ -91,15 +96,26 @@ class ScanMeister {
           }
 
           // Regex to extract bus, port and device number
-          const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+          // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+          const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
 
           // Return list with bus, port and device number
           descriptors = descriptors.map(descriptor => {
+
+            // Perform match
             const match = descriptor.match(re);
-            const bus = match[1].padStart(3, '0')
-            const port = parseInt(match[2]);
-            const device = match[3].padStart(3, '0')
-            return {bus, device, port};
+
+            // Extract data
+            // const bus = match[1].padStart(3, '0')
+            const bus = parseInt(match[1]);
+            const level = parseInt(match[2]);
+            const parent = parseInt(match[3]);
+            const port = parseInt(match[4]);
+            const container = parseInt(match[5]);
+            // const device = match[6].padStart(3, '0');
+            const device = parseInt(match[6]);
+            return {bus, level, parent, port, container, device};
+
           });
           resolve(descriptors);
 
@@ -117,7 +133,14 @@ class ScanMeister {
 
   }
 
+  /*
+   {"name":"genesys:libusb:001:031","vendor":"Canon","model":"LiDE 110","type":"flatbed scanner","index":"0"}
+   {"name":"genesys:libusb:001:013","vendor":"Canon","model":"LiDE 220","type":"flatbed scanner","index":"1"}
+   */
   async #updateScannerList(deviceDescriptors) {
+
+    // Identify the hub we are currently using
+    const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
 
     // Get scanners list through Linux `scanimage` command
     this.#devices = await new Promise((resolve, reject) => {
@@ -132,11 +155,21 @@ class ScanMeister {
         }
 
         results.forEach(r => {
-          const dd = deviceDescriptors.find(desc => r.name.endsWith(`${desc.bus}:${desc.device}`));
-          r.port = dd.port;
-          r.device = dd.device;
+          const dd = deviceDescriptors.find(
+            // desc => r.name.endsWith(`${desc.bus}:${desc.device}`)
+            desc => {
+              const id = desc.bus.padStart(3, '0') + ":" + desc.device.padStart(3, '0');
+              return r.name.endsWith(id)
+            }
+          );
           r.bus = dd.bus;
-          devices.push(new Scanner(this.#oscPort, r))
+          r.parent = dd.parent;
+          r.device = dd.device;
+          r.port = dd.port;
+          r.physicalPort = hub.ports.find(
+            port => port.parent === dd.parent && port.number === dd.port
+          );
+          devices.push(new Scanner(this.#oscPort, r));
         });
 
         devices.sort((a, b) => a.port - b.port);
@@ -173,10 +206,10 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
-    console.log("COucou", error);
+    // console.log("COucou", error);
     logError(error);
-    await this.destroy();
-    logError("Exiting");
+    // await this.destroy();
+    // logError("Exiting");
   }
 
   #removeOscCallbacks() {
