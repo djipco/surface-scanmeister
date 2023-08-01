@@ -50,6 +50,8 @@ class ScanMeister {
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
+    console.log(shd);
+
     if (shd.length === 0) {
       this.#devices = [];
       logInfo("No scanner found.");
