@@ -157,7 +157,7 @@ class ScanMeister {
           r.parent = dd.parent;
           r.device = dd.device;
           r.port = dd.port;
-          console.log(port.parent, port.number);
+          console.log(dd.parent, dd.number);
           r.physicalPort = hub.ports.find(
             port => port.parent === dd.parent && port.number === dd.port
           ).physical;
