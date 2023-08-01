@@ -1,10 +1,10 @@
 import {spawn} from 'child_process';
 import osc from "osc";
 import {Scanner} from './Scanner.js';
-import {config} from "../config.js";
+import {config} from "../config/config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
-import {hubs} from "../hubs.js"
+import {hubs} from "../config/hubs.js"
 
 class ScanMeister {
 
@@ -74,11 +74,6 @@ class ScanMeister {
 
   }
 
-  /*
-   T:  Bus=01 Lev=04 Prnt=11 Port=02 Cnt=01 Dev#= 13 Spd=480 MxCh= 0
-   S:  Manufacturer=Canon
-   S:  Product=CanoScan
-   */
   async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
@@ -133,10 +128,6 @@ class ScanMeister {
 
   }
 
-  /*
-   {"name":"genesys:libusb:001:031","vendor":"Canon","model":"LiDE 110","type":"flatbed scanner","index":"0"}
-   {"name":"genesys:libusb:001:013","vendor":"Canon","model":"LiDE 220","type":"flatbed scanner","index":"1"}
-   */
   async #updateScannerList(deviceDescriptors) {
 
     // Identify the hub we are currently using

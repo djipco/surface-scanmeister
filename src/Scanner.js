@@ -2,7 +2,7 @@ import {spawn} from 'child_process';
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
-import {config} from "../config.js";
+import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
