@@ -8,7 +8,7 @@ import {hubs} from "../config/hubs.js"
 
 class ScanMeister {
 
-  #version = "0.1.0";
+  #version = "0.1.1";
   #devices = [];
   #callbacks = {}
   #oscCommands = ["scan"];
@@ -197,7 +197,6 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
-    // console.log("COucou", error);
     logError(error);
     // await this.destroy();
     // logError("Exiting");
@@ -241,7 +240,7 @@ class ScanMeister {
     if (command === "scan" && message.args[0].value === 1) {
 
       // Find scanner by port
-      const scanner = this.getDeviceByPort(port);
+      const scanner = this.getDeviceByPhysicalPort(port);
       if (!scanner) {
         logWarn(
           "Warning: unable to execute OSC command. No device connected to specified port (" +
@@ -291,8 +290,8 @@ class ScanMeister {
     this.#oscPort.send({address: address, args: args});
   }
 
-  getDeviceByPort(port) {
-    return this.devices.find(device => device.port === port);
+  getDeviceByPhysicalPort(port) {
+    return this.devices.find(device => device.physicalPort === port);
   }
 
   async destroy() {
