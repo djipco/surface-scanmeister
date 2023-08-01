@@ -52,7 +52,7 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
   get type() { return this.#type; }
   get description() {
-    return `${this.vendor} ${this.model}, ${this.name}, physical port ${this.port}`
+    return `${this.vendor} ${this.model}, ${this.name}, physical port ${this.physicalPort}`
   }
 
   get bus() { return this.#bus; }
