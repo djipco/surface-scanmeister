@@ -9,7 +9,7 @@ import {hubs} from "../config/hubs.js"
 class ScanMeister {
 
   #version = "0.1.1";
-  #devices = [];
+  #scanners = [];
   #callbacks = {}
   #oscCommands = ["scan"];
   #oscPort;
@@ -31,8 +31,8 @@ class ScanMeister {
     return this.#version;
   }
 
-  get devices() {
-    return this.#devices;
+  get scanners() {
+    return this.#scanners;
   }
 
   get oscCommands() {
@@ -51,7 +51,7 @@ class ScanMeister {
     const shd = await this.#getScannerHardwareDescriptors();
 
     if (shd.length === 0) {
-      this.#devices = [];
+      this.#scanners = [];
       logInfo("No scanner found.");
       return;
     } else {
@@ -62,7 +62,7 @@ class ScanMeister {
     await this.#updateScannerList(shd);
 
     // Log scanners to console
-    this.devices.forEach(device => logInfo(`\t${device.description}`, true));
+    this.scanners.forEach(device => logInfo(`\t${device.description}`, true));
 
     // Send status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
@@ -134,12 +134,12 @@ class ScanMeister {
     const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
 
     // Get scanners list through Linux `scanimage` command
-    this.#devices = await new Promise((resolve, reject) => {
+    this.#scanners = await new Promise((resolve, reject) => {
 
       const successCallback = data => {
 
         let results = [];
-        let devices = [];
+        let scanners = [];
 
         if (data) {
           results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
@@ -157,14 +157,15 @@ class ScanMeister {
           r.parent = dd.parent;
           r.device = dd.device;
           r.port = dd.port;
+          console.log(port.parent, port.number);
           r.physicalPort = hub.ports.find(
             port => port.parent === dd.parent && port.number === dd.port
           ).physical;
-          devices.push(new Scanner(this.#oscPort, r));
+          scanners.push(new Scanner(this.#oscPort, r));
         });
 
-        devices.sort((a, b) => a.physicalPort - b.physicalPort);
-        resolve(devices);
+        scanners.sort((a, b) => a.physicalPort - b.physicalPort);
+        resolve(scanners);
       }
 
       const errorCallback = error => {
@@ -291,13 +292,13 @@ class ScanMeister {
   }
 
   getDeviceByPhysicalPort(port) {
-    return this.devices.find(device => device.physicalPort === port);
+    return this.scanners.find(device => device.physicalPort === port);
   }
 
   async destroy() {
 
-    // Destroy devices and remove callbacks
-    this.devices.forEach(device => device.destroy());
+    // Destroy scanners and remove callbacks
+    this.scanners.forEach(device => device.destroy());
     this.#removeOscCallbacks();
 
     if (this.#oscPort) {
