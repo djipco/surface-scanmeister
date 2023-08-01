@@ -163,7 +163,7 @@ class ScanMeister {
           devices.push(new Scanner(this.#oscPort, r));
         });
 
-        devices.sort((a, b) => a.port - b.port);
+        devices.sort((a, b) => a.physicalPort - b.physicalPort);
         resolve(devices);
       }
 
