@@ -158,7 +158,7 @@ class ScanMeister {
           const dd = deviceDescriptors.find(
             // desc => r.name.endsWith(`${desc.bus}:${desc.device}`)
             desc => {
-              const id = desc.bus.padStart(3, '0') + ":" + desc.device.padStart(3, '0');
+              const id = desc.bus.toString().padStart(3, '0') + ":" + desc.device.toString().padStart(3, '0');
               return r.name.endsWith(id)
             }
           );
