@@ -168,7 +168,7 @@ class ScanMeister {
           r.port = dd.port;
           r.physicalPort = hub.ports.find(
             port => port.parent === dd.parent && port.number === dd.port
-          );
+          ).physical;
           devices.push(new Scanner(this.#oscPort, r));
         });
 
