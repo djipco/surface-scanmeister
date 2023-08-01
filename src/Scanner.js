@@ -42,8 +42,8 @@ export class Scanner extends EventEmitter {
 
     this.#physicalPort = options.physicalPort;
 
-    this.sendOscMessage(`/device/${this.port}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.port}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
 
   }
 
@@ -74,7 +74,7 @@ export class Scanner extends EventEmitter {
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
-    this.sendOscMessage(`/device/${this.port}/scanning`, [{type: "i", value: 1}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 1}]);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
@@ -174,7 +174,7 @@ export class Scanner extends EventEmitter {
       logError("Error: " + data);
     } else {
       percentage = parseFloat(percentage.slice(0, -1)) / 100;
-      this.sendOscMessage(`/device/${this.port}/progress`, [{type: "f", value: percentage}]);
+      this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: percentage}]);
     }
 
   }
@@ -189,8 +189,8 @@ export class Scanner extends EventEmitter {
   #onScanImageEnd() {
     this.#scanimage = null;
     this.#scanning = false;
-    this.sendOscMessage(`/device/${this.port}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.port}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
@@ -204,8 +204,8 @@ export class Scanner extends EventEmitter {
   }
 
   destroy() {
-    this.sendOscMessage(`/device/${this.port}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.port}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
     this.removeListener();
   }
 

@@ -197,7 +197,7 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
-    logError(error);
+    logWarn(error);
     // await this.destroy();
     // logError("Exiting");
   }
