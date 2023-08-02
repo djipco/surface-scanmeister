@@ -61,7 +61,7 @@ class ScanMeister {
       logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
     }
 
-    // Use `scanimage` and the scanner hardware descriptors to build list of Scanner objects
+    // Use the scanner hardware descriptors to build list of Scanner objects
     await this.#updateScannerList(shd);
 
     // Log scanners to console
@@ -159,14 +159,16 @@ class ScanMeister {
           scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
         }
 
-        // Add correct model
+        // Add correct model and linux name
 
         for (const [key, value] of Object.entries(scanners)) {
           const product = models.find(m => m.identifier === `${value.vendor}:${value.productId}`);
           scanners[key].product = product.model;
+          scanners[key].linuxName = product.driverPrefix + ":" + value.bus + ":" + value.number;
+
         }
 
-        console.log(scanners);
+        resolve(scanners);
 
       };
 
@@ -182,69 +184,73 @@ class ScanMeister {
 
   async #updateScannerList(deviceDescriptors) {
 
-    // Identify the hub we are currently using
-    const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
-
-    // Get scanners list through Linux `scanimage` command
-    this.#scanners = await new Promise((resolve, reject) => {
-
-      const successCallback = data => {
-
-        let results = [];
-        let scanners = [];
-
-        if (data) {
-          results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
-        }
-
-        results.forEach(r => {
-          const dd = deviceDescriptors.find(
-            // desc => r.name.endsWith(`${desc.bus}:${desc.device}`)
-            desc => {
-              const id = desc.bus.toString().padStart(3, '0') + ":" + desc.device.toString().padStart(3, '0');
-              return r.name.endsWith(id)
-            }
-          );
-          r.bus = dd.bus;
-          r.parent = dd.parent;
-          r.device = dd.device;
-          r.port = dd.port;
-
-          const foundPort = hub.ports.find(
-            port => port.parent === dd.parent && port.number === dd.port
-          );
-
-          if (foundPort) {
-            r.physicalPort = foundPort.physical;
-            scanners.push(new Scanner(this.#oscPort, r));
-          } else {
-            logWarn(`Cannot find matching port for parent ${dd.parent} and number ${dd.port}`);
-          }
-
-
-        });
-
-        scanners.sort((a, b) => a.physicalPort - b.physicalPort);
-        resolve(scanners);
-      }
-
-      const errorCallback = error => {
-        reject(error);
-      }
-
-      // Initiate scanning
-      const scanImageSpawner = new Spawner();
-      const format = '{"name":"%d","vendor":"%v","model":"%m","type":"%t","index":"%i"}%n'
-      scanImageSpawner.execute(
-        "scanimage",
-        ['--formatted-device-list=' + format],
-        {
-          sucessCallback: successCallback,
-          errorCallback: errorCallback
-        }
-      );
-
+    deviceDescriptors.forEach(dd => {
+      this.#scanners.push(new Scanner(this.#oscPort, dd));
     });
+
+    // // Identify the hub we are currently using
+    // const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
+    //
+    // // Get scanners list through Linux `scanimage` command
+    // this.#scanners = await new Promise((resolve, reject) => {
+    //
+    //   const successCallback = data => {
+    //
+    //     let results = [];
+    //     let scanners = [];
+    //
+    //     if (data) {
+    //       results = data.split('\n').filter(Boolean).map(line => JSON.parse(line));
+    //     }
+    //
+    //     results.forEach(r => {
+    //       const dd = deviceDescriptors.find(
+    //         // desc => r.name.endsWith(`${desc.bus}:${desc.device}`)
+    //         desc => {
+    //           const id = desc.bus.toString().padStart(3, '0') + ":" + desc.device.toString().padStart(3, '0');
+    //           return r.name.endsWith(id)
+    //         }
+    //       );
+    //       r.bus = dd.bus;
+    //       r.parent = dd.parent;
+    //       r.device = dd.device;
+    //       r.port = dd.port;
+    //
+    //       const foundPort = hub.ports.find(
+    //         port => port.parent === dd.parent && port.number === dd.port
+    //       );
+    //
+    //       if (foundPort) {
+    //         r.physicalPort = foundPort.physical;
+    //         scanners.push(new Scanner(this.#oscPort, r));
+    //       } else {
+    //         logWarn(`Cannot find matching port for parent ${dd.parent} and number ${dd.port}`);
+    //       }
+    //
+    //
+    //     });
+    //
+    //     scanners.sort((a, b) => a.physicalPort - b.physicalPort);
+    //     resolve(scanners);
+    //   }
+    //
+    //   const errorCallback = error => {
+    //     reject(error);
+    //   }
+    //
+    //   // Initiate scanning
+    //   const scanImageSpawner = new Spawner();
+    //   const format = '{"name":"%d","vendor":"%v","model":"%m","type":"%t","index":"%i"}%n'
+    //   scanImageSpawner.execute(
+    //     "scanimage",
+    //     ['--formatted-device-list=' + format],
+    //     {
+    //       sucessCallback: successCallback,
+    //       errorCallback: errorCallback
+    //     }
+    //   );
+    //
+    // });
 
   }
 
