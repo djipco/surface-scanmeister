@@ -151,6 +151,7 @@ class ScanMeister {
           let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
           descriptors = items.map(item => {
             const match = item.match(re);
+            const all = match[0];
             const bus = parseInt(match[1]);
             const level = parseInt(match[2]);
             const parent = parseInt(match[3]);
@@ -159,16 +160,13 @@ class ScanMeister {
             const number = parseInt(match[6]);
             const vendor = match[7];
             const productId = match[8];
-            // const manufacturer = match[9];
-            // const product = match[10];
-            // const serial = match[11];
             return {bus, level, parent, port, container, number, vendor, productId};
           });
 
 
         re = /S:\s*Manufacturer=\s*(.*)Product=(.*)SerialNumber=(.*)\s.*C:/;
         descriptors = descriptors.map(d => {
-          const match = d.match(re);
+          const match = d.all.match(re);
           if (match) {
             d.manufacturer = match[1];
             d.product = match[2];
