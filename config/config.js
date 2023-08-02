@@ -58,7 +58,7 @@ const config = convict({
         format: String,
         default: "045b"
       },
-      productId: {
+      modelId: {
         doc: "A hex string that identifier the hub's product ID",
         format: String,
         default: "0209"

@@ -107,8 +107,8 @@ class ScanMeister {
           const container = parseInt(match[5]);
           const number = parseInt(match[6]);
           const manufacturerId = match[7];
-          const productId = match[8];
-          return {all, bus, level, parent, port, container, number, manufacturerId, productId};
+          const modelId = match[8];
+          return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
         });
 
         // Check if manufacturer and product ID can be found for each device (not always the case)
@@ -127,7 +127,7 @@ class ScanMeister {
         // scanners are connected. For this, we use the hub's manufacturer and product IDs.
         const hubItems = descriptors.filter(d => {
           return d.manufacturerId === config.get("devices.hub.manufacturerId") &&
-            d.productId === config.get("devices.hub.productId");
+            d.modelId === config.get("devices.hub.modelId");
         });
 
         // The item with the lowest level (higher up in hierarchy) is the parent (the hub itself),
@@ -153,7 +153,7 @@ class ScanMeister {
 
 
         // Add physicalPort property to the descriptors by looking up our mapping chart
-        const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.productId")}`;
+        const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
         const hub = hubs.find(hub => hub.identifier === hubId);
         for (const [key, value] of Object.entries(scanners)) {
           scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
@@ -162,7 +162,7 @@ class ScanMeister {
         // Add correct model and system name
         for (const [key, value] of Object.entries(scanners)) {
           const model = models.find(m => {
-            return m.identifier === `${value.manufacturerId}:${value.productId}`;
+            return m.identifier === `${value.manufacturerId}:${value.modelId}`;
           });
           scanners[key].model = model.name;
           const formattedBus = value.bus.toString().padStart(3, '0');
