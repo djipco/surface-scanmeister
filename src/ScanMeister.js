@@ -142,18 +142,18 @@ class ScanMeister {
               // .map(item => item.replaceAll("S:  ", ""))
               // .map(item => item.replaceAll("C:  ", ""))
               // .map(item => item.replaceAll("I:  ", ""))
-              // .map(item => item.replaceAll("\n", " "))
+              .map(item => item.replaceAll("\n", " "))
               // .map(item => item.replaceAll(/=\s*/g, "="))
 
               // .filter(text => text.includes(config.get('devices.filter')))
               // .map(text => text.split('\n')[0]);
 
-            const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
+            const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/g;
 
             console.log(items);
 
-            // const match = items[0].match(re);
-            // console.log(match);
+            const match = items[0].match(re);
+            console.log(match);
 
           }
 
