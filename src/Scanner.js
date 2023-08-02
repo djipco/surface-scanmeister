@@ -7,10 +7,9 @@ import {config} from "../config/config.js";
 export class Scanner extends EventEmitter {
 
   #callbacks = {};
-  #name;
+  #systemName;
   #vendor;
   #model;
-  #type;
 
   #bus;
   #device;
@@ -31,12 +30,11 @@ export class Scanner extends EventEmitter {
   constructor(oscPort, options = {}) {
     super();
     this.#oscPort = oscPort;
-    this.#name = options.name;
-    this.#vendor = options.vendor;
-    this.#model = options.model;
-    this.#type = options.type;
+    this.#systemName = options.systemName;
+    this.#vendor = options.manufacturer;
+    this.#model = options.product;
 
-    this.#device = options.device;
+    this.#device = options.deviceXXX;
     this.#bus = options.bus;
     this.#port = options.port;
 
@@ -47,12 +45,11 @@ export class Scanner extends EventEmitter {
 
   }
 
-  get name() { return this.#name; }
+  get systemName() { return this.#systemName; }
   get vendor() { return this.#vendor; }
   get model() { return this.#model; }
-  get type() { return this.#type; }
   get description() {
-    return `${this.vendor} ${this.model} (${this.name}) on physical port #${this.physicalPort}`
+    return `${this.vendor} ${this.model} (${this.systemName}) on physical port #${this.physicalPort}`
   }
 
   get bus() { return this.#bus; }
@@ -81,8 +78,8 @@ export class Scanner extends EventEmitter {
     const args = [];
 
     // The device name is optional. If not specified, the first found scanner will be used.
-    if (this.name) {
-      args.push(`--device-name=${this.name}`);
+    if (this.systemName) {
+      args.push(`--device-name=${this.systemName}`);
     }
 
     // File format

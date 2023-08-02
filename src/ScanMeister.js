@@ -5,7 +5,7 @@ import {config} from "../config/config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
 import {hubs} from "../config/hubs.js"
-import {scanners as models} from "../config/scanners.js"
+import {models} from "../config/models.js"
 
 class ScanMeister {
 
@@ -90,9 +90,9 @@ class ScanMeister {
           return;
         }
 
-
-        // Split the long string received from usb-devices into blocks for each device. Doing so, we
-        // replace the newlines by a token (NNNNN).
+        // Split the long string received from usb-devices into discrete blocks for each device.
+        // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
+        // regex.
         const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"))
 
         // Extract relevant data from each block and create description objects
@@ -106,9 +106,9 @@ class ScanMeister {
           const port = parseInt(match[4]);
           const container = parseInt(match[5]);
           const number = parseInt(match[6]);
-          const vendor = match[7];
+          const manufacturerId = match[7];
           const productId = match[8];
-          return {all, bus, level, parent, port, container, number, vendor, productId};
+          return {all, bus, level, parent, port, container, number, manufacturerId, productId};
         });
 
         // Check if manufacturer and product ID can be found for each device (not always the case)
@@ -118,15 +118,15 @@ class ScanMeister {
           delete d.all;
           if (match) {
             d.manufacturer = match[1];
-            d.product = match[2];
+            d.model = match[2];
           }
           return d;
         });
 
         // From all the identified devices, only keep the ones related to the USB hub where the
-        // scanners are connected. For this, we use the hub's vendor and product ID information.
+        // scanners are connected. For this, we use the hub's manufacturer and product IDs.
         const hubItems = descriptors.filter(d => {
-          return d.vendor === config.get("devices.hub.vendor") &&
+          return d.manufacturerId === config.get("devices.hub.manufacturerId") &&
             d.productId === config.get("devices.hub.productId");
         });
 
@@ -153,19 +153,21 @@ class ScanMeister {
 
 
         // Add physicalPort property to the descriptors by looking up our mapping chart
-        const hubId = `${config.get("devices.hub.vendor")}:${config.get("devices.hub.productId")}`;
+        const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.productId")}`;
         const hub = hubs.find(hub => hub.identifier === hubId);
         for (const [key, value] of Object.entries(scanners)) {
           scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
         }
 
-        // Add correct model and linux name
-
+        // Add correct model and system name
         for (const [key, value] of Object.entries(scanners)) {
-          const product = models.find(m => m.identifier === `${value.vendor}:${value.productId}`);
-          scanners[key].product = product.model;
-          scanners[key].linuxName = product.driverPrefix + value.bus.toString().padStart(3, '0') + ":" + value.number.toString().padStart(3, '0');
-
+          const model = models.find(m => {
+            return m.identifier === `${value.manufacturerId}:${value.productId}`;
+          });
+          scanners[key].model = model.name;
+          const formattedBus = value.bus.toString().padStart(3, '0');
+          const formattedNumber = value.number.toString().padStart(3, '0');
+          scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
         }
 
         resolve(scanners);

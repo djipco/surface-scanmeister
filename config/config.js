@@ -53,7 +53,7 @@ const config = convict({
       default: 75
     },
     hub: {
-      vendor: {
+      manufacturerId: {
         doc: 'A hex string that identifier the vendor of the hub',
         format: String,
         default: "045b"
