@@ -164,9 +164,10 @@ class ScanMeister {
           });
 
 
-        re = /S:\s*Manufacturer=\s*(.*)Product=(.*)SerialNumber=(.*)\s.*C:/;
+        re = /S:\s*Manufacturer=\s*(.*)\sProduct=(.*)\sS:.*SerialNumber=(.*)\s.*C:/;
         descriptors = descriptors.map(d => {
           const match = d.all.match(re);
+          delete d.all;
           if (match) {
             d.manufacturer = match[1];
             d.product = match[2];
