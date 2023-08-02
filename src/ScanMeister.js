@@ -136,7 +136,7 @@ class ScanMeister {
         hubItems.forEach(item => {
 
           descriptors.filter(d => d.parent === item.number).forEach(children => {
-            results[`${item.number}-${children.number}`] = children;
+            results[`${item.port}-${children.port}`] = children;
           })
 
         })
