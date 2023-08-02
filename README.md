@@ -47,7 +47,7 @@ device `genesys:libusb:001:009' is a Canon LiDE 210 flatbed scanner
 device `genesys:libusb:001:008' is a Canon LiDE 210 flatbed scanner
 ```
 
-#### Retrieve options for device (the options varies from device to device)
+### Retrieve options for device (the options varies from device to device)
 
 ```sh
 scanimage --device-name='genesys:libusb:001:008' --help 
@@ -116,7 +116,7 @@ Options specific to device 'genesys:libusb:001:008':
 ```
 
 
-#### Perform scan
+### Perform scan
 
 ```sh
 scanimage \
@@ -131,7 +131,7 @@ scanimage \
   --output-file='image008.png'
 ```
 
-### Devices
+## USB Devices
 
 USB devices are listed in `/dev/bus/usb`. You can also list them with:
 
