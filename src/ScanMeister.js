@@ -136,20 +136,25 @@ class ScanMeister {
           if (data) {
 
             items = data.split('\n\n')
-              .map(item => item.replaceAll("T:  ", ""))
-              .map(item => item.replaceAll("D:  ", ""))
-              .map(item => item.replaceAll("P:  ", ""))
-              .map(item => item.replaceAll("S:  ", ""))
-              .map(item => item.replaceAll("C:  ", ""))
-              .map(item => item.replaceAll("I:  ", ""))
-              .map(item => item.replaceAll("\n", " "))
-              .map(item => item.replaceAll(/=\s*/g, "="))
+              // .map(item => item.replaceAll("T:  ", ""))
+              // .map(item => item.replaceAll("D:  ", ""))
+              // .map(item => item.replaceAll("P:  ", ""))
+              // .map(item => item.replaceAll("S:  ", ""))
+              // .map(item => item.replaceAll("C:  ", ""))
+              // .map(item => item.replaceAll("I:  ", ""))
+              // .map(item => item.replaceAll("\n", " "))
+              // .map(item => item.replaceAll(/=\s*/g, "="))
 
               // .filter(text => text.includes(config.get('devices.filter')))
               // .map(text => text.split('\n')[0]);
+
+            const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
+
+            const match = items[0].match(re);
+            console.log(match);
+
           }
 
-          console.log(items);
 
           // // Regex to extract bus, port and device number
           // // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
