@@ -141,7 +141,7 @@ class ScanMeister {
               // .map(item => item.replaceAll("C:  ", ""))
               // .map(item => item.replaceAll("I:  ", ""))
               // .map(item => item.replaceAll("S:  ", ""))
-              .map(item => item.replaceAll("\n", " "))
+              // .map(item => item.replaceAll("\n", " "))
           }
 
           console.log(items);
@@ -164,7 +164,7 @@ class ScanMeister {
           });
 
 
-        re = /S:\s*Manufacturer=\s*(.*)\sProduct=(.*)\sS:.*SerialNumber=(.*)\s.*C:/;
+        re = /S:\s*Manufacturer=\s*(.*)S:.*\sProduct=(.*)\sS:.*SerialNumber=(.*)\s.*C:/;
         descriptors = descriptors.map(d => {
           const match = d.all.match(re);
           delete d.all;
