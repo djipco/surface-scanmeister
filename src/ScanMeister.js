@@ -76,43 +76,101 @@ class ScanMeister {
 
   async #getScannerHardwareDescriptors() {
 
+    // return new Promise((resolve, reject) => {
+    //
+    //   const callback = data => {
+    //
+    //       let descriptors = [];
+    //
+    //       // Discard unrelated devices and only keep first line (the only one relevant to us)
+    //       if (data) {
+    //         descriptors = data
+    //           .split('\n\n')
+    //           .filter(text => text.includes(config.get('devices.filter')))
+    //           .map(text => text.split('\n')[0]);
+    //       }
+    //
+    //       // Regex to extract bus, port and device number
+    //       // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+    //       const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
+    //
+    //       // Return list with bus, port and device number
+    //       descriptors = descriptors.map(descriptor => {
+    //
+    //         // Perform match
+    //         const match = descriptor.match(re);
+    //
+    //         // Extract data
+    //         // const bus = match[1].padStart(3, '0')
+    //         const bus = parseInt(match[1]);
+    //         const level = parseInt(match[2]);
+    //         const parent = parseInt(match[3]);
+    //         const port = parseInt(match[4]);
+    //         const container = parseInt(match[5]);
+    //         // const device = match[6].padStart(3, '0');
+    //         const device = parseInt(match[6]);
+    //         return {bus, level, parent, port, container, device};
+    //
+    //       });
+    //       resolve(descriptors);
+    //
+    //   };
+    //
+    //   const usbDevicesSpawner = new Spawner();
+    //
+    //   usbDevicesSpawner.execute(
+    //     "usb-devices",
+    //     [],
+    //     {sucessCallback: callback, errorCallback: reject}
+    //   );
+    //
+    // });
+
     return new Promise((resolve, reject) => {
 
       const callback = data => {
 
           let descriptors = [];
 
-          // Discard unrelated devices and only keep first line (the only one relevant to us)
           if (data) {
-            descriptors = data
-              .split('\n\n')
-              .filter(text => text.includes(config.get('devices.filter')))
-              .map(text => text.split('\n')[0]);
+
+            const items = data.split('\n\n')
+              .map(item => item.replace("T:  ", ""))
+              .map(item => item.replace("D:  ", ""))
+              .map(item => item.replace("P:  ", ""))
+              .map(item => item.replace("S:  ", ""))
+              .map(item => item.replace("C:  ", ""))
+              .map(item => item.replace("I:  ", ""))
+
+              // .filter(text => text.includes(config.get('devices.filter')))
+              // .map(text => text.split('\n')[0]);
           }
 
-          // Regex to extract bus, port and device number
-          // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
-          const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
+          console.log(items);
 
-          // Return list with bus, port and device number
-          descriptors = descriptors.map(descriptor => {
-
-            // Perform match
-            const match = descriptor.match(re);
-
-            // Extract data
-            // const bus = match[1].padStart(3, '0')
-            const bus = parseInt(match[1]);
-            const level = parseInt(match[2]);
-            const parent = parseInt(match[3]);
-            const port = parseInt(match[4]);
-            const container = parseInt(match[5]);
-            // const device = match[6].padStart(3, '0');
-            const device = parseInt(match[6]);
-            return {bus, level, parent, port, container, device};
-
-          });
-          resolve(descriptors);
+          // // Regex to extract bus, port and device number
+          // // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
+          // const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
+          //
+          // // Return list with bus, port and device number
+          // descriptors = descriptors.map(descriptor => {
+          //
+          //   // Perform match
+          //   const match = descriptor.match(re);
+          //
+          //   // Extract data
+          //   // const bus = match[1].padStart(3, '0')
+          //   const bus = parseInt(match[1]);
+          //   const level = parseInt(match[2]);
+          //   const parent = parseInt(match[3]);
+          //   const port = parseInt(match[4]);
+          //   const container = parseInt(match[5]);
+          //   // const device = match[6].padStart(3, '0');
+          //   const device = parseInt(match[6]);
+          //   return {bus, level, parent, port, container, device};
+          //
+          // });
+          // resolve(descriptors);
 
       };
 
@@ -125,6 +183,7 @@ class ScanMeister {
       );
 
     });
+
 
   }
 
