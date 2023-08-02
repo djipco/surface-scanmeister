@@ -136,13 +136,13 @@ class ScanMeister {
           if (data) {
 
             items = data.split('\n\n')
-              .map(item => item.replace("T:  ", ""))
-              .map(item => item.replace("D:  ", ""))
-              .map(item => item.replace("P:  ", ""))
-              .map(item => item.replace("S:  ", ""))
-              .map(item => item.replace("C:  ", ""))
-              .map(item => item.replace("I:  ", ""))
-              .map(item => item.replace("\n", " "))
+              .map(item => item.replaceAll("T:  ", ""))
+              .map(item => item.replaceAll("D:  ", ""))
+              .map(item => item.replaceAll("P:  ", ""))
+              .map(item => item.replaceAll("S:  ", ""))
+              .map(item => item.replaceAll("C:  ", ""))
+              .map(item => item.replaceAll("I:  ", ""))
+              .map(item => item.replaceAll("\n", " "))
 
               // .filter(text => text.includes(config.get('devices.filter')))
               // .map(text => text.split('\n')[0]);
