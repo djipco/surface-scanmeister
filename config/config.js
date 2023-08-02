@@ -42,20 +42,27 @@ const config = convict({
   },
 
   devices: {
-    filter: {
-      doc: 'String used to find appropriate devices inside the `usb-devices` command output',
-      format: String,
-      default: 'Product=CanoScan'
-    },
+    // filter: {
+    //   doc: 'String used to find appropriate devices inside the `usb-devices` command output',
+    //   format: String,
+    //   default: 'Product=CanoScan'
+    // },
     resolution: {
       doc: 'The default scanning resolution to use in DPI',
       format: 'int',
       default: 75
     },
     hub: {
-      doc: 'The model of the USB hub to properly map software ports with hardware ports',
-      format: String,
-      default: "Atolla"
+      vendor: {
+        doc: 'A hex string that identifier the vendor of the hub',
+        format: String,
+        default: "045b"
+      },
+      productId: {
+        doc: "A hex string that identifier the hub's product ID",
+        format: String,
+        default: "0209"
+      }
     },
   }
 
