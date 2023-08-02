@@ -138,7 +138,7 @@ class ScanMeister {
           }
 
           // const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-          const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*Manufacturer=(.*).*S:.*Product=(.*).*S:.*SerialNumber=(\S*).*/
+          const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*Manufacturer=(.*).*S:.*Product=(.*).*S:.*SerialNumber=(\S*).*C:/
 
           // Perform match and extract data
           descriptors = items.map(item => {
@@ -151,9 +151,9 @@ class ScanMeister {
             const number = parseInt(match[6]);
             const vendor = match[7];
             const productId = match[8];
-            const manufacturer = match[8];
-            const product = match[8];
-            const serial = match[8];
+            const manufacturer = match[9];
+            const product = match[10];
+            const serial = match[11];
             return {bus, level, parent, port, container, number, vendor, productId, manufacturer, product, serial};
           });
 
