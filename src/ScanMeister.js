@@ -5,7 +5,7 @@ import {config} from "../config/config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
 import {hubs} from "../config/hubs.js"
-import {models} from "../config/scanners.js"
+import {scanners as models} from "../config/scanners.js"
 
 class ScanMeister {
 
