@@ -1,24 +1,27 @@
-# To Do
+# TO DO
 * Install `winston`for logging
 * ~~send OSC (to report on status)~~
 * Send file via netcat (if TD team fixes the issue, we need to check new version)
 * Clarify the inbound and outbound OSC schema
 
-# Raspbian
+# CONFIGURATION
 
-* Use **Raspberry Pi Imager.app** to create brand new boot medium for the Raspberry Pi 2 Model B.
+## Raspbian
+
+* Use **Raspberry Pi Imager.app** (or simialr) to create brand new boot medium for the Raspberry Pi 
+  2 Model B (this is the model we are currently using).
 * Create account named **surface**
 * Connect to wifi
-* Update
+* Update everything:
 
   ```
   sudo apt update
   sudo apt upgrade -y
   ```
 
-# SANE
+## SANE
 
-SANE is the framework that provides support for a variety of scanners (and cameras). It comes with `scanimage` which is the tool we are using.
+SANE is the framework that provides support for a variety of scanners (and cameras):
 
 ```
 sudo apt install sane
@@ -30,11 +33,10 @@ Once it's installed, you can check available devices with:
 sudo sane-find-scanner -q
 ```
 
-# scanimage
+## scanimage
 
-Th `scanimage` command is installed by default in Raspbian.
-
-### List available devices
+The `scanimage` command is installed by default in Raspbian. This is what is used to trigger 
+scanning. You can calso list available devices:
 
 ```scanimage --list-devices```
 
@@ -45,7 +47,7 @@ device `genesys:libusb:001:009' is a Canon LiDE 210 flatbed scanner
 device `genesys:libusb:001:008' is a Canon LiDE 210 flatbed scanner
 ```
 
-### Retrieve options for device (varies from device to device)
+### Retrieve options for device (the options varies from device to device)
 
 ```sh
 scanimage --device-name='genesys:libusb:001:008' --help 
@@ -232,3 +234,9 @@ Insert:
 ```
 @reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
+
+# TROUBLESHOOTING
+
+## USB Devices
+
+`lsusb -t`
