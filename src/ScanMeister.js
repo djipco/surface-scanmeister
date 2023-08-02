@@ -150,8 +150,10 @@ class ScanMeister {
 
             const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
 
-            const match = items[0].match(re);
-            console.log(match);
+            console.log(items);
+
+            // const match = items[0].match(re);
+            // console.log(match);
 
           }
 
