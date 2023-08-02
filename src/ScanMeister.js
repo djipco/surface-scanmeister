@@ -150,13 +150,16 @@ class ScanMeister {
             .forEach(child => scanners[`${item.port}-${child.port}`] = child);
         })
 
-        console.log(scanners);
 
-        // // Add physicalPort property to the descriptors
-        // for (const [key, value] of Object.entries(scanners)) {
-        //   console.log(`${key}: ${value}`);
-        //   scanners[key].physicalPort =
-        // }
+        // Add physicalPort property to the descriptors by looking up our mapping chart
+        const hubId = `${config.get("devices.hub.vendor")}:${config.get("devices.hub.productId")}`;
+        const hub = hubs.find(hub => hub.identifier === hubId);
+
+        for (const [key, value] of Object.entries(scanners)) {
+          scanners[key].physicalPort = hub.ports.filter(p => p.portId === key).physical
+        }
+
+        console.log(scanners);
 
       };
 
