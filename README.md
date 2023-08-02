@@ -145,15 +145,17 @@ Hierachical view (tree view):
 lsusb -t
 ```
 
-# USB Physical Ports
+## USB Physical Ports
 
-`scanimage` does not provide physical port information. This information can be fetched with `usb-devices` (also installed by default). This is what the code uses to figure which device is on which port:
+`scanimage` does not provide physical port information. This information can be fetched with 
+`usb-devices` (also installed by default). This is what the code uses to figure which device is on 
+which port:
 
 ```
 usb-devices
 ```
 
-# Configure Access to Shared Folder
+## Configure Access to Shared Folder
 
 **On Windows:**
 
@@ -186,15 +188,16 @@ Mount everything that's in `/etc/fstab`:
 sudo mount -a
 ```
 
-If needed, you can mount and unmount manuall: 
+If needed, you can mount and unmount manually: 
 
 ```
 sudo umount /home/surface/scans
 ```
 
-# Node
+## Node.js
 
-The control program is written in JavaScript so Node.js must be installed. First, we need to add the source for Node's latest LTS version:
+The control program is written in JavaScript so Node.js must be installed. First, we need to add the
+source for Node's latest LTS version:
 
 ```
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -210,7 +213,7 @@ sudo apt install -y nodejs
 
 This is the wrapper module we are using. Just get it from npm.
 
-# Git
+## Git
 
 Ask for credentials to be stored locally:
 
@@ -231,7 +234,7 @@ Update from repo (put it in folder called `code`):
 git pull https://github.com/djipco/surface-scanmeister code
 ```
 
-# Start at boot
+## Start at boot
 
 In Terminal:
 
@@ -244,9 +247,3 @@ Insert:
 ```
 @reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
-
-# TROUBLESHOOTING
-
-## USB Devices
-
-`lsusb -t`
