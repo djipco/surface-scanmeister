@@ -167,12 +167,12 @@ class ScanMeister {
 
 
         re = /S:\s*Manufacturer=\s*(.*)Product=(.*)SerialNumber=(.*)\s.*C:/;
-        descriptors = items.map(item => {
-          const match = item.match(re);
+        descriptors = descriptors.map(d => {
+          const match = d.match(re);
           if (match) {
-            item.manufacturer = match[1];
-            item.product = match[2];
-            item.serial = match[3];
+            d.manufacturer = match[1];
+            d.product = match[2];
+            d.serial = match[3];
           }
         });
 
