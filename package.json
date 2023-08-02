@@ -15,7 +15,8 @@
     "date-fns": "^2.30.0",
     "djipevents": "^2.0.7",
     "osc": "^2.4.4",
-    "samba-client": "^7.2.0"
+    "samba-client": "^7.2.0",
+    "usb": "^2.9.0"
   },
   "devDependencies": {
     "eslint": "^8.46.0"

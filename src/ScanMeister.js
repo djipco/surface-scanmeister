@@ -3,8 +3,13 @@ import {Scanner} from './Scanner.js';
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
-import {hubs} from "../config/hubs.js"
-import {models} from "../config/models.js"
+import {hubs} from "../config/hubs.js";
+import {models} from "../config/models.js";
+
+
+import { getDeviceList } from 'usb';
+
+
 
 class ScanMeister {
 
@@ -35,6 +40,14 @@ class ScanMeister {
   }
 
   async init() {
+
+    const devices = getDeviceList();
+
+    for (const device of devices) {
+      console.log(device); // Legacy device
+    }
+
+
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
     const onInitialOscError = async err => {
