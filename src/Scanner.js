@@ -1,4 +1,3 @@
-import {spawn} from 'child_process';
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
@@ -6,7 +5,6 @@ import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
-  #callbacks = {};
   #systemName;
   #manufacturer;
   #model;
@@ -126,7 +124,7 @@ export class Scanner extends EventEmitter {
     // Lamp off time
 
     // Lamp off scan
-    if (!!options.lampOffScan) {
+    if (options.lampOffScan) {
       args.push('--lamp-off-scan=yes');
     } else {
       args.push('--lamp-off-scan=no');

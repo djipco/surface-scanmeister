@@ -1,4 +1,3 @@
-import {spawn} from 'child_process';
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {config} from "../config/config.js";
@@ -64,7 +63,6 @@ class ScanMeister {
     if (Object.entries(shd).length === 0) {
       this.#scanners = [];
       logWarn("No scanners found.");
-      // return;
     } else {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
     }
@@ -87,6 +85,10 @@ class ScanMeister {
 
   }
 
+  /**
+   *
+   * @returns {Promise<object>}
+   */
   async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
@@ -162,7 +164,7 @@ class ScanMeister {
         // Add hardwarePort property to the descriptors by looking up our mapping chart
         const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
         const hub = hubs.find(hub => hub.identifier === hubId);
-        for (const [key, value] of Object.entries(scanners)) {
+        for (const key of Object.keys(scanners)) {
           scanners[key].hardwarePort = hub.ports.find(p => p.portId === key).physical
         }
 
@@ -209,14 +211,14 @@ class ScanMeister {
     this.#oscPort.on("error", this.#callbacks.onOscError);
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
     this.#oscPort.on("message", this.#callbacks.onOscMessage);
-    this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
+    // this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
     this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
   }
 
   async #onOscError(error) {
-    logError(error);
-    await this.destroy();
-    logError("Exiting");
+    logWarn(error);
+    // await this.destroy();
+    // logInfo("Exiting");
   }
 
   #removeOscCallbacks() {
@@ -242,7 +244,14 @@ class ScanMeister {
 
   }
 
-  #onOscMessage(message, timetag, info) {
+  /**
+   *
+   * @param {object} message
+   * @param {string} message.address
+   * @param {[]} message.address.args
+   */
+  #onOscMessage(message) {
+  // #onOscMessage(message, timetag, info) {
 
     const segments = message.address.split("/").slice(1);
 
@@ -275,29 +284,29 @@ class ScanMeister {
 
   }
 
-  #onOscBundle(bundle, timetag, info) {
-
-    // console.log("tag", timetag);
-
-    // const segments = message.address.split("/").slice(1);
-    // if (segments[0] !== "midi") return;
-    //
-    // // Check if command is supported (case-insensitive) and trigger it if it is.
-    // const index = this.oscCommands.findIndex(command => {
-    //   return command.toLowerCase() === segments[2].toLowerCase();
-    // });
-    //
-    // if (index >= 0) {
-    //   const command = this.oscCommands[index];
-    //   const channel = segments[1];
-    //
-    //   const time = osc.ntpToJSTime(timetag.raw[0], timetag.raw[1]);
-    //
-    //   this[`on${command}`](channel, segments[2], message.args, time);
-    //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
-    // }
-
-  }
+  // #onOscBundle(bundle, timetag, info) {
+  //
+  //   // console.log("tag", timetag);
+  //
+  //   // const segments = message.address.split("/").slice(1);
+  //   // if (segments[0] !== "midi") return;
+  //   //
+  //   // // Check if command is supported (case-insensitive) and trigger it if it is.
+  //   // const index = this.oscCommands.findIndex(command => {
+  //   //   return command.toLowerCase() === segments[2].toLowerCase();
+  //   // });
+  //   //
+  //   // if (index >= 0) {
+  //   //   const command = this.oscCommands[index];
+  //   //   const channel = segments[1];
+  //   //
+  //   //   const time = osc.ntpToJSTime(timetag.raw[0], timetag.raw[1]);
+  //   //
+  //   //   this[`on${command}`](channel, segments[2], message.args, time);
+  //   //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
+  //   // }
+  //
+  // }
 
   sendOscMessage(address, args = []) {
     if (!this.#oscPort.socket) {
