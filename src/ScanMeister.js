@@ -8,7 +8,6 @@ import {models} from "../config/models.js"
 
 class ScanMeister {
 
-  #version = "0.2.1";
   #scanners = [];
   #callbacks = {}
   #oscCommands = ["scan"];
@@ -25,10 +24,6 @@ class ScanMeister {
       metadata: true
     });
 
-  }
-
-  get version() {
-    return this.#version;
   }
 
   get scanners() {
