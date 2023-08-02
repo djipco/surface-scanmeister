@@ -5,6 +5,7 @@ import {config} from "../config/config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
 import {hubs} from "../config/hubs.js"
+import {models} from "../config/scanners.js"
 
 class ScanMeister {
 
@@ -154,12 +155,15 @@ class ScanMeister {
         // Add physicalPort property to the descriptors by looking up our mapping chart
         const hubId = `${config.get("devices.hub.vendor")}:${config.get("devices.hub.productId")}`;
         const hub = hubs.find(hub => hub.identifier === hubId);
+        for (const [key, value] of Object.entries(scanners)) {
+          scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
+        }
+
+        // Add correct model
 
         for (const [key, value] of Object.entries(scanners)) {
-          // console.log(key);
-          // console.log(value);
-          console.log(hub.ports.filter(p => p.portId === key));
-          scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
+          const product = models.find(m => m.identifier === `${value.vendor}:${value.productId}`);
+          scanners[key].product = product.model;
         }
 
         console.log(scanners);
