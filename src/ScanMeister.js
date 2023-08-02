@@ -42,12 +42,26 @@ class ScanMeister {
 
   async init() {
 
+    // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
+    // event, we're good to go.
+    const onInitialOscError = async err => {
+      logError(err);
+      await this.destroy();
+      logError("Exiting");
+    }
+    this.#oscPort.once("error", onInitialOscError);
+    this.#oscPort.open();
+    await new Promise(resolve => this.#oscPort.once("ready", resolve));
+    this.#oscPort.off("error", onInitialOscError);
+
     // Add OSC callbacks and start listening for inbound OSC messages (must be done before creating
     // scanner objects)
     this.#addOscCallbacks();
-    this.#oscPort.open();
 
-    await new Promise(resolve => this.#oscPort.once("ready", resolve));
+
+
+
+
 
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
