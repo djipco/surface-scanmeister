@@ -40,7 +40,6 @@ class ScanMeister {
   }
 
   async init() {
-
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
     const onInitialOscError = async err => {
@@ -212,7 +211,7 @@ class ScanMeister {
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
     this.#oscPort.on("message", this.#callbacks.onOscMessage);
     // this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
-    this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
+    // this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
   }
 
   async #onOscError(error) {
