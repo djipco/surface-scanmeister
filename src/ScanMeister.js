@@ -57,6 +57,8 @@ class ScanMeister {
     if (Object.entries(shd).length === 0) {
       this.#scanners = [];
       logWarn("No scanners found.");
+    } else if (Object.entries(shd).length === 1) {
+      logInfo(`${Object.entries(shd).length} scanner has been detected. Retrieving details:`);
     } else {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
     }
@@ -66,7 +68,7 @@ class ScanMeister {
 
     // Log scanners to console
     this.scanners.forEach((device, index) => {
-      logInfo(`${index+1}. ${device.description}`, true)
+      logInfo(`    ${index+1}. ${device.description}`, true)
     });
 
     // Send status via OSC
