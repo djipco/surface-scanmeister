@@ -9,7 +9,7 @@ import {models} from "../config/models.js"
 
 class ScanMeister {
 
-  #version = "0.1.1";
+  #version = "0.2.0";
   #scanners = [];
   #callbacks = {}
   #oscCommands = ["scan"];
@@ -46,6 +46,7 @@ class ScanMeister {
     // scanner objects)
     this.#addOscCallbacks();
     this.#oscPort.open();
+
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
 
     // Retrieve list of objects describing scanner ports and device numbers
@@ -63,7 +64,9 @@ class ScanMeister {
     await this.#updateScannerList(shd);
 
     // Log scanners to console
-    this.scanners.forEach(device => logInfo(`\t${device.description}`, true));
+    this.scanners.forEach((device, index) => {
+      logInfo(`\t${index}. ${device.description}`, true)
+    });
 
     // Send status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
@@ -183,7 +186,6 @@ class ScanMeister {
 
     this.#scanners = [];
 
-    // for (const [key, descriptor] of Object.entries(deviceDescriptors)) {
     for (const descriptor of Object.values(deviceDescriptors)) {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     }
@@ -203,9 +205,9 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
-    logWarn(error);
-    // await this.destroy();
-    // logError("Exiting");
+    logError(error);
+    await this.destroy();
+    logError("Exiting");
   }
 
   #removeOscCallbacks() {
