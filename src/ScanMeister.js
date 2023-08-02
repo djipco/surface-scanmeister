@@ -154,7 +154,7 @@ class ScanMeister {
             console.log(items);
 
             const match = items[0].match(re);
-            console.log(match);
+            console.log(match[1]);
 
           }
 
