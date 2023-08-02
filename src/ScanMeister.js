@@ -134,11 +134,19 @@ class ScanMeister {
           let items = [];
 
           if (data) {
-            items = data.split('\n\n').map(item => item.replaceAll("\n", " "));
+            items = data.split('\n\n')
+              .map(item => item.replaceAll("T:  ", " "))
+              .map(item => item.replaceAll("D:  ", " "))
+              .map(item => item.replaceAll("P:  ", " "))
+              .map(item => item.replaceAll("C:  ", " "))
+              .map(item => item.replaceAll("I:  ", " "))
+              .map(item => item.replaceAll("S:  ", " "))
+              .map(item => item.replaceAll("\n", " "))
           }
 
+          console.log(items);
+
           const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-          // const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*Manufacturer=(.*).*S:.*Product=(.*).*S:.*SerialNumber=(\S*).*C:/
 
           // Perform match and extract data
           descriptors = items.map(item => {
@@ -151,10 +159,10 @@ class ScanMeister {
             const number = parseInt(match[6]);
             const vendor = match[7];
             const productId = match[8];
-            const manufacturer = match[9];
-            const product = match[10];
-            const serial = match[11];
-            return {bus, level, parent, port, container, number, vendor, productId, manufacturer, product, serial};
+            // const manufacturer = match[9];
+            // const product = match[10];
+            // const serial = match[11];
+            return {bus, level, parent, port, container, number, vendor, productId};
           });
 
           console.log(descriptors);
