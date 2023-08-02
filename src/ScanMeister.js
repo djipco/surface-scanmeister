@@ -157,7 +157,8 @@ class ScanMeister {
 
         for (const [key, value] of Object.entries(scanners)) {
           console.log(key);
-          console.log(value);
+          // console.log(value);
+          console.log(hub.ports.filter(p => p.portId === key));
           scanners[key].physicalPort = hub.ports.filter(p => p.portId === key).physical
         }
 
