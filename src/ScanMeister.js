@@ -160,7 +160,7 @@ class ScanMeister {
             const number = parseInt(match[6]);
             const vendor = match[7];
             const productId = match[8];
-            return {bus, level, parent, port, container, number, vendor, productId};
+            return {all, bus, level, parent, port, container, number, vendor, productId};
           });
 
 
