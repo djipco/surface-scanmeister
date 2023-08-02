@@ -134,53 +134,31 @@ class ScanMeister {
           let items = [];
 
           if (data) {
-
-            items = data.split('\n\n')
-              // .map(item => item.replaceAll("T:  ", ""))
-              // .map(item => item.replaceAll("D:  ", ""))
-              // .map(item => item.replaceAll("P:  ", ""))
-              // .map(item => item.replaceAll("S:  ", ""))
-              // .map(item => item.replaceAll("C:  ", ""))
-              // .map(item => item.replaceAll("I:  ", ""))
-              .map(item => item.replaceAll("\n", " "))
-              // .map(item => item.replaceAll(/=\s*/g, "="))
-
-              // .filter(text => text.includes(config.get('devices.filter')))
-              // .map(text => text.split('\n')[0]);
-
-            // const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
-
-            const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-
-            const match = items[0].match(re);
-
-            match.forEach(m => console.log(m));
-
+            items = data.split('\n\n').map(item => item.replaceAll("\n", " "));
           }
 
+          const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
 
-          // // Regex to extract bus, port and device number
-          // // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
-          // const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
-          //
-          // // Return list with bus, port and device number
-          // descriptors = descriptors.map(descriptor => {
-          //
-          //   // Perform match
-          //   const match = descriptor.match(re);
-          //
-          //   // Extract data
-          //   // const bus = match[1].padStart(3, '0')
-          //   const bus = parseInt(match[1]);
-          //   const level = parseInt(match[2]);
-          //   const parent = parseInt(match[3]);
-          //   const port = parseInt(match[4]);
-          //   const container = parseInt(match[5]);
-          //   // const device = match[6].padStart(3, '0');
-          //   const device = parseInt(match[6]);
-          //   return {bus, level, parent, port, container, device};
-          //
-          // });
+          descriptors = items.map(item => {
+
+            // Perform match
+            const match = item.match(re);
+
+            // Extract data
+            const bus = parseInt(match[1]);
+            const level = parseInt(match[2]);
+            const parent = parseInt(match[3]);
+            const port = parseInt(match[4]);
+            const container = parseInt(match[5]);
+            const number = parseInt(match[6]);
+            const vendor = parseInt(match[7]);
+            const productId = parseInt(match[8]);
+            return {bus, level, parent, port, container, number, vendor, productId};
+
+          });
+
+          console.log(descriptors);
+
           // resolve(descriptors);
 
       };
