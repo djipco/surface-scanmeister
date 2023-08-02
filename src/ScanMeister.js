@@ -132,7 +132,16 @@ class ScanMeister {
         // ports)
         hubItems.sort((a, b) => b.port - a.port);
 
-        console.log(hubItems);
+        const results = {};
+        hubItems.forEach(item => {
+
+          descriptors.filter(d => d.parent === item.number).forEach(children => {
+            results[`${item.number}-${children.number}`] = children;
+          })
+
+        })
+
+        console.log(results);
 
       };
 
