@@ -14,7 +14,6 @@
     "convict-format-with-validator": "^6.2.0",
     "date-fns": "^2.30.0",
     "djipevents": "^2.0.7",
-    "node-hid": "^2.1.2",
     "osc": "^2.4.4"
   },
   "devDependencies": {
