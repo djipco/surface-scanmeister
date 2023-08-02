@@ -148,16 +148,15 @@ class ScanMeister {
               // .filter(text => text.includes(config.get('devices.filter')))
               // .map(text => text.split('\n')[0]);
 
-            // const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
+            const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/gm
 
-            const re = /.*Bus=\s*(\d*).*Lev/
+            // const re = /.*Bus=\s*(\d*).*Lev/
 
             console.log(items[0]);
 
             const match = items[0].match(re);
-            console.log(match[0]);
-            console.log(match[1]);
-            console.log(match[2]);
+
+            match.forEach(m => console.log(m));
 
           }
 
