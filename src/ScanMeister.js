@@ -51,8 +51,6 @@ class ScanMeister {
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
-    console.log(shd);
-
     if (shd.length === 0) {
       this.#scanners = [];
       logInfo("No scanner found.");
@@ -149,11 +147,11 @@ class ScanMeister {
             .forEach(child => scanners[`${item.port}-${child.port}`] = child);
         })
 
-        // Add physicalPort property to the descriptors by looking up our mapping chart
+        // Add hardwarePort property to the descriptors by looking up our mapping chart
         const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
         const hub = hubs.find(hub => hub.identifier === hubId);
         for (const [key, value] of Object.entries(scanners)) {
-          scanners[key].physicalPort = hub.ports.find(p => p.portId === key).physical
+          scanners[key].hardwarePort = hub.ports.find(p => p.portId === key).physical
         }
 
         // Add correct model and system name
@@ -183,9 +181,9 @@ class ScanMeister {
 
   async #updateScannerList(deviceDescriptors) {
 
-    deviceDescriptors.forEach(dd => {
-      this.#scanners.push(new Scanner(this.#oscPort, dd));
-    });
+    for (const [key, descriptor] of Object.entries(deviceDescriptors)) {
+      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    }
 
     // // Identify the hub we are currently using
     // const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
@@ -220,7 +218,7 @@ class ScanMeister {
     //       );
     //
     //       if (foundPort) {
-    //         r.physicalPort = foundPort.physical;
+    //         r.hardwarePort = foundPort.physical;
     //         scanners.push(new Scanner(this.#oscPort, r));
     //       } else {
     //         logWarn(`Cannot find matching port for parent ${dd.parent} and number ${dd.port}`);
@@ -229,7 +227,7 @@ class ScanMeister {
     //
     //     });
     //
-    //     scanners.sort((a, b) => a.physicalPort - b.physicalPort);
+    //     scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
     //     resolve(scanners);
     //   }
     //
@@ -306,7 +304,7 @@ class ScanMeister {
     if (command === "scan" && message.args[0].value === 1) {
 
       // Find scanner by port
-      const scanner = this.getDeviceByPhysicalPort(port);
+      const scanner = this.getDeviceByHardwarePort(port);
       if (!scanner) {
         logWarn(
           "Warning: unable to execute OSC command. No device connected to specified port (" +
@@ -356,8 +354,8 @@ class ScanMeister {
     this.#oscPort.send({address: address, args: args});
   }
 
-  getDeviceByPhysicalPort(port) {
-    return this.scanners.find(device => device.physicalPort === port);
+  getDeviceByHardwarePort(port) {
+    return this.scanners.find(device => device.hardwarePort === port);
   }
 
   async destroy() {

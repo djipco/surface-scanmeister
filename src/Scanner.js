@@ -8,13 +8,12 @@ export class Scanner extends EventEmitter {
 
   #callbacks = {};
   #systemName;
-  #vendor;
+  #manufacturer;
   #model;
 
   #bus;
-  #device;
-  #port;
-  #physicalPort;
+  #hardwarePort;
+  #softwarePort;
   #oscPort;
 
   #scanning = false;
@@ -28,34 +27,32 @@ export class Scanner extends EventEmitter {
   }
 
   constructor(oscPort, options = {}) {
+
     super();
+
     this.#oscPort = oscPort;
+
+    this.#softwarePort = options.port;
+    this.#hardwarePort = options.hardwarePort;
     this.#systemName = options.systemName;
-    this.#vendor = options.manufacturer;
-    this.#model = options.product;
+    this.#manufacturer = options.manufacturer;
+    this.#model = options.model;
 
-    this.#device = options.deviceXXX;
-    this.#bus = options.bus;
-    this.#port = options.port;
-
-    this.#physicalPort = options.physicalPort;
-
-    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
 
   }
 
   get systemName() { return this.#systemName; }
-  get vendor() { return this.#vendor; }
+  get manufacturer() { return this.#manufacturer; }
   get model() { return this.#model; }
   get description() {
-    return `${this.vendor} ${this.model} (${this.systemName}) on physical port #${this.physicalPort}`
+    return `${this.manufacturer} ${this.model} (${this.systemName}) on physical port #${this.hardwarePort}`
   }
 
   get bus() { return this.#bus; }
-  get device() { return this.#device; }
-  get port() { return this.#port; }
-  get physicalPort() { return this.#physicalPort; }
+  get hardwarePort() { return this.#hardwarePort; }
+  get softwarePort() { return this.#softwarePort; }
 
   get scanning() { return this.#scanning; }
   get options() { return this.#options; }
@@ -64,14 +61,14 @@ export class Scanner extends EventEmitter {
 
     // Ignore if already scanning
     if (this.scanning) {
-      logWarn(`Already scanning on device ${this.description}. Ignoring.`)
+      logWarn(`Already scanning with device ${this.description}. Ignoring.`)
       return;
     }
 
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
-    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 1}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 1}]);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
@@ -171,7 +168,7 @@ export class Scanner extends EventEmitter {
       logError("Error: " + data);
     } else {
       percentage = parseFloat(percentage.slice(0, -1)) / 100;
-      this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: percentage}]);
+      this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: percentage}]);
     }
 
   }
@@ -186,8 +183,8 @@ export class Scanner extends EventEmitter {
   #onScanImageEnd() {
     this.#scanimage = null;
     this.#scanning = false;
-    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
@@ -201,8 +198,8 @@ export class Scanner extends EventEmitter {
   }
 
   destroy() {
-    this.sendOscMessage(`/device/${this.physicalPort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.physicalPort}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
     this.removeListener();
   }
 
