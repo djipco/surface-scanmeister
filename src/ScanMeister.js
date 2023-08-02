@@ -156,10 +156,12 @@ class ScanMeister {
         const hub = hubs.find(hub => hub.identifier === hubId);
 
         for (const [key, value] of Object.entries(scanners)) {
+          console.log(key);
+          console.log(value);
           scanners[key].physicalPort = hub.ports.filter(p => p.portId === key).physical
         }
 
-        console.log(scanners);
+        // console.log(scanners);
 
       };
 
