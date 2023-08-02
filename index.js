@@ -6,11 +6,11 @@ import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('./package.json', import.meta.url)));
 
 // Check platform
-if (process.platform !== "linux") {
-  logError(`This platform (${process.platform}) is not supported.`);
-  logInfo("Exiting...");
-  process.exit(1);
-}
+// if (process.platform !== "linux") {
+//   logError(`This platform (${process.platform}) is not supported.`);
+//   logInfo("Exiting...");
+//   process.exit(1);
+// }
 
 // Start ScanMeister
 logInfo(`Starting ScanMeister v${pkg.version}...`);
