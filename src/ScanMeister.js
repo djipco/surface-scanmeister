@@ -123,9 +123,14 @@ class ScanMeister {
 
         // resolve(descriptors);
 
+        // Find the elements tied to our hub. The first one is the hub, the others are the subgroups
         const hubItems = descriptors.filter(d => d.vendor === "045b" && d.productId === "0209");
         hubItems.sort((a, b) => a.level - b.level);
         hubItems.shift();
+
+        // Sort the subgroups by port (largest first because we must go down to match the physical
+        // ports)
+        hubItems.sort((a, b) => b.port - a.port);
 
         console.log(hubItems);
 
