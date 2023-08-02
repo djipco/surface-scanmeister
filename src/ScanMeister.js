@@ -172,6 +172,7 @@ class ScanMeister {
             d.product = match[2];
             d.serial = match[3];
           }
+          return d;
         });
 
 
