@@ -50,6 +50,8 @@ class ScanMeister {
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
+    console.log(shd);
+
     if (shd.length === 0) {
       this.#scanners = [];
       logInfo("No scanner found.");
@@ -76,94 +78,38 @@ class ScanMeister {
 
   async #getScannerHardwareDescriptors() {
 
-    // return new Promise((resolve, reject) => {
-    //
-    //   const callback = data => {
-    //
-    //       let descriptors = [];
-    //
-    //       // Discard unrelated devices and only keep first line (the only one relevant to us)
-    //       if (data) {
-    //         descriptors = data
-    //           .split('\n\n')
-    //           .filter(text => text.includes(config.get('devices.filter')))
-    //           .map(text => text.split('\n')[0]);
-    //       }
-    //
-    //       // Regex to extract bus, port and device number
-    //       // const re = /Bus=\s*(\d*).*Port=\s*(\d*).*Dev#=\s*(\d*)/
-    //       const re = /Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*)/
-    //
-    //       // Return list with bus, port and device number
-    //       descriptors = descriptors.map(descriptor => {
-    //
-    //         // Perform match
-    //         const match = descriptor.match(re);
-    //
-    //         // Extract data
-    //         // const bus = match[1].padStart(3, '0')
-    //         const bus = parseInt(match[1]);
-    //         const level = parseInt(match[2]);
-    //         const parent = parseInt(match[3]);
-    //         const port = parseInt(match[4]);
-    //         const container = parseInt(match[5]);
-    //         // const device = match[6].padStart(3, '0');
-    //         const device = parseInt(match[6]);
-    //         return {bus, level, parent, port, container, device};
-    //
-    //       });
-    //       resolve(descriptors);
-    //
-    //   };
-    //
-    //   const usbDevicesSpawner = new Spawner();
-    //
-    //   usbDevicesSpawner.execute(
-    //     "usb-devices",
-    //     [],
-    //     {sucessCallback: callback, errorCallback: reject}
-    //   );
-    //
-    // });
-
     return new Promise((resolve, reject) => {
 
       const callback = data => {
 
-          let descriptors = [];
-          let items = [];
+        if (!data) {
+          reject("The usb-devices command did not return any data.");
+          return;
+        }
 
-          if (data) {
-            items = data.split('\n\n')
-              // .map(item => item.replaceAll("T:  ", ""))
-              // .map(item => item.replaceAll("D:  ", ""))
-              // .map(item => item.replaceAll("P:  ", ""))
-              // .map(item => item.replaceAll("C:  ", ""))
-              // .map(item => item.replaceAll("I:  ", ""))
-              // .map(item => item.replaceAll("S:  ", ""))
-              .map(item => item.replaceAll("\n", "NNNNN"))
-          }
+        let descriptors = [];
+        let blocks = [];
 
-          console.log(items);
+        // Split data blocks into array
+        blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"))
 
+        // Perform match for common data on each block
+        let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
+        descriptors = blocks.map(b => {
+          const match = b.match(re);
+          const all = match[0];
+          const bus = parseInt(match[1]);
+          const level = parseInt(match[2]);
+          const parent = parseInt(match[3]);
+          const port = parseInt(match[4]);
+          const container = parseInt(match[5]);
+          const number = parseInt(match[6]);
+          const vendor = match[7];
+          const productId = match[8];
+          return {all, bus, level, parent, port, container, number, vendor, productId};
+        });
 
-          // Perform match for common data
-          let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-          descriptors = items.map(item => {
-            const match = item.match(re);
-            const all = match[0];
-            const bus = parseInt(match[1]);
-            const level = parseInt(match[2]);
-            const parent = parseInt(match[3]);
-            const port = parseInt(match[4]);
-            const container = parseInt(match[5]);
-            const number = parseInt(match[6]);
-            const vendor = match[7];
-            const productId = match[8];
-            return {all, bus, level, parent, port, container, number, vendor, productId};
-          });
-
-
+        // Perform match for manufacturer and product
         re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
         descriptors = descriptors.map(d => {
           const match = d.all.match(re);
@@ -171,16 +117,11 @@ class ScanMeister {
           if (match) {
             d.manufacturer = match[1];
             d.product = match[2];
-            // d.serial = match[3];
           }
           return d;
         });
 
-
-
-          console.log(descriptors);
-
-          // resolve(descriptors);
+        resolve(descriptors);
 
       };
 
