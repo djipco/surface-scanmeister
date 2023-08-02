@@ -121,7 +121,11 @@ class ScanMeister {
           return d;
         });
 
-        resolve(descriptors);
+        // resolve(descriptors);
+
+        const hubItems = descriptors.filter(d => d.vendor === "045b" && d.productId === "0209");
+
+        console.log(hubItems);
 
       };
 
