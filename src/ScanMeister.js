@@ -141,7 +141,7 @@ class ScanMeister {
               // .map(item => item.replaceAll("C:  ", ""))
               // .map(item => item.replaceAll("I:  ", ""))
               // .map(item => item.replaceAll("S:  ", ""))
-              .map(item => item.replaceAll("\n", "NNN"))
+              .map(item => item.replaceAll("\n", "NNNNN"))
           }
 
           console.log(items);
@@ -164,17 +164,17 @@ class ScanMeister {
           });
 
 
-        // re = /S:\s*Manufacturer=\s*(.*)S:.*\sProduct=(.*)\sS:.*SerialNumber=(.*)\s.*C:/;
-        // descriptors = descriptors.map(d => {
-        //   const match = d.all.match(re);
-        //   delete d.all;
-        //   if (match) {
-        //     d.manufacturer = match[1];
-        //     d.product = match[2];
-        //     d.serial = match[3];
-        //   }
-        //   return d;
-        // });
+        re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
+        descriptors = descriptors.map(d => {
+          const match = d.all.match(re);
+          delete d.all;
+          if (match) {
+            d.manufacturer = match[1];
+            d.product = match[2];
+            // d.serial = match[3];
+          }
+          return d;
+        });
 
 
 
