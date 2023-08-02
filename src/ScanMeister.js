@@ -124,6 +124,8 @@ class ScanMeister {
         // resolve(descriptors);
 
         const hubItems = descriptors.filter(d => d.vendor === "045b" && d.productId === "0209");
+        hubItems.sort((a, b) => a.level - b.level);
+        hubItems.shift();
 
         console.log(hubItems);
 
