@@ -164,7 +164,7 @@ class ScanMeister {
         for (const [key, value] of Object.entries(scanners)) {
           const product = models.find(m => m.identifier === `${value.vendor}:${value.productId}`);
           scanners[key].product = product.model;
-          scanners[key].linuxName = product.driverPrefix + value.bus.padStart(3, '0') + ":" + value.number.padStart(3, '0');
+          scanners[key].linuxName = product.driverPrefix + value.bus.toString().padStart(3, '0') + ":" + value.number.toString().padStart(3, '0');
 
         }
 
