@@ -47,7 +47,7 @@ class ScanMeister {
     const onInitialOscError = async err => {
       logError(err);
       await this.destroy();
-      logError("Exiting");
+      logInfo("Exiting");
     }
     this.#oscPort.once("error", onInitialOscError);
     this.#oscPort.open();
@@ -64,7 +64,7 @@ class ScanMeister {
     if (Object.entries(shd).length === 0) {
       this.#scanners = [];
       logWarn("No scanners found.");
-      return;
+      // return;
     } else {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
     }
@@ -74,7 +74,7 @@ class ScanMeister {
 
     // Log scanners to console
     this.scanners.forEach((device, index) => {
-      logInfo(`\t${index+1}. ${device.description}`, true)
+      logInfo(`${index+1}. ${device.description}`, true)
     });
 
     // Send status via OSC
