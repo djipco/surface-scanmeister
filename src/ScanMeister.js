@@ -143,7 +143,7 @@ class ScanMeister {
               .map(item => item.replaceAll("C:  ", ""))
               .map(item => item.replaceAll("I:  ", ""))
               .map(item => item.replaceAll("\n", " "))
-              .map(item => item.replace(/=\s*/, "="))
+              .map(item => item.replaceAll(/=\s*/, "="))
 
               // .filter(text => text.includes(config.get('devices.filter')))
               // .map(text => text.split('\n')[0]);
