@@ -135,20 +135,20 @@ class ScanMeister {
 
           if (data) {
             items = data.split('\n\n')
-              .map(item => item.replaceAll("T:  ", " "))
-              .map(item => item.replaceAll("D:  ", " "))
-              .map(item => item.replaceAll("P:  ", " "))
-              .map(item => item.replaceAll("C:  ", " "))
-              .map(item => item.replaceAll("I:  ", " "))
-              .map(item => item.replaceAll("S:  ", " "))
+              // .map(item => item.replaceAll("T:  ", ""))
+              // .map(item => item.replaceAll("D:  ", ""))
+              // .map(item => item.replaceAll("P:  ", ""))
+              // .map(item => item.replaceAll("C:  ", ""))
+              // .map(item => item.replaceAll("I:  ", ""))
+              // .map(item => item.replaceAll("S:  ", ""))
               .map(item => item.replaceAll("\n", " "))
           }
 
           console.log(items);
 
-          const re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
 
-          // Perform match and extract data
+          // Perform match for common data
+          let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
           descriptors = items.map(item => {
             const match = item.match(re);
             const bus = parseInt(match[1]);
@@ -164,6 +164,19 @@ class ScanMeister {
             // const serial = match[11];
             return {bus, level, parent, port, container, number, vendor, productId};
           });
+
+
+        re = /S:\s*Manufacturer=\s*(.*)Product=(.*)SerialNumber=(.*)\s.*C:/;
+        descriptors = items.map(item => {
+          const match = item.match(re);
+          if (match) {
+            item.manufacturer = match[1];
+            item.product = match[2];
+            item.serial = match[3];
+          }
+        });
+
+
 
           console.log(descriptors);
 
