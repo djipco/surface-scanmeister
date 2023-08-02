@@ -131,10 +131,11 @@ class ScanMeister {
       const callback = data => {
 
           let descriptors = [];
+          let items = [];
 
           if (data) {
 
-            const items = data.split('\n\n')
+            items = data.split('\n\n')
               .map(item => item.replace("T:  ", ""))
               .map(item => item.replace("D:  ", ""))
               .map(item => item.replace("P:  ", ""))
