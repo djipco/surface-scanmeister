@@ -1,8 +1,8 @@
 import osc from "osc";
 import {Scanner} from './Scanner.js';
-import {config} from "../config/config.js";
 import {logError, logInfo, logWarn} from "./Utils.js";
 import {Spawner} from "./Spawner.js";
+import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js"
 import {models} from "../config/models.js"
 
