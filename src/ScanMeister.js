@@ -185,6 +185,9 @@ class ScanMeister {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     }
 
+    // Sort by hardware port
+    this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
+
     // // Identify the hub we are currently using
     // const hub = hubs.find(hub => hub.model === config.get("devices.hub"));
     //
