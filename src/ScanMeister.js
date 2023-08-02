@@ -54,21 +54,16 @@ class ScanMeister {
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
     this.#oscPort.off("error", onInitialOscError);
 
-    // Add OSC callbacks and start listening for inbound OSC messages (must be done before creating
+    // Now that OSC is ready, add callbacks for inbound messages (must be done before creating
     // scanner objects)
     this.#addOscCallbacks();
-
-
-
-
-
 
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
-    if (shd.length === 0) {
+    if (Object.entries(shd).length === 0) {
       this.#scanners = [];
-      logInfo("No scanner found.");
+      logWarn("No scanners found.");
       return;
     } else {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
@@ -79,7 +74,7 @@ class ScanMeister {
 
     // Log scanners to console
     this.scanners.forEach((device, index) => {
-      logInfo(`\t${index}. ${device.description}`, true)
+      logInfo(`\t${index+1}. ${device.description}`, true)
     });
 
     // Send status via OSC
