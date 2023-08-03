@@ -4,6 +4,10 @@
 * Send file via netcat (if TD team fixes the issue, we need to check new version)
 * Clarify the inbound and outbound OSC schema
 
+# OSC Schema
+
+
+
 # CONFIGURATION
 
 ## Raspbian
