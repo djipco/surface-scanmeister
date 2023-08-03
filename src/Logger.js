@@ -19,8 +19,8 @@ const logger = createLogger({
     format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
     format.errors(),
     format.splat(),
-    format.printf(({ level, message, label, timestamp }) => {
-      return `[${timestamp}] ${label} ${level}: ${message}`;
+    format.printf(({ level, message, timestamp }) => {
+      return `[${timestamp}] ${level}: ${message}`;
     })
   ),
   transports: [
