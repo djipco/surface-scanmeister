@@ -1,6 +1,5 @@
 import osc from "osc";
 import {Scanner} from './Scanner.js';
-// import {logError, logInfo, logWarn} from "./Utils.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
@@ -42,7 +41,7 @@ class ScanMeister {
     const onInitialOscError = async err => {
       logError(err);
       await this.destroy();
-      logInfo("Exiting");
+      logInfo("Exiting...");
     }
     this.#oscPort.once("error", onInitialOscError);
     this.#oscPort.open();
@@ -214,9 +213,9 @@ class ScanMeister {
   }
 
   async #onOscError(error) {
-    logWarn(error);
-    // await this.destroy();
-    // logInfo("Exiting");
+    logError(error);
+    await this.destroy();
+    logInfo("Exiting...");
   }
 
   #removeOscCallbacks() {
@@ -267,8 +266,8 @@ class ScanMeister {
       const scanner = this.getDeviceByHardwarePort(port);
       if (!scanner) {
         logWarn(
-          "Warning: unable to execute OSC command. No device connected to specified port (" +
-          message.address + ")"
+          "Unable to execute OSC command. No device connected to specified port (" +
+          message.address + ")."
         );
         return;
       }
@@ -308,7 +307,7 @@ class ScanMeister {
 
   sendOscMessage(address, args = []) {
     if (!this.#oscPort.socket) {
-      logWarn("Warning: impossible to send OSC, no socket available.")
+      logWarn("Impossible to send OSC, no socket available.")
       return;
     }
     this.#oscPort.send({address: address, args: args});

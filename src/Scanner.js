@@ -1,5 +1,4 @@
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
-// import {logError, logInfo, logWarn} from "./Utils.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
@@ -176,7 +175,7 @@ export class Scanner extends EventEmitter {
     this.#scanimage = null;
     this.#scanning = false;
     this.emit("warning", error);
-    logWarn("Warning: " + error);
+    logWarn(error);
   }
 
   #onScanImageEnd() {
@@ -190,7 +189,7 @@ export class Scanner extends EventEmitter {
 
   sendOscMessage(address, args = []) {
     if (!this.#oscPort.socket) {
-      logWarn("Warning: impossible to send OSC, no socket available.")
+      logWarn("Impossible to send OSC, no socket available.")
       return;
     }
     this.#oscPort.send({address: address, args: args});
