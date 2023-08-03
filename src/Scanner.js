@@ -8,14 +8,11 @@ export class Scanner extends EventEmitter {
   #systemName;
   #manufacturer;
   #model;
-
   #bus;
   #hardwarePort;
   #softwarePort;
   #oscPort;
-
   #scanning = false;
-  #scanimage;
 
   #options = {
     formats: ["png"],
@@ -172,14 +169,12 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageError(error) {
-    this.#scanimage = null;
     this.#scanning = false;
     this.emit("warning", error);
     logWarn(error);
   }
 
   #onScanImageEnd() {
-    this.#scanimage = null;
     this.#scanning = false;
     this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
     this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
