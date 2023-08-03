@@ -16,10 +16,12 @@ const logger = createLogger({
   level: 'info',
   format: format.combine(
     format.colorize(),
-    format.timestamp(),
+    format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
     format.errors(),
     format.splat(),
-    format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+    format.printf(({ level, message, label, timestamp }) => {
+      `[${timestamp}] ${label}: ${level}: ${message}`
+    }
   ),
   transports: [
     drfTransport,
@@ -27,8 +29,7 @@ const logger = createLogger({
     new transports.Console({
       format: format.combine(
         format.colorize(),
-        format.timestamp(),
-        format.printf(info => `${info.message}`),
+        format.printf(info => `${info.level}: ${info.message}`),
       )
     })
   ]
