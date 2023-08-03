@@ -26,7 +26,7 @@ const logger = createLogger({
     new transports.Console({
       format: format.combine(
         format.colorize(),
-        format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+        format.printf(info => `${info.timestamp} ${info.message}`),
       )
     })
   ]
