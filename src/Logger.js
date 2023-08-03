@@ -2,7 +2,8 @@ import { createLogger, format, transports } from "winston";
 import "winston-daily-rotate-file";
 
 
-const transport = new transports.DailyRotateFile({
+const drfTransport = new transports.DailyRotateFile({
+  level: 'info',
   filename: 'scanmeister.%DATE%.log',
   dirname: "logs",
   datePattern: 'YYYY-MM-DD',
@@ -21,9 +22,8 @@ const logger = createLogger({
     format.splat(),
     // format.json()
   ),
-  defaultMeta: { service: 'scanmeister' },
   transports: [
-    transport,
+    drfTransport,
     new transports.Console({format: format.simple()})
   ]
 });
