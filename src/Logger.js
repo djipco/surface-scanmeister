@@ -15,7 +15,6 @@ const drfTransport = new transports.DailyRotateFile({
 const logger = createLogger({
   level: 'info',
   format: format.combine(
-    // format.colorize(),
     format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
     format.errors(),
     format.splat(),
@@ -27,8 +26,8 @@ const logger = createLogger({
     drfTransport,
     new transports.Console({
       format: format.combine(
-        format.colorize({all: true}),
-        format.printf(info => `${info.level}: ${info.message}`),
+        format.colorize({all: true, colors: {info: "gray", warn: "orange", error: "red"}}),
+        format.printf(info => `${info.message}`),
       )
     })
   ]
