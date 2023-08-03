@@ -20,7 +20,7 @@ const logger = createLogger({
     format.errors({ stack: true }),
     format.splat(),
     format.printf(
-      info => `${info.timestamp} ${info.level}: ${info.message}`,
+      info => `${[info.timestamp]} ${info.level.toUpperCase()}: ${info.message}`,
     ),
     // format.json()
   ),
