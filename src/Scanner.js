@@ -1,6 +1,6 @@
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 // import {logError, logInfo, logWarn} from "./Utils.js";
-import {logInfo, logError, logWarn} from "./src/Logger.js"
+import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 

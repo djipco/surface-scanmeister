@@ -1,5 +1,4 @@
 import {ScanMeister} from "./src/ScanMeister.js";
-// import {logError, logInfo} from "./src/Utils.js";
 import {logInfo, logError} from "./src/Logger.js"
 import process from 'node:process';
 
