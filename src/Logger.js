@@ -19,7 +19,7 @@ const logger = createLogger({
     format.errors(),
     format.splat(),
     format.printf(({ level, message, timestamp }) => {
-      return `[${timestamp}] ${level}: ${message}`;
+      return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
     })
   ),
   transports: [
