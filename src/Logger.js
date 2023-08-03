@@ -26,7 +26,7 @@ const logger = createLogger({
     drfTransport,
     new transports.Console({
       format: format.combine(
-        format.colorize({all: true, colors: {info: "gray", warn: "yellow", error: "red"}}),
+        format.colorize({all: true, colors: {info: "white", warn: "yellow", error: "red"}}),
         format.printf(info => `${info.message}`),
       )
     })
