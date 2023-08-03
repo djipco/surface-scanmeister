@@ -36,6 +36,7 @@ Once it's installed, you can check available devices with:
 ```
 sudo sane-find-scanner -q
 ```
+There is a [list of supported scanners]([url](http://www.sane-project.org/sane-mfgs.html#SCANNERS)) on the SANE website.
 
 ## scanimage
 
