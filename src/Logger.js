@@ -20,8 +20,8 @@ const logger = createLogger({
     format.errors(),
     format.splat(),
     format.printf(({ level, message, label, timestamp }) => {
-      `[${timestamp}] ${label}: ${level}: ${message}`
-    }
+      return `[${timestamp}] ${label} ${level}: ${message}`;
+    })
   ),
   transports: [
     drfTransport,
