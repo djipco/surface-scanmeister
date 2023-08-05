@@ -6,6 +6,11 @@
 
 # OSC Schema
 
+Commands accepted by ScanMeister.
+
+Trigger a scan on scanner connected to physical port 12:
+
+* /scan/12
 
 
 # CONFIGURATION
