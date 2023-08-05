@@ -6,11 +6,13 @@
 
 # OSC Schema
 
-Commands accepted by ScanMeister.
-
 Trigger a scan on scanner connected to physical port 12:
 
 * /scan/12
+
+On startup and shutdown, the system broadcast this message:
+
+* /system/status i 0 (or 1)
 
 
 # CONFIGURATION
