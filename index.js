@@ -24,7 +24,7 @@ ScanMeister.init()
   })
   .catch(async error => {
     logError(error);
-    logError("Exiting...")
+    logInfo("Exiting...")
     await ScanMeister.destroy();
     process.exit(1);
   });
