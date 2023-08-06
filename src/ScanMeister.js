@@ -178,10 +178,11 @@ class ScanMeister {
             const formattedNumber = value.number.toString().padStart(3, '0');
             scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
           } else {
-            logWarn(
+            reject(
               `No match for manufacturer ${value.manufacturerId} and model ${value.modelId} ` +
               "in models.js file."
             );
+            return;
           }
 
         }
