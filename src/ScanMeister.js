@@ -6,6 +6,10 @@ import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 
+
+import fs from 'node:fs/promises'
+import SambaClient from "samba-client";
+
 class ScanMeister {
 
   #scanners = [];
@@ -35,6 +39,37 @@ class ScanMeister {
   }
 
   async init() {
+
+
+
+
+
+    // this.address = options.address;
+    // this.username = options.username || "guest";
+    // this.password = options.password;
+    // this.domain = options.domain;
+    // this.port = options.port;
+    // this.directory = options.directory;
+    // this.timeout = options.timeout;
+    // // Possible values for protocol version are listed in the Samba man pages:
+    // // https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#CLIENTMAXPROTOCOL
+    // this.maxProtocol = options.maxProtocol;
+    // this.maskCmd = Boolean(options.maskCmd);
+
+    // const testFile = "test.txt";
+
+    const client = new SambaClient({
+      address: "10.0.0.122",
+      // username: "",
+      // password: "",
+      directory: "select",
+    });
+
+    const list = await client.listFiles();
+    console.log(`found these files: ${list}`);
+
+
+
 
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
