@@ -369,7 +369,7 @@ class ScanMeister {
     this.scanners.forEach(device => device.destroy());
     this.#removeOscCallbacks();
 
-    if (this.#oscPort) {
+    if (this.#oscPort.socket) {
 
       // Broadcast system status (and leave enough time for the message to be sent)
       this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
