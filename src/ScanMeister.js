@@ -167,14 +167,23 @@ class ScanMeister {
 
         // Add correct model and system name (from the models.js file)
         for (const [key, value] of Object.entries(scanners)) {
+
           const model = models.find(m => {
             return m.identifier === `${value.manufacturerId}:${value.modelId}`;
           });
-          console.log(model);
-          scanners[key].model = model.name;
-          const formattedBus = value.bus.toString().padStart(3, '0');
-          const formattedNumber = value.number.toString().padStart(3, '0');
-          scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
+
+          if (model) {
+            scanners[key].model = model.name;
+            const formattedBus = value.bus.toString().padStart(3, '0');
+            const formattedNumber = value.number.toString().padStart(3, '0');
+            scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
+          } else {
+            logWarn(
+              `No match for manufacturer ${value.manufacturerId} and model ${value.modelId} ` +
+              "in models.js file."
+            );
+          }
+
         }
 
         resolve(scanners);
