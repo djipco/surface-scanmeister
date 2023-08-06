@@ -1,5 +1,5 @@
 # TO DO
-* Install `winston`for logging
+* ~~Install `winston`for logging~~
 * ~~send OSC (to report on status)~~
 * Send file via netcat (if TD team fixes the issue, we need to check new version)
 * Clarify the inbound and outbound OSC schema
