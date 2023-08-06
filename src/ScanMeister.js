@@ -65,7 +65,7 @@ class ScanMeister {
       directory: "select",
     });
 
-    const list = await client.listFiles();
+    const list = await client.listFiles("IMG", ".jpg");
     console.log(`found these files: ${list}`);
 
 
