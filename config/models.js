@@ -2,7 +2,7 @@ const models = [
   {
     name: "CanoScan LiDE 35/40/50",
     manufacturer: "Canon",
-    // identifier: "04a9:2213",
+    identifier: "04a9:2213",
     driverPrefix: "genesys:libusb:"
   },
   {
