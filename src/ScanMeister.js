@@ -51,7 +51,7 @@ class ScanMeister {
     try {
       const name = (Math.random() + 1).toString(36).substring(2);
       await this.#smbClient.mkdir(name);
-      await this.#smbClient.execute('rmdir', name);
+      await this.#smbClient.execute('rmXXXdir', name);
     } catch(err) {
       logWarn("Cannot gain write access to SMB share (" + config.get("smb.address") + ")" );
     }
