@@ -188,6 +188,8 @@ smb: {
 }
 ```
 
+The NPM `samba-client` module needs the `smbclient` package to be installed.
+
 ## Node.js
 
 The control program is written in JavaScript so Node.js must be installed. First, we need to add the
