@@ -60,12 +60,12 @@ class ScanMeister {
 
     const client = new SambaClient({
       address: "//10.0.0.122/select",
-      // username: "",
-      // password: "",
+      username: "jpcote",
+      password: "kling.klang",
       // directory: "select",
     });
 
-    const list = await client.listFiles("IMG", ".jpg");
+    const list = await client.listFiles("IMG_0887", ".jpg");
     console.log(`found these files: ${list}`);
 
 
