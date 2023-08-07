@@ -5,6 +5,7 @@ import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
+import {credentials} from "../config/credentials.js";
 
 
 import fs from 'node:fs/promises'
@@ -16,6 +17,7 @@ class ScanMeister {
   #callbacks = {}
   #oscCommands = ["scan"];
   #oscPort;
+  #smbClient;
 
   constructor() {
 
@@ -26,6 +28,13 @@ class ScanMeister {
       remoteAddress: config.get("osc.remote.address"),
       remotePort: config.get("osc.remote.port"),
       metadata: true
+    });
+
+    // Prepare SMB client
+    this.#smbClient = new SambaClient({
+      address: config.get("smb.address"),
+      username: credentials.smb.username,
+      password: credentials.smb.password
     });
 
   }
@@ -58,14 +67,9 @@ class ScanMeister {
 
     // const testFile = "test.txt";
 
-    const client = new SambaClient({
-      address: "//10.0.0.122/select",
-      username: "jpcote",
-      password: "kling.klang",
-      // directory: "select",
-    });
 
-    const list = await client.listFiles("IMG_0887", ".jpg");
+
+    const list = await this.#smbClient.listFiles("IMG_0887", ".jpg");
     console.log(`found these files: ${list}`);
 
 
