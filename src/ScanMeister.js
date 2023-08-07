@@ -59,10 +59,10 @@ class ScanMeister {
     // const testFile = "test.txt";
 
     const client = new SambaClient({
-      address: "10.0.0.122",
+      address: "//10.0.0.122/select",
       // username: "",
       // password: "",
-      directory: "select",
+      // directory: "select",
     });
 
     const list = await client.listFiles("IMG", ".jpg");
