@@ -69,7 +69,8 @@ class ScanMeister {
 
 
 
-    const list = await this.#smbClient.listFiles("IMG_0887", ".jpg");
+    // const list = await this.#smbClient.listFiles("IMG_0887", ".jpg");
+    const list = await this.#smbClient.list();
     console.log(`found these files: ${list}`);
 
 
