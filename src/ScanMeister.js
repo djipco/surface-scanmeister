@@ -71,7 +71,7 @@ class ScanMeister {
     // Test the connection to the SMB share by writing and deleting a bogus file (if no error is
     // thrown, were good!)
     // await this.#smbClient.listFiles();
-    const name = (Math.random() + 1).toString(36).substring(7);
+    const name = (Math.random() + 1).toString(36).substring(2);
     await this.#smbClient.mkdir(name);
     // await this.#smbClient.execute('rmdir', name);
 
