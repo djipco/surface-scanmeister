@@ -68,10 +68,16 @@ class ScanMeister {
     // const testFile = "test.txt";
 
 
+    // Test the connection to the SMB share by writing and deleting a bogus file (if no error is
+    // thrown, were good!)
+    // await this.#smbClient.listFiles();
+    const name = (Math.random() + 1).toString(36).substring(7);
+    await this.#smbClient.mkdir(name);
+    await this.#smbClient.execute('rmdir', name);
 
-    const list = await this.#smbClient.listFiles();
-    console.log(`found these files: ${list}`);
-
+    // async mkdir(remotePath, cwd) {
+    //   return await this.execute("mkdir", [remotePath], cwd);
+    // }
 
 
 
