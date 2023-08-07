@@ -60,8 +60,8 @@ class ScanMeister {
 
     const client = new SambaClient({
       address: "//10.0.0.122/select",
-      // username: "jpcote",
-      // password: "kling.klang",
+      username: "jpcote",
+      password: "kling.klang",
       // directory: "select",
     });
 
