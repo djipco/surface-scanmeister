@@ -1,4 +1,5 @@
 import osc from "osc";
+import SambaClient from "samba-client";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
@@ -6,10 +7,6 @@ import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import {credentials} from "../config/credentials.js";
-
-
-import fs from 'node:fs/promises'
-import SambaClient from "samba-client";
 
 class ScanMeister {
 
@@ -49,37 +46,15 @@ class ScanMeister {
 
   async init() {
 
-
-
-
-
-    // this.address = options.address;
-    // this.username = options.username || "guest";
-    // this.password = options.password;
-    // this.domain = options.domain;
-    // this.port = options.port;
-    // this.directory = options.directory;
-    // this.timeout = options.timeout;
-    // // Possible values for protocol version are listed in the Samba man pages:
-    // // https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html#CLIENTMAXPROTOCOL
-    // this.maxProtocol = options.maxProtocol;
-    // this.maskCmd = Boolean(options.maskCmd);
-
-    // const testFile = "test.txt";
-
-
-    // Test the connection to the SMB share by writing and deleting a bogus file (if no error is
-    // thrown, were good!)
-    // await this.#smbClient.listFiles();
-    const name = (Math.random() + 1).toString(36).substring(2);
-    await this.#smbClient.mkdir(name);
-    // await this.#smbClient.execute('rmdir', name);
-
-    // async mkdir(remotePath, cwd) {
-    //   return await this.execute("mkdir", [remotePath], cwd);
-    // }
-
-
+    // Try to write and delete a bogus directory to make sure we can access and write to the SMB
+    // share specified in the config.
+    try {
+      const name = (Math.random() + 1).toString(36).substring(2);
+      await this.#smbClient.mkdir(name);
+      await this.#smbClient.execute('rmdir', name);
+    } catch(err) {
+      logWarn("Cannot gain write access to SMB share (" + config.get("smb.address") + ")" );
+    }
 
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
