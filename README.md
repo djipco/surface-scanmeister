@@ -176,34 +176,16 @@ usb-devices
 
 **On the Pi:**
 
-* Create a folder to mount the remote directory to:
+* Specify the address to the SMB-shared folder in the `config/config.js` file
 
 ```sh
-mkdir /home/surface/scans
-```
-
-Edit `fstab` so changes kick in at boot:
-
-```sh
-sudo nano /etc/fstab
-```
-
-Add the following line:
-
-```sh
-//10.0.0.132/Users/surface/project/scans /home/surface/scans cifs username=pi,password=pipipi,uid=1000,gid=1000 0 0
-```
-
-Mount everything that's in `/etc/fstab`:
-
-```
-sudo mount -a
-```
-
-If needed, you can mount and unmount manually: 
-
-```
-sudo umount /home/surface/scans
+smb: {
+  address: {
+    doc: 'Path to remote SMB-shared directory where scans should be saved',
+    format: String,
+    default: "//10.0.0.122/some_dir"
+  }
+}
 ```
 
 ## Node.js
