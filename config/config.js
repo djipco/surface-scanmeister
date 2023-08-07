@@ -64,6 +64,14 @@ const config = convict({
         default: "0209"
       }
     },
+  },
+
+  smb: {
+    address: {
+      doc: 'Path to remote SMB-shared directory where scans should be saved',
+      format: String,
+      default: "//10.0.0.122/select"
+    }
   }
 
 });
