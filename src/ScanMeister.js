@@ -73,7 +73,7 @@ class ScanMeister {
     // await this.#smbClient.listFiles();
     const name = (Math.random() + 1).toString(36).substring(7);
     await this.#smbClient.mkdir(name);
-    await this.#smbClient.execute('rmdir', name);
+    // await this.#smbClient.execute('rmdir', name);
 
     // async mkdir(remotePath, cwd) {
     //   return await this.execute("mkdir", [remotePath], cwd);
