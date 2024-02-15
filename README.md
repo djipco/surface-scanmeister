@@ -30,6 +30,11 @@ On startup and shutdown, the system broadcast this message:
   sudo apt upgrade -y
   ```
 
+## Remote Access
+
+* Use the built-in VNC server (set a password)
+* To run headless, you must go to -> Menu -> Prefs -> RasPi Config -> Display and select a headless resolution (1920x1080)
+
 ## SANE
 
 SANE is the framework that provides support for a variety of scanners (and cameras):
