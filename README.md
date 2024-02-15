@@ -29,11 +29,12 @@ On startup and shutdown, the system broadcast this message:
   sudo apt update
   sudo apt upgrade -y
   ```
+* Disable screen blanking by going to Menu -> Prefs -> RasPi Config -> Display
 
 ## Remote Access
 
 * Use the built-in VNC server (set a password)
-* To run headless, you must go to -> Menu -> Prefs -> RasPi Config -> Display and select a headless resolution (1920x1080)
+* To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution (1920x1080)
 
 ## SANE
 
