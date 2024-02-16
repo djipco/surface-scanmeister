@@ -1,19 +1,8 @@
-# OSC Schema
-
-Trigger a scan on scanner connected to physical port 12:
-
-* `/scan/12`
-
-On startup and shutdown, the system broadcasts this message:
-
-* `/system/status i 0 (or 1)`
-
-
-# CONFIGURATION
+# INITIAL CONFIGURATION OF THE SYSTEM
 
 ## Raspbian
 
-* Use **Raspberry Pi Imager.app** (or simialr) to create brand new boot medium for the Raspberry Pi 
+* Use **Raspberry Pi Imager.app** (or similar) to create brand new boot medium for the Raspberry Pi 
   2 Model B (this is the model we are currently using).
 * Create account named **surface**
 * Connect to wifi
@@ -23,12 +12,55 @@ On startup and shutdown, the system broadcasts this message:
   sudo apt update
   sudo apt upgrade -y
   ```
+  
 * Disable screen blanking by going to Menu -> Prefs -> RasPi Config -> Display
 
 ## Remote Access
 
 * Use the built-in VNC server (set a password)
-* To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution (1920x1080)
+* To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution
+  (1280x720)
+
+## Configure Access to SMB Shared Folder
+
+This is only needed if the `smb` operating mode is used in `scanmeister`. In the `tcp` mode, there is no need
+to bother with that.
+
+**On Windows box running TouchDesigner:**
+
+* Create a user that will be used to connect from the Raspberry Pi
+* Share a folder where the scans should be stored
+
+**On the Pi:**
+
+* Specify the address to the SMB-shared folder in the `config/config.js` file
+
+```sh
+smb: {
+  address: {
+    doc: 'Path to remote SMB-shared directory where scans should be saved',
+    format: String,
+    default: "//10.0.0.122/some_dir"
+  }
+}
+```
+
+The NPM `samba-client` module needs the `smbclient` package to be installed.
+
+## Node.js
+
+The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
+we need to add the source for Node's latest LTS version:
+
+```
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+```
+
+Then, we can install it:
+
+```
+sudo apt install -y nodejs
+```
 
 ## SANE
 
@@ -43,7 +75,70 @@ Once it's installed, you can check available devices with:
 ```
 sudo sane-find-scanner -q
 ```
+
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the SANE website.
+
+
+
+## Git
+
+Ask for credentials to be stored locally:
+
+```
+git config credential.helper store
+```
+
+
+## Installing the scanmeister daemon
+
+Clone repo:
+
+```
+git clone https://github.com/djipco/surface-scanmeister
+```
+Enter credentials (once).
+
+Update from repo (put it in folder called `code`):
+
+```
+git pull https://github.com/djipco/surface-scanmeister code
+```
+
+To install all the modules required by the app, go to root of project and run:
+
+```npm install```
+
+## Make sure scanmeister starts at boot
+
+In Terminal:
+
+```bash
+crontab -e
+```
+
+Insert:
+
+```
+@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
+```
+
+
+
+
+
+# OSC Schema
+
+Trigger a scan on scanner connected to physical port 12:
+
+* `/scan/12`
+
+On startup and shutdown, the system broadcasts this message:
+
+* `/system/status i 0 (or 1)`
+
+
+
+# Testing the scanning environment
 
 ## scanimage
 
@@ -128,7 +223,7 @@ Options specific to device 'genesys:libusb:001:008':
 ```
 
 
-### Perform scan
+### Perform a manual scan
 
 This will save the file on the disk as `image.png`
 
@@ -182,84 +277,4 @@ which port:
 
 ```
 usb-devices
-```
-
-## Configure Access to Shared Folder
-
-This is only needed if the `smb` operating mode is used. In the `tcp` mode, there is no need to 
-bother with that.
-
-**On Windows:**
-
-* Create a user that will be used to connect from the Raspberry Pi
-* Share a folder where the scans should be stored
-
-**On the Pi:**
-
-* Specify the address to the SMB-shared folder in the `config/config.js` file
-
-```sh
-smb: {
-  address: {
-    doc: 'Path to remote SMB-shared directory where scans should be saved',
-    format: String,
-    default: "//10.0.0.122/some_dir"
-  }
-}
-```
-
-The NPM `samba-client` module needs the `smbclient` package to be installed.
-
-## Node.js
-
-The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
-we need to add the source for Node's latest LTS version:
-
-```
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-```
-
-Then, we can install it:
-
-```
-sudo apt install -y nodejs
-```
-
-### sane-scan-image-wrapper
-
-This is the wrapper module we are using. Just get it from npm.
-
-## Git
-
-Ask for credentials to be stored locally:
-
-```
-git config credential.helper store
-```
-
-Clone repo:
-
-```
-git clone https://github.com/djipco/surface-scanmeister
-```
-Enter credentials (once).
-
-Update from repo (put it in folder called `code`):
-
-```
-git pull https://github.com/djipco/surface-scanmeister code
-```
-
-## Start at boot
-
-In Terminal:
-
-```bash
-crontab -e
-```
-
-Insert:
-
-```
-@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
