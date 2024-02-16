@@ -63,12 +63,12 @@ const config = convict({
     brightness: {
       doc: 'The scanning brightness (-100...100)',
       format: 'int',
-      default: -25
+      default: 0
     },
     contrast: {
       doc: 'The scanning contrast (-100...100)',
       format: 'int',
-      default: 25
+      default: 75
     },
     lampOffScan: {
       doc: 'Whether open lamp while scanning (-100...100)',
