@@ -312,7 +312,7 @@ class ScanMeister {
         outputFile: config.get("paths.scansDir") + `/scanner${port}.png`
       }
       scanner.scan(options);
-      // scanner.scan().pipe(fs.createWriteStream(`image${port}.png`));
+
     }
 
   }

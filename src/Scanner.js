@@ -1,9 +1,12 @@
+// Node.js modules
+import net from "net";
+
+// Project classes
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 
-import net from "net";
 
 export class Scanner extends EventEmitter {
 
@@ -15,22 +18,13 @@ export class Scanner extends EventEmitter {
   #softwarePort;
   #oscPort;
   #scanning = false;
-
   #socket;
-
-  #options = {
-    // formats: ["png"],
-    // modes: ["Color", "Gray"],
-    resolutions: [75, 100, 150, 300, 600, 1200, 2400, 4800],
-    // depths: [8, 16]
-  }
 
   constructor(oscPort, options = {}) {
 
     super();
 
     this.#oscPort = oscPort;
-
     this.#softwarePort = options.port;
     this.#hardwarePort = options.hardwarePort;
     this.#systemName = options.systemName;
@@ -54,7 +48,6 @@ export class Scanner extends EventEmitter {
   get softwarePort() { return this.#softwarePort; }
 
   get scanning() { return this.#scanning; }
-  get options() { return this.#options; }
 
   async scan(options = {}) {
 
@@ -91,46 +84,24 @@ export class Scanner extends EventEmitter {
     }
 
     // Color mode
-    // if (this.options.modes.includes(options.mode)) {
-    //   args.push('--mode=' + options.mode);
-    // } else {
-      args.push('--mode=Color');
-    // }
+    args.push('--mode=Color');
 
     // Scanning bit depth
-    // if (this.options.depths.includes(options.mode)) {
-    //   args.push('--depth=' + options.depth);
-    // } else {
-      args.push('--depth=8');
-    // }
+    args.push('--depth=8'); // 8-bit per channel (RGB)
 
     // Scanning resolution
-    if (this.options.resolutions.includes(options.resolution)) {
-      args.push('--resolution=' + options.resolution);
-    } else {
-      args.push('--resolution=' + config.get("devices.resolution"));
-    }
+    args.push('--resolution=' + config.get("devices.resolution"));
 
     // Brightness (-100...100)
-    this.options.brightness = parseInt(this.options.brightness);
-    if (this.options.brightness) {
-      args.push('--brightness=' + options.brightness);
-    } else {
-      args.push('--brightness=0');
-    }
+    args.push('--brightness=' + config.get("devices.resolution"));
 
     // Contrast (-100...100)
-    this.options.contrast = parseInt(this.options.contrast);
-    if (this.options.contrast) {
-      args.push('--contrast=' + options.contrast);
-    } else {
-      args.push('--contrast=0');
-    }
+    args.push('--contrast=' + config.get("devices.contrast"));
 
     // Lamp off time
 
     // Lamp off scan
-    if (options.lampOffScan) {
+    if (config.get("devices.lampOffScan")) {
       args.push('--lamp-off-scan=yes');
     } else {
       args.push('--lamp-off-scan=no');
