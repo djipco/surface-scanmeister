@@ -92,11 +92,11 @@ export class Scanner extends EventEmitter {
     // Scanning resolution
     args.push('--resolution=' + config.get("devices.resolution"));
 
-    // Brightness (-100...100)
-    args.push('--brightness=' + config.get("devices.resolution"));
-
-    // Contrast (-100...100)
-    args.push('--contrast=' + config.get("devices.contrast"));
+    // // Brightness (-100...100)
+    // args.push('--brightness=' + config.get("devices.resolution"));
+    //
+    // // Contrast (-100...100)
+    // args.push('--contrast=' + config.get("devices.contrast"));
 
     // Lamp off time
 
