@@ -14,6 +14,14 @@ const config = convict({
     }
   },
 
+  operation: {
+    mode: {
+      doc: 'How the image should be sent to peer',
+      format: String,
+      default: 'tcp'  // tcp or smb
+    }
+  },
+
   osc: {
     local: {
       address: {
@@ -72,6 +80,19 @@ const config = convict({
       format: String,
       default: "//10.0.0.122/select"
     }
+  },
+
+  tcp: {
+    address: {
+      doc: 'Address of the remote server',
+      format: String,
+      default: "10.0.0.200"
+    },
+    port: {
+      doc: 'Port of the remote server',
+      format: String,
+      default: "1234"
+    },
   }
 
 });

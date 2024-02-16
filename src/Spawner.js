@@ -38,6 +38,16 @@ export class Spawner extends EventEmitter {
 
   }
 
+  pipe(destination, source = "stdout") {
+
+    if (source === "stdout") {
+      this.#process.stdout.pipe(destination);
+    } else if (source === "stderr") {
+      this.#process.stderr.pipe(destination);
+    }
+
+  }
+
   #onProcessStderr(data) {
 
     if (typeof this.#callbacks.onProcessStderrUser === 'function') {
