@@ -133,6 +133,8 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     const scanImageSpawner = new Spawner();
 
+    console.log(args);
+
     scanImageSpawner.execute(
       "scanimage",
       args,
