@@ -129,7 +129,7 @@ export class Scanner extends EventEmitter {
     }
 
     // Send the device's hardware port so TD knows which scanners it's receiving from
-    this.socket.write("device: " + this.hardwarePort + "\n");
+    this.socket.write("# Device: " + this.hardwarePort + "\n");
 
     // Initiate scanning
     const scanImageSpawner = new Spawner();
