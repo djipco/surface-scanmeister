@@ -1,18 +1,12 @@
-# TO DO
-* ~~Install `winston`for logging~~
-* ~~send OSC (to report on status)~~
-* Send file via netcat (if TD team fixes the issue, we need to check new version)
-* Clarify the inbound and outbound OSC schema
-
 # OSC Schema
 
 Trigger a scan on scanner connected to physical port 12:
 
-* /scan/12
+* `/scan/12`
 
-On startup and shutdown, the system broadcast this message:
+On startup and shutdown, the system broadcasts this message:
 
-* /system/status i 0 (or 1)
+* `/system/status i 0 (or 1)`
 
 
 # CONFIGURATION
@@ -136,6 +130,8 @@ Options specific to device 'genesys:libusb:001:008':
 
 ### Perform scan
 
+This will save the file on the disk as `image.png`
+
 ```sh
 scanimage \
   --device-name='genesys:libusb:001:008' \
@@ -146,8 +142,23 @@ scanimage \
   --brightness=0 \
   --contrast=0 \
   --lamp-off-scan=no \
-  --output-file='image008.png'
+  --output-file='image.png'
 ```
+
+### Send data to TD over TCP
+
+To quickly test the system, it is possible to pipe the output of `scanimage` into `nc` in order to 
+send it to TouchDesigner over a TCP connection:
+
+```scanimage --format=pnm --mode=Color | nc -q 0 10.0.0.200 1234```
+
+In this scenario, the image will appear in TD in the `image0` component. The format **must be** `pnm` and 
+the mode **must be** `Color`. This yiels a PNM in the P6 format.
+
+The **scanmeister** daemon running on the Pi does the same thing behind the scene. To identify which
+device the image is coming from, **scanmeister** adds a comment on the first line of the output. This
+is why images sent by **scanmeister** are properly indexed from 1 to 16 (matching the hardware device
+number).
 
 ## USB Devices
 
@@ -175,6 +186,9 @@ usb-devices
 
 ## Configure Access to Shared Folder
 
+This is only needed if the `smb` operating mode is used. In the `tcp` mode, there is no need to 
+bother with that.
+
 **On Windows:**
 
 * Create a user that will be used to connect from the Raspberry Pi
@@ -198,8 +212,8 @@ The NPM `samba-client` module needs the `smbclient` package to be installed.
 
 ## Node.js
 
-The control program is written in JavaScript so Node.js must be installed. First, we need to add the
-source for Node's latest LTS version:
+The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
+we need to add the source for Node's latest LTS version:
 
 ```
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
