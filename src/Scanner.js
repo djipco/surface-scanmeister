@@ -93,7 +93,7 @@ export class Scanner extends EventEmitter {
     args.push('--resolution=' + config.get("devices.resolution"));
 
     // Brightness (-100...100)
-    args.push('--brightness=' + config.get("devices.resolution"));
+    args.push('--brightness=' + config.get("devices.brightness"));
 
     // Contrast (-100...100)
     args.push('--contrast=' + config.get("devices.contrast"));
