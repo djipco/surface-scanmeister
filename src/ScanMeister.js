@@ -46,14 +46,18 @@ class ScanMeister {
 
   async init() {
 
-    // Try to write and delete a bogus directory to make sure we can access and write to the SMB
-    // share specified in the config.
-    try {
-      const name = (Math.random() + 1).toString(36).substring(2);
-      await this.#smbClient.mkdir(name);
-      await this.#smbClient.execute('rmdir', name);
-    } catch(err) {
-      logWarn("Cannot gain write access to SMB share (" + config.get("smb.address") + ")" );
+    if (config.get("operation.mode") == "smb") {
+
+      // Try to write and delete a bogus directory to make sure we can access and write to the SMB
+      // share specified in the config.
+      try {
+        const name = (Math.random() + 1).toString(36).substring(2);
+        await this.#smbClient.mkdir(name);
+        await this.#smbClient.execute('rmdir', name);
+      } catch(err) {
+        logWarn("Cannot gain write access to SMB share (" + config.get("smb.address") + ")" );
+      }
+
     }
 
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
