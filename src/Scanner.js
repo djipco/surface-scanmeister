@@ -109,7 +109,8 @@ export class Scanner extends EventEmitter {
 
     // Ask to report progress on stderr
     args.push('--progress');
-    // args.push('--preview');
+
+    // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
     args.push('--buffer-size=8'); // default is 32KB
 
 
@@ -132,8 +133,6 @@ export class Scanner extends EventEmitter {
 
     // Initiate scanning
     const scanImageSpawner = new Spawner();
-
-    console.log(args);
 
     scanImageSpawner.execute(
       "scanimage",

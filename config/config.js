@@ -50,11 +50,6 @@ const config = convict({
   },
 
   devices: {
-    // filter: {
-    //   doc: 'String used to find appropriate devices inside the `usb-devices` command output',
-    //   format: String,
-    //   default: 'Product=CanoScan'
-    // },
     resolution: {
       doc: 'The scanning resolution (in PDI) to use',
       format: [75, 100, 150, 300, 600, 1200, 2400, 4800],
