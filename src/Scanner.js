@@ -3,6 +3,8 @@ import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 
+import net from "net";
+
 export class Scanner extends EventEmitter {
 
   #systemName;
@@ -14,11 +16,13 @@ export class Scanner extends EventEmitter {
   #oscPort;
   #scanning = false;
 
+  #socket;
+
   #options = {
-    formats: ["png"],
-    modes: ["Color", "Gray"],
+    // formats: ["png"],
+    // modes: ["Color", "Gray"],
     resolutions: [75, 100, 150, 300, 600, 1200, 2400, 4800],
-    depths: [8, 16]
+    // depths: [8, 16]
   }
 
   constructor(oscPort, options = {}) {
@@ -52,7 +56,7 @@ export class Scanner extends EventEmitter {
   get scanning() { return this.#scanning; }
   get options() { return this.#options; }
 
-  scan(options = {}) {
+  async scan(options = {}) {
 
     // Ignore if already scanning
     if (this.scanning) {
@@ -74,26 +78,31 @@ export class Scanner extends EventEmitter {
       args.push(`--device-name=${this.systemName}`);
     }
 
-    // File format
-    if (this.options.formats.includes(options.format)) {
-      args.push('--format=' + options.format);
-    } else {
+    // File format and output
+    if (config.get("operation.mode") === "smb") {
       args.push('--format=png');
+      if (options.outputFile) {
+        args.push('--output-file=' + options.outputFile)
+      }
+    } else if (config.get("operation.mode") === "tcp") {
+      args.push('--format=pnm');
+    } else {
+      throw new Error(`Invalid operation mode: ${config.get("operation.mode")}`)
     }
 
-    // Scanning mode
-    if (this.options.modes.includes(options.mode)) {
-      args.push('--mode=' + options.mode);
-    } else {
+    // Color mode
+    // if (this.options.modes.includes(options.mode)) {
+    //   args.push('--mode=' + options.mode);
+    // } else {
       args.push('--mode=Color');
-    }
+    // }
 
     // Scanning bit depth
-    if (this.options.depths.includes(options.mode)) {
-      args.push('--depth=' + options.depth);
-    } else {
+    // if (this.options.depths.includes(options.mode)) {
+    //   args.push('--depth=' + options.depth);
+    // } else {
       args.push('--depth=8');
-    }
+    // }
 
     // Scanning resolution
     if (this.options.resolutions.includes(options.resolution)) {
@@ -130,11 +139,21 @@ export class Scanner extends EventEmitter {
     // Ask to report progress on stderr
     args.push('--progress');
     // args.push('--preview');
-    args.push('--buffer-size=32'); // default is 32KB
+    args.push('--buffer-size=8'); // default is 32KB
 
-    // Scan to file (instead of stdout)
-    if (options.outputFile) {
-      args.push('--output-file=' + options.outputFile)
+
+    // If we are using the "tcp" mode, we create a TCP client and connect to server
+    if (config.get("operation.mode") === "tcp") {
+
+      await new Promise(resolve => {
+
+        this.socket = net.createConnection(
+          { port: config.get("tcp.port"), host: config.get("tcp.address") },
+          resolve
+        );
+
+      });
+
     }
 
     // Initiate scanning
@@ -150,6 +169,8 @@ export class Scanner extends EventEmitter {
         stderrCallback: this.#onScanImageStderr.bind(this)
       }
     );
+
+    scanImageSpawner.pipe(this.socket, "stdout");
 
   }
 
