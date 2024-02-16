@@ -295,7 +295,8 @@ class ScanMeister {
     const port = parseInt(segments[1]);
 
     // Execute command
-    if (command === "scan" && message.args[0].value === 1) {
+    // if (command === "scan" && message.args[0].value === 1) {
+    if (command === "scan") {
 
       // Find scanner by port
       const scanner = this.getDeviceByHardwarePort(port);
