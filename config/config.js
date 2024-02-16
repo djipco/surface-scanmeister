@@ -1,6 +1,6 @@
 import convict from "convict"
-import {ipaddress} from 'convict-format-with-validator';
-convict.addFormat(ipaddress);
+import convict_format_with_validator from 'convict-format-with-validator';
+convict.addFormats(convict_format_with_validator);
 
 
 /************************************* START CONFIGURATION ****************************************/
@@ -17,8 +17,8 @@ const config = convict({
   operation: {
     mode: {
       doc: 'How the image should be sent to peer',
-      format: String,
-      default: 'tcp'  // tcp or smb
+      format: ["tcp", "smb"],
+      default: 'tcp'
     }
   },
 
@@ -56,9 +56,24 @@ const config = convict({
     //   default: 'Product=CanoScan'
     // },
     resolution: {
-      doc: 'The default scanning resolution to use in DPI',
-      format: 'int',
+      doc: 'The scanning resolution (in PDI) to use',
+      format: [75, 100, 150, 300, 600, 1200, 2400, 4800],
       default: 75
+    },
+    brightness: {
+      doc: 'The scanning brightness (-100...100)',
+      format: 'int',
+      default: 0
+    },
+    contrast: {
+      doc: 'The scanning contrast (-100...100)',
+      format: 'int',
+      default: 0
+    },
+    lampOffScan: {
+      doc: 'Whether open lamp while scanning (-100...100)',
+      format: 'Boolean',
+      default: false
     },
     hub: {
       manufacturerId: {
@@ -85,12 +100,12 @@ const config = convict({
   tcp: {
     address: {
       doc: 'Address of the remote server',
-      format: String,
+      format: 'ipaddress',
       default: "10.0.0.200"
     },
     port: {
       doc: 'Port of the remote server',
-      format: String,
+      format: 'port',
       default: "1234"
     },
   }
