@@ -7,8 +7,11 @@ import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import {credentials} from "../config/credentials.js";
+import process from "node:process";
+import { readFile } from 'fs/promises';
+const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
-class ScanMeister {
+export default class ScanMeister {
 
   #scanners = [];
   #callbacks = {}
@@ -16,25 +19,7 @@ class ScanMeister {
   #oscPort;
   #smbClient;
 
-  constructor() {
-
-    // Instantiate OSC UDP port
-    this.#oscPort = new osc.UDPPort({
-      localAddress: config.get("osc.local.address"),
-      localPort: config.get("osc.local.port"),
-      remoteAddress: config.get("osc.remote.address"),
-      remotePort: config.get("osc.remote.port"),
-      metadata: true
-    });
-
-    // Prepare SMB client
-    this.#smbClient = new SambaClient({
-      address: config.get("smb.address"),
-      username: credentials.smb.username,
-      password: credentials.smb.password
-    });
-
-  }
+  constructor() {}
 
   get scanners() {
     return this.#scanners;
@@ -44,41 +29,51 @@ class ScanMeister {
     return this.#oscCommands;
   }
 
-  async init() {
+  async start() {
 
+    logInfo(`Starting ${pkg.title} v${pkg.version}...`);
+
+    // Check platform
+    // if (process.platform !== "linux") {
+    //   logError(`This platform (${process.platform}) is not supported.`);
+    //   logInfo("Exiting...");
+    //   setTimeout(() => process.exit(1), 500); // wait for log files to be written
+    // }
+
+    // Watch for quit signals
+    this.#callbacks.onExitRequest = this.#onExitRequest.bind(this);
+    process.on("SIGINT", this.#callbacks.onExitRequest);               // CTRL+C
+    process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
+    process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
+
+    // Set up SMB (if necessary)
     if (config.get("operation.mode") == "smb") {
-
-      // Try to write and delete a bogus directory to make sure we can access and write to the SMB
-      // share specified in the config.
       try {
-        const name = (Math.random() + 1).toString(36).substring(2);
-        await this.#smbClient.mkdir(name);
-        await this.#smbClient.execute('rmdir', name);
-      } catch(err) {
-        logWarn("Cannot gain write access to SMB share (" + config.get("smb.address") + ")" );
+        await this.setupSmb();
+      } catch (e) {
+        logWarn(e.message);
       }
-
     }
 
-    // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
-    // event, we're good to go.
-    const onInitialOscError = async err => {
+    // Set up OSC (mandatory)
+    try {
+      this.setupOsc()
+    } catch (err) {
       logError(err);
-      await this.destroy();
-      logInfo("Exiting...");
+      await this.quit();
+      return;
     }
-    this.#oscPort.once("error", onInitialOscError);
-    this.#oscPort.open();
-    await new Promise(resolve => this.#oscPort.once("ready", resolve));
-    this.#oscPort.off("error", onInitialOscError);
 
-    // Now that OSC is ready, add callbacks for inbound messages (must be done before creating
-    // scanner objects)
-    this.#addOscCallbacks();
+    // Report OSC status
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
 
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
 
+    // Report number of scanners found
     if (Object.entries(shd).length === 0) {
       this.#scanners = [];
       logWarn("No scanners found.");
@@ -91,19 +86,79 @@ class ScanMeister {
     // Use the scanner hardware descriptors to build list of Scanner objects
     await this.#updateScannerList(shd);
 
-    // Log scanners to console
+    // Log scanner details to console
     this.scanners.forEach((device, index) => {
       logInfo(`    ${index+1}. ${device.description}`, true)
     });
 
-    // Send status via OSC
+    // Send ready status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
-    logInfo(
-      `Listening for OSC on ` +
-      config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    );
+  }
 
+  async setupOsc() {
+
+    // Instantiate OSC UDP port
+    this.#oscPort = new osc.UDPPort({
+      localAddress: config.get("osc.local.address"),
+      localPort: config.get("osc.local.port"),
+      remoteAddress: config.get("osc.remote.address"),
+      remotePort: config.get("osc.remote.port"),
+      metadata: true
+    });
+
+    // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
+    // event, we're good to go.
+    this.#callbacks.onInitialOscError = err => {
+      throw err;
+    }
+    this.#oscPort.once("error", this.#callbacks.onInitialOscError);
+    this.#oscPort.open();
+    await new Promise(resolve => this.#oscPort.once("ready", resolve));
+    this.#oscPort.off("error", this.#callbacks.onInitialOscError);
+    this.#callbacks.onInitialOscError = undefined;
+
+    // Now that OSC is ready, add callbacks for inbound messages (must be done before creating
+    // scanner objects)
+    this.#callbacks.onOscError = this.#onOscError.bind(this);
+    this.#oscPort.on("error", this.#callbacks.onOscError);
+    this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
+    this.#oscPort.on("message", this.#callbacks.onOscMessage);
+    // this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
+    // this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
+
+  }
+
+  async setupSmb() {
+
+    // Prepare SMB client
+    this.#smbClient = new SambaClient({
+      address: config.get("smb.address"),
+      username: credentials.smb.username,
+      password: credentials.smb.password
+    });
+
+    try {
+      const name = (Math.random() + 1).toString(36).substring(2);
+      await this.#smbClient.mkdir(name);
+      await this.#smbClient.execute('rmdir', name);
+    } catch(err) {
+      throw new Error("Cannot gain write access to SMB share (" + config.get("smb.address") + ")");
+    }
+
+  }
+
+  async #onExitRequest() {
+    await this.quit();
+  }
+
+  async quit() {
+    process.off("SIGINT", this.callbacks.onExitRequest);       // CTRL+C
+    process.off("SIGQUIT", this.callbacks.onExitRequest);      // Keyboard quit
+    process.off("SIGTERM", this.callbacks.onExitRequest);      // `kill` command
+    logInfo("Exiting...");
+    await this.destroy();
+    process.exit();
   }
 
   /**
@@ -238,15 +293,6 @@ class ScanMeister {
 
   }
 
-  #addOscCallbacks() {
-    this.#callbacks.onOscError = this.#onOscError.bind(this);
-    this.#oscPort.on("error", this.#callbacks.onOscError);
-    this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
-    this.#oscPort.on("message", this.#callbacks.onOscMessage);
-    // this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
-    // this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
-  }
-
   async #onOscError(error) {
     logError(error);
     await this.destroy();
@@ -373,10 +419,3 @@ class ScanMeister {
   }
 
 }
-
-// Export singleton instance class. The 'constructor' is nulled so that it cannot be used to
-// instantiate a new object or extend it. However, it is not freezed so it remains extensible
-// (properties can be added at will).
-const sm = new ScanMeister();
-sm.constructor = null;
-export {sm as ScanMeister};
