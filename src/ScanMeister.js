@@ -288,9 +288,7 @@ export default class ScanMeister {
   }
 
   async #onOscError(error) {
-    logError(error);
-    await this.destroy();
-    logInfo("Exiting...");
+    logWarn(error);
   }
 
   #removeOscCallbacks() {
