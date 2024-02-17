@@ -68,7 +68,7 @@ const config = convict({
     lampOffScan: {
       doc: 'Whether open lamp while scanning (-100...100)',
       format: 'Boolean',
-      default: true
+      default: false
     },
     hub: {
       manufacturerId: {
