@@ -153,9 +153,9 @@ export default class ScanMeister {
   }
 
   async quit() {
-    process.off("SIGINT", this.callbacks.onExitRequest);       // CTRL+C
-    process.off("SIGQUIT", this.callbacks.onExitRequest);      // Keyboard quit
-    process.off("SIGTERM", this.callbacks.onExitRequest);      // `kill` command
+    process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
+    process.off("SIGQUIT", this.#callbacks.onExitRequest);      // Keyboard quit
+    process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
     logInfo("Exiting...");
     await this.destroy();
     process.exit();
