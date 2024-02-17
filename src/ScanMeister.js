@@ -39,14 +39,7 @@ export default class ScanMeister {
       setTimeout(() => process.exit(1), 500); // wait for log files to be written
     }
 
-    // Set up OSC (mandatory)
-    try {
-      this.setupOsc()
-    } catch (e) {
-      logError(e.message);
-      await this.quit(1);
-      return;
-    }
+
 
     // Set up SMB (if necessary)
     if (config.get("operation.mode") == "smb") {
@@ -78,6 +71,15 @@ export default class ScanMeister {
       logInfo(`    ${index+1}. ${device.description}`, true)
     });
 
+    // Set up OSC (mandatory)
+    try {
+      this.setupOsc()
+    } catch (e) {
+      logError(e.message);
+      await this.quit(1);
+      return;
+    }
+
     // Report OSC status
     logInfo(
       `Listening for OSC on ` +
@@ -103,7 +105,7 @@ export default class ScanMeister {
     this.#removeOscCallbacks();
 
     // Send notification and close OSC
-    if (this.#oscPort.socket) {
+    if (this.#oscPort && this.#oscPort.socket) {
       this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
       this.#oscPort.close();
