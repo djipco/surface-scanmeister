@@ -63,9 +63,6 @@ export default class ScanMeister {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
     }
 
-    // Use the scanner hardware descriptors to build list of Scanner objects
-    await this.#updateScannerList(shd);
-
     // Set up OSC (mandatory)
     try {
       this.setupOsc()
@@ -74,6 +71,14 @@ export default class ScanMeister {
       await this.quit(1);
       return;
     }
+
+
+
+
+    // Use the scanner hardware descriptors to build list of Scanner objects
+    await this.#updateScannerList(shd);
+
+
 
 
     // Log scanner details to console
