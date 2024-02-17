@@ -8,7 +8,7 @@ const config = convict({
 
   paths: {
     scansDir: {
-      doc: 'Path to directory where scans should be saved',
+      doc: 'Path to directory where scans should be saved in "file" mode',
       format: String,
       default: '/home/surface/scans'
     }
@@ -16,10 +16,23 @@ const config = convict({
 
   operation: {
     mode: {
-      doc: 'How the image should be sent to peer',
-      format: ["tcp", "smb"],
+      doc: 'Whether to save the scan locally (file) of send it via network (tcp)',
+      format: ["tcp", "file"],
       default: 'tcp'
     }
+  },
+
+  tcp: {
+    address: {
+      doc: 'Address of the remote server',
+      format: 'ipaddress',
+      default: "10.0.0.200"
+    },
+    port: {
+      doc: 'Port of the remote server',
+      format: 'port',
+      default: "1234"
+    },
   },
 
   osc: {
@@ -81,27 +94,6 @@ const config = convict({
         format: String,
         default: "0209"
       }
-    },
-  },
-
-  smb: {
-    address: {
-      doc: 'Path to remote SMB-shared directory where scans should be saved',
-      format: String,
-      default: "//10.0.0.200/select"
-    }
-  },
-
-  tcp: {
-    address: {
-      doc: 'Address of the remote server',
-      format: 'ipaddress',
-      default: "10.0.0.200"
-    },
-    port: {
-      doc: 'Port of the remote server',
-      format: 'port',
-      default: "1234"
     },
   }
 

@@ -1,13 +1,11 @@
 // Import modules
 import osc from "osc";
-import SambaClient from "samba-client";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
-import {credentials} from "../config/credentials.js";
 import process from "node:process";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
@@ -18,7 +16,6 @@ export default class ScanMeister {
   #oscCommands = ["scan"];
   #oscPort;
   #scanners = [];
-  #smbClient;
 
   constructor() {}
 
@@ -39,15 +36,14 @@ export default class ScanMeister {
       setTimeout(() => process.exit(1), 500); // wait for log files to be written
     }
 
-
-
-    // Set up SMB (if necessary)
-    if (config.get("operation.mode") == "smb") {
-      try {
-        await this.setupSmb();
-      } catch (e) {
-        logWarn(e.message);
-      }
+    // Set up OSC. This must be done before updating the scanners list because scanners need a
+    // reference to the OSC object to send status.
+    try {
+      this.setupOsc()
+    } catch (e) {
+      logError(e.message);
+      await this.quit(1);
+      return;
     }
 
     // Retrieve list of objects describing scanner ports and device numbers
@@ -63,32 +59,15 @@ export default class ScanMeister {
       logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
     }
 
-    // Set up OSC (mandatory)
-    try {
-      this.setupOsc()
-    } catch (e) {
-      logError(e.message);
-      await this.quit(1);
-      return;
-    }
-
-
-
-
     // Use the scanner hardware descriptors to build list of Scanner objects
     await this.#updateScannerList(shd);
-
-
-
 
     // Log scanner details to console
     this.scanners.forEach((device, index) => {
       logInfo(`    ${index+1}. ${device.description}`, true)
     });
 
-
-
-    // Report OSC status
+    // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `Listening for OSC on ` +
       config.get("osc.local.address") + ":" + config.get("osc.local.port")
@@ -161,25 +140,6 @@ export default class ScanMeister {
     this.#oscPort.on("error", this.#callbacks.onOscError);
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
     this.#oscPort.on("message", this.#callbacks.onOscMessage);
-
-  }
-
-  async setupSmb() {
-
-    // Prepare SMB client
-    this.#smbClient = new SambaClient({
-      address: config.get("smb.address"),
-      username: credentials.smb.username,
-      password: credentials.smb.password
-    });
-
-    try {
-      const name = (Math.random() + 1).toString(36).substring(2);
-      await this.#smbClient.mkdir(name);
-      await this.#smbClient.execute('rmdir', name);
-    } catch(err) {
-      throw new Error("Cannot gain write access to SMB share (" + config.get("smb.address") + ")");
-    }
 
   }
 

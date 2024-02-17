@@ -21,31 +21,6 @@
 * To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution
   (1280x720)
 
-## Configure Access to SMB Shared Folder
-
-This is only needed if the `smb` operating mode is used in `scanmeister`. In the `tcp` mode, there is no need
-to bother with that.
-
-**On Windows box running TouchDesigner:**
-
-* Create a user that will be used to connect from the Raspberry Pi
-* Share a folder where the scans should be stored
-
-**On the Pi:**
-
-* Specify the address to the SMB-shared folder in the `config/config.js` file
-
-```sh
-smb: {
-  address: {
-    doc: 'Path to remote SMB-shared directory where scans should be saved',
-    format: String,
-    default: "//10.0.0.122/some_dir"
-  }
-}
-```
-
-The NPM `samba-client` module needs the `smbclient` package to be installed.
 
 ## Node.js
 
