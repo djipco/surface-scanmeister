@@ -103,7 +103,7 @@ export default class ScanMeister {
     this.#removeOscCallbacks();
 
     // Send notification and close OSC
-    if (this.#oscPort.socket) {
+    if (this.#oscPort && this.#oscPort.socket) {
       this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
       this.#oscPort.close();
