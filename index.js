@@ -1,9 +1,10 @@
+// Import modules
 import {ScanMeister} from "./src/ScanMeister.js";
 import {logInfo, logError} from "./src/Logger.js"
 import process from 'node:process';
-
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('./package.json', import.meta.url)));
+
 
 // Check platform
 if (process.platform !== "linux") {
@@ -13,7 +14,7 @@ if (process.platform !== "linux") {
 }
 
 // Start ScanMeister
-logInfo(`Starting ScanMeister v${pkg.version}...`);
+logInfo(`Starting ${pkg.title} v${pkg.version}...`);
 
 ScanMeister.init()
   .then(() => {
