@@ -77,7 +77,7 @@ export class Scanner extends EventEmitter {
     }
 
     // File format and output
-    if (config.get("operation.mode") === "smb") {
+    if (config.get("operation.mode") === "file") {
       args.push('--format=png');
       if (options.outputFile) {
         args.push('--output-file=' + options.outputFile)
