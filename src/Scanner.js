@@ -37,14 +37,19 @@ export class Scanner extends EventEmitter {
   }
 
   get systemName() { return this.#systemName; }
+
   get manufacturer() { return this.#manufacturer; }
+
   get model() { return this.#model; }
+
   get description() {
     return `${this.manufacturer} ${this.model} on hardware port #${this.hardwarePort} (${this.systemName})`;
   }
 
   get bus() { return this.#bus; }
+
   get hardwarePort() { return this.#hardwarePort; }
+
   get softwarePort() { return this.#softwarePort; }
 
   get scanning() { return this.#scanning; }
@@ -186,10 +191,11 @@ export class Scanner extends EventEmitter {
     this.#oscPort.send({address: address, args: args});
   }
 
-  destroy() {
+  async destroy() {
     this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
     this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
     this.removeListener();
+    await new Promise(resolve => setTimeout(resolve, 25));
   }
 
 }

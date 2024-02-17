@@ -1,3 +1,4 @@
+// Import modules
 import osc from "osc";
 import SambaClient from "samba-client";
 import {Scanner} from './Scanner.js';
@@ -13,38 +14,30 @@ const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url
 
 export default class ScanMeister {
 
-  #scanners = [];
   #callbacks = {}
   #oscCommands = ["scan"];
   #oscPort;
+  #scanners = [];
   #smbClient;
 
   constructor() {}
 
-  get scanners() {
-    return this.#scanners;
-  }
-
-  get oscCommands() {
-    return this.#oscCommands;
-  }
-
   async start() {
-
-    logInfo(`Starting ${pkg.title} v${pkg.version}...`);
-
-    // Check platform
-    // if (process.platform !== "linux") {
-    //   logError(`This platform (${process.platform}) is not supported.`);
-    //   logInfo("Exiting...");
-    //   setTimeout(() => process.exit(1), 500); // wait for log files to be written
-    // }
 
     // Watch for quit signals
     this.#callbacks.onExitRequest = this.#onExitRequest.bind(this);
     process.on("SIGINT", this.#callbacks.onExitRequest);               // CTRL+C
     process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
+
+    logInfo(`Starting ${pkg.title} v${pkg.version}...`);
+
+    // Check platform
+    if (process.platform !== "linux") {
+      logError(`This platform (${process.platform}) is not supported.`);
+      logInfo("Exiting...");
+      setTimeout(() => process.exit(1), 500); // wait for log files to be written
+    }
 
     // Set up SMB (if necessary)
     if (config.get("operation.mode") == "smb") {
@@ -54,21 +47,6 @@ export default class ScanMeister {
         logWarn(e.message);
       }
     }
-
-    // Set up OSC (mandatory)
-    try {
-      this.setupOsc()
-    } catch (err) {
-      logError(err);
-      await this.quit();
-      return;
-    }
-
-    // Report OSC status
-    logInfo(
-      `Listening for OSC on ` +
-      config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    );
 
     // Retrieve list of objects describing scanner ports and device numbers
     const shd = await this.#getScannerHardwareDescriptors();
@@ -91,9 +69,58 @@ export default class ScanMeister {
       logInfo(`    ${index+1}. ${device.description}`, true)
     });
 
+    // Set up OSC (mandatory)
+    try {
+      this.setupOsc()
+    } catch (e) {
+      logError(e.message);
+      await this.quit(1);
+      return;
+    }
+
+    // Report OSC status
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
+
     // Send ready status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
+  }
+
+  async quit(status = 0) {
+
+    logInfo("Exiting...");
+
+    // Remove quit listeners
+    process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
+    process.off("SIGQUIT", this.#callbacks.onExitRequest);      // Keyboard quit
+    process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
+
+    // Destroy scanners and remove callbacks
+    this.scanners.forEach(async device => await device.destroy());
+    this.#removeOscCallbacks();
+
+    // Send notification and close OSC
+    if (this.#oscPort.socket) {
+      this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
+      await new Promise(resolve => setTimeout(resolve, 25));
+      this.#oscPort.close();
+      this.#oscPort = null;
+    }
+
+    // Exit
+    process.exit(status);
+
+  }
+
+  get scanners() {
+    return this.#scanners;
+  }
+
+  get oscCommands() {
+    return this.#oscCommands;
   }
 
   async setupOsc() {
@@ -110,8 +137,8 @@ export default class ScanMeister {
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
     this.#callbacks.onInitialOscError = err => {
-      throw err;
-    }
+      throw new Error(`Unable to start OSC server: ${err}`)
+    };
     this.#oscPort.once("error", this.#callbacks.onInitialOscError);
     this.#oscPort.open();
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
@@ -124,8 +151,6 @@ export default class ScanMeister {
     this.#oscPort.on("error", this.#callbacks.onOscError);
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
     this.#oscPort.on("message", this.#callbacks.onOscMessage);
-    // this.#callbacks.onOscBundle = this.#onOscBundle.bind(this);
-    // this.#oscPort.on("bundle", this.#callbacks.onOscBundle);
 
   }
 
@@ -148,23 +173,22 @@ export default class ScanMeister {
 
   }
 
+  sendOscMessage(address, args = []) {
+    if (!this.#oscPort.socket) {
+      logWarn("Impossible to send OSC, no socket available.")
+      return;
+    }
+    this.#oscPort.send({address: address, args: args});
+  }
+
+  getDeviceByHardwarePort(port) {
+    return this.scanners.find(device => device.hardwarePort === port);
+  }
+
   async #onExitRequest() {
     await this.quit();
   }
 
-  async quit() {
-    process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
-    process.off("SIGQUIT", this.#callbacks.onExitRequest);      // Keyboard quit
-    process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
-    logInfo("Exiting...");
-    await this.destroy();
-    process.exit();
-  }
-
-  /**
-   *
-   * @returns {Promise<object>}
-   */
   async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
@@ -322,12 +346,6 @@ export default class ScanMeister {
 
   }
 
-  /**
-   *
-   * @param {object} message
-   * @param {string} message.address
-   * @param {[]} message.address.args
-   */
   #onOscMessage(message) {
   // #onOscMessage(message, timetag, info) {
 
@@ -358,61 +376,6 @@ export default class ScanMeister {
         outputFile: config.get("paths.scansDir") + `/scanner${port}.png`
       }
       scanner.scan(options);
-
-    }
-
-  }
-
-  // #onOscBundle(bundle, timetag, info) {
-  //
-  //   // console.log("tag", timetag);
-  //
-  //   // const segments = message.address.split("/").slice(1);
-  //   // if (segments[0] !== "midi") return;
-  //   //
-  //   // // Check if command is supported (case-insensitive) and trigger it if it is.
-  //   // const index = this.oscCommands.findIndex(command => {
-  //   //   return command.toLowerCase() === segments[2].toLowerCase();
-  //   // });
-  //   //
-  //   // if (index >= 0) {
-  //   //   const command = this.oscCommands[index];
-  //   //   const channel = segments[1];
-  //   //
-  //   //   const time = osc.ntpToJSTime(timetag.raw[0], timetag.raw[1]);
-  //   //
-  //   //   this[`on${command}`](channel, segments[2], message.args, time);
-  //   //   this.emit("data", {command: command, channel: channel, args: message.args, time: time});
-  //   // }
-  //
-  // }
-
-  sendOscMessage(address, args = []) {
-    if (!this.#oscPort.socket) {
-      logWarn("Impossible to send OSC, no socket available.")
-      return;
-    }
-    this.#oscPort.send({address: address, args: args});
-  }
-
-  getDeviceByHardwarePort(port) {
-    return this.scanners.find(device => device.hardwarePort === port);
-  }
-
-  async destroy() {
-
-    // Destroy scanners and remove callbacks
-    this.scanners.forEach(device => device.destroy());
-    this.#removeOscCallbacks();
-
-    if (this.#oscPort.socket) {
-
-      // Broadcast system status (and leave enough time for the message to be sent)
-      this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
-      await new Promise(resolve => setTimeout(resolve, 25));
-
-      this.#oscPort.close();
-      this.#oscPort = null;
 
     }
 
