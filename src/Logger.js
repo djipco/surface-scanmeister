@@ -1,10 +1,12 @@
 import { createLogger, format, transports } from "winston";
 import "winston-daily-rotate-file";
+import { readFile } from 'fs/promises';
+const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
-
+// Prepare daily rotate file transport
 const drfTransport = new transports.DailyRotateFile({
-  level: 'info',
-  filename: 'scanmeister.%DATE%.log',
+  level: 'debug',
+  filename: `${pkg.name}.%DATE%.log`,
   dirname: "logs",
   datePattern: 'YYYY-MM-DD',
   zippedArchive: true,
@@ -12,8 +14,9 @@ const drfTransport = new transports.DailyRotateFile({
   maxFiles: '60d'
 });
 
+// Create logger
 const logger = createLogger({
-  level: 'info',
+  level: 'debug',
   format: format.combine(
     format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
     format.errors(),
@@ -33,16 +36,19 @@ const logger = createLogger({
   ]
 });
 
+
+
+
+
+
+
+
+
+
+
+
+// Export functions
 const logInfo = logger.info;
 const logWarn = logger.warn;
 const logError = logger.error;
-
 export {logInfo, logWarn, logError};
-
-
-// logger.log
-// // info: test message my string {}
-// logger.log('info', 'test message %s', 'my string');
-//
-// // info: test message 123 {}
-// logger.log('info', 'test message %d', 123);

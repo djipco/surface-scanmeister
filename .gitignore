@@ -1,9 +1,9 @@
 ### Node template
 # Logs
-logs/
+/logs/*
 
 # Dependency directories
-node_modules/
+/node_modules/
 
 # Passwords
 /config/credentials.js
