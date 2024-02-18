@@ -52,7 +52,7 @@ const config = convict({
       address: {
         doc: 'Remote IP address to send OSC to',
         format: 'ipaddress',
-        default: '10.0.0.132'
+        default: '10.0.0.200'
       },
       port: {
         doc: 'Remote port to send OSC to',
