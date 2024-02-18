@@ -18,6 +18,12 @@ const models = [
     driverPrefix: "genesys:libusb:"
   },
   {
+    name: "CanoScan LiDE 120",
+    manufacturer: "Canon",
+    identifier: "04a9:190e",
+    driverPrefix: "genesys:libusb:"
+  },
+  {
     name: "CanoScan LiDE 210",
     manufacturer: "Canon",
     identifier: "04a9:190a",
