@@ -26,6 +26,9 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessStderrUser = options.stderrCallback;
 
     // Execute command and store resulting process object
+    this.#command = command;
+    this.#parameters = parameters;
+    this.#options = options;
     this.#process = spawn(command, parameters, options);
 
     // Add error handlers
@@ -61,8 +64,12 @@ export class Spawner extends EventEmitter {
       this.#callbacks.onProcessStderrUser(data.toString().trim());
     }
 
-    this.emit("stderr", data.toString().trim());
+    this.emit("stderr", data.toString().trim() + this.getDetails());
 
+  }
+
+  getDetails() {
+    return `${this.#command} // ${this.#parameters} // ${this.#options}`;
   }
 
   #onProcessError(error) {
@@ -72,8 +79,6 @@ export class Spawner extends EventEmitter {
     }
 
     this.#removeAllListeners();
-    // this.emit("error", Buffer.from(error, "utf-8"));
-    console.log("onProcessError", this.#command, this.#parameters, this.#options);
     this.emit("error", error.message);
 
     this.#process = null;
