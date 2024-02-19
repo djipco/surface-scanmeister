@@ -126,7 +126,7 @@ export default class ScanMeister {
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
     this.#callbacks.onInitialOscError = err => {
-      throw new Error(`Unable to start OSC server: ${err}`)
+      throw new Error(`Unable to start OSC server (${err.message})`)
     };
     this.#oscPort.once("error", this.#callbacks.onInitialOscError);
     this.#oscPort.open();
