@@ -139,8 +139,6 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     const scanImageSpawner = new Spawner();
 
-    args.push("--device-name=xxxxxx")
-
     scanImageSpawner.execute(
       "scanimage",
       args,
@@ -162,9 +160,8 @@ export class Scanner extends EventEmitter {
 
     // When called with the --progress switch, scanimage reports progress on stderr
     if (prefix !== "Progress") {
-      console.log("onScanImageStderr");
       this.emit("error", data);
-      logError("Error: " + data);
+      logError("STDERR: " + data);
     } else {
       percentage = parseFloat(percentage.slice(0, -1)) / 100;
       this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: percentage}]);
@@ -173,7 +170,6 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageError(error) {
-    console.log("onScanImageError");
     this.#scanning = false;
     this.emit("warning", error);
     logWarn(error);
