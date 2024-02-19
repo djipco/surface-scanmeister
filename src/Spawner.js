@@ -6,12 +6,19 @@ export class Spawner extends EventEmitter {
   #process;
   #buffer = "";
   #callbacks = {};
+  #command;
+  #parameters
+  #options
 
   constructor() {
     super();
   }
 
   execute(command, parameters = [], options = {}) {
+
+    this.#command = command;
+    this.#parameters = parameters;
+    this.#options = options;
 
     // Save user-defined callbacks
     this.#callbacks.onProcessSuccessUser = options.sucessCallback;
@@ -59,11 +66,16 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessError(error) {
+
     if (typeof this.#callbacks.onProcessErrorUser === 'function') {
       this.#callbacks.onProcessErrorUser();
     }
+
     this.#removeAllListeners();
-    this.emit("error", Buffer.from(error, "utf-8"));
+    // this.emit("error", Buffer.from(error, "utf-8"));
+    console.log("onProcessError", this.#command, this.#parameters, this.#options);
+    this.emit("error", error.message);
+
     this.#process = null;
     this.#buffer = "";
   }
