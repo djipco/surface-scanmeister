@@ -39,7 +39,7 @@ export default class ScanMeister {
     // Set up OSC. This must be done before updating the scanners list because scanners need a
     // reference to the OSC object to send status.
     try {
-      this.setupOsc()
+      await this.setupOsc()
     } catch (e) {
       logError(e.message);
       await this.quit(1);
