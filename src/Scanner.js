@@ -139,7 +139,7 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     const scanImageSpawner = new Spawner();
 
-    args.push("xxxxxx")
+    args.push("--device-name=xxxxxx")
 
     scanImageSpawner.execute(
       "scanimage",
@@ -162,6 +162,7 @@ export class Scanner extends EventEmitter {
 
     // When called with the --progress switch, scanimage reports progress on stderr
     if (prefix !== "Progress") {
+      console.log("onScanImageStderr");
       this.emit("error", data);
       logError("Error: " + data);
     } else {
@@ -172,6 +173,7 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageError(error) {
+    console.log("onScanImageError");
     this.#scanning = false;
     this.emit("warning", error);
     logWarn(error);
