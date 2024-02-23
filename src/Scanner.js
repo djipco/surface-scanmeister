@@ -7,7 +7,6 @@ import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 
-
 export class Scanner extends EventEmitter {
 
   #systemName;
@@ -186,7 +185,7 @@ export class Scanner extends EventEmitter {
   }
 
   sendOscMessage(address, args = []) {
-    if (!this.#oscPort.socket) {
+    if (!this.#oscPort || !this.#oscPort.socket) {
       logWarn("Impossible to send OSC, no socket available.")
       return;
     }
