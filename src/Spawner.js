@@ -64,6 +64,7 @@ export class Spawner extends EventEmitter {
       this.#callbacks.onProcessStderrUser(data.toString().trim());
     }
 
+    this.removeAllListeners();
     this.emit("stderr", data.toString().trim() + this.getDetails());
 
   }
@@ -74,13 +75,11 @@ export class Spawner extends EventEmitter {
 
   #onProcessError(error) {
 
-    console.log("onProcessError", error);
-
     if (typeof this.#callbacks.onProcessErrorUser === 'function') {
       this.#callbacks.onProcessErrorUser();
     }
 
-    this.#removeAllListeners();
+    this.removeAllListeners();
     this.emit("error", error.message);
 
     this.#process = null;
@@ -99,12 +98,12 @@ export class Spawner extends EventEmitter {
       this.#callbacks.onProcessSuccessUser(this.#buffer);
     }
     this.emit("complete", this.#buffer);
-    this.#removeAllListeners();
+    this.removeAllListeners();
     this.#buffer = "";
     this.#process = null;
   }
 
-  #removeAllListeners() {
+  removeAllListeners() {
 
     // Remove reference to user callbacks
     this.#callbacks.onProcessSuccessUser = null;
@@ -127,7 +126,7 @@ export class Spawner extends EventEmitter {
   }
 
   destroy() {
-    this.#removeAllListeners();
+    this.removeAllListeners();
     this.removeListener();
   }
 
