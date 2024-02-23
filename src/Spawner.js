@@ -60,6 +60,8 @@ export class Spawner extends EventEmitter {
 
   #onProcessStderr(data) {
 
+    console.log("onProcessStderr", data);
+
     if (typeof this.#callbacks.onProcessStderrUser === 'function') {
       this.#callbacks.onProcessStderrUser(data.toString().trim());
     }
@@ -73,6 +75,8 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessError(error) {
+
+    console.log("onProcessError", error);
 
     if (typeof this.#callbacks.onProcessErrorUser === 'function') {
       this.#callbacks.onProcessErrorUser();
@@ -89,7 +93,10 @@ export class Spawner extends EventEmitter {
     this.#buffer += data.toString()
   }
 
-  #onProcessEnd() {
+  #onProcessEnd(abc) {
+
+    console.log("onProcessEnd", abc);
+
     if (typeof this.#callbacks.onProcessSuccessUser === 'function') {
       this.#callbacks.onProcessSuccessUser(this.#buffer);
     }
