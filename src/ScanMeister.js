@@ -225,18 +225,19 @@ export default class ScanMeister {
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
-      // If the scanner does not create logical sub-devices, we can use the parent as the actual hub
-      // device. However, if the device does create logical sub-devices, we must go one level above.
+
+
+      // "parent" is the hub or subgroup
       let parent = this.getDescriptor(scanner.parent);
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
 
-      // Hardware port (the number physically written on the device)
+
 
       // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
-      let portId = scanner.port;
+      let portId = scanner.port.toString();
       if (hub.hasSubGroups) portId = `${parent.port}-${portId}`;
 
-      // Get physical port number
+      // Get physical port number (the number physically written on the device)
       const port = hub.ports.find(p => p.portId === portId);
       if (port) scanner.hardwarePort = port.physical;
 
