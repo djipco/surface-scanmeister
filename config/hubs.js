@@ -3,7 +3,10 @@
  */
 const hubs = [
   {
-    identifier: "045b:0209", // vendor:productId for Atolla hub
+    identifier: "045b:0209",
+    vendor: "045b",
+    productId: "0209",
+    description: "Atolla USB 3.0 16-Port Hub",
     ports: [
       {physical: 1,  portId: "3-3"},
       {physical: 2,  portId: "3-2"},
@@ -21,6 +24,21 @@ const hubs = [
       {physical: 14, portId: "0-2"},
       {physical: 15, portId: "0-1"},
       {physical: 16, portId: "0-0"},
+    ]
+  },
+  {
+    identifier: "0409:0050",
+    vendor: "0409",
+    productId: "0050",
+    description: "Dynex USB 2.0 7-Port Hub",
+    ports: [
+      {physical: 1,  portId: "3-3"},
+      {physical: 2,  portId: "3-2"},
+      {physical: 3,  portId: "3-1"},
+      {physical: 4,  portId: "3-0"},
+      {physical: 5,  portId: "2-3"},
+      {physical: 6,  portId: "2-2"},
+      {physical: 7,  portId: "2-1"}
     ]
   }
 ]

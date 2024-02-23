@@ -4,7 +4,7 @@ import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
-import {hubs} from "../config/hubs.js";
+import {configHubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import process from "node:process";
 import { readFile } from 'fs/promises';
@@ -215,8 +215,28 @@ export default class ScanMeister {
           return d;
         });
 
-        // From all the identified devices, only keep the ones related to the USB hub where the
-        // scanners are connected. For this, we use the hub's manufacturer and product IDs.
+
+
+
+
+        // Find all the active hubs that match those configured in /config/hubs.js. Those are the
+        // ones we want to check for connected scanners.
+        let hubs = [];
+        descriptors.forEach(d => {
+          configHubs.forEach(h => {
+            if (d.manufacturerId === h.vendor && d.modelId === h.productId) {
+              hubs.push(d);
+            }
+          });
+        });
+
+        console.log(hubs);
+
+
+
+
+        // From all the found devices, identify the ones that are hubs with scanners connected. For
+        // this, we use the hub's manufacturer and product IDs.
         const hubItems = descriptors.filter(d => {
           return d.manufacturerId === config.get("devices.hub.manufacturerId") &&
             d.modelId === config.get("devices.hub.modelId");
@@ -237,11 +257,21 @@ export default class ScanMeister {
           descriptors
             .filter(d => d.parent === item.number)
             .forEach(child => scanners[`${item.port}-${child.port}`] = child);
-        })
+        });
+
+
+
+
+
+
+
+
+
+
 
         // Add hardwarePort property to the descriptors by looking up our mapping chart
         const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
-        const hub = hubs.find(hub => hub.identifier === hubId);
+        const hub = configHubs.find(hub => hub.identifier === hubId);
         for (const key of Object.keys(scanners)) {
           scanners[key].hardwarePort = hub.ports.find(p => p.portId === key).physical
         }
