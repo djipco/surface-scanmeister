@@ -67,14 +67,14 @@ export default class ScanMeister {
     //   logInfo(`    ${index+1}. ${device.description}`, true)
     // });
 
-    // // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
-    // logInfo(
-    //   `Listening for OSC on ` +
-    //   config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    // );
-    //
-    // // Send ready status via OSC
-    // this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+    // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
+
+    // Send ready status via OSC
+    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
   }
 
