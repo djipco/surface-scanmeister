@@ -34,13 +34,13 @@ const hubs = [
     description: "Dynex USB 2.0 7-Port Hub",
     hasSubGroups: false,
     ports: [
-      {physical: 1,  portId: "3-3"},
-      {physical: 2,  portId: "3-2"},
-      {physical: 3,  portId: "3-1"},
-      {physical: 4,  portId: "3-0"},
-      {physical: 5,  portId: "2-3"},
-      {physical: 6,  portId: "2-2"},
-      {physical: 7,  portId: "2-1"}
+      {physical: 0,  portId: "1-0"},
+      {physical: 1,  portId: "1-1"},
+      {physical: 2,  portId: "1-2"},
+      {physical: 3,  portId: "1-3"},
+      {physical: 4,  portId: "1-4"},
+      {physical: 5,  portId: "1-5"},
+      {physical: 6,  portId: "1-6"}
     ]
   }
 ]
