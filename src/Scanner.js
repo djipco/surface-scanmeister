@@ -22,17 +22,17 @@ export class Scanner extends EventEmitter {
   #args;
   constructor(oscPort, options = {}) {
 
-    super();
-
-    this.#oscPort = oscPort;
-    this.#softwarePort = options.port;
-    this.#hardwarePort = options.hardwarePort;
-    this.#systemName = options.systemName;
-    this.#manufacturer = options.manufacturer;
-    this.#model = options.model;
-
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
+    // super();
+    //
+    // this.#oscPort = oscPort;
+    // this.#softwarePort = options.port;
+    // this.#hardwarePort = options.hardwarePort;
+    // this.#systemName = options.systemName;
+    // this.#manufacturer = options.manufacturer;
+    // this.#model = options.model;
+    //
+    // this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
+    // this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
 
   }
 

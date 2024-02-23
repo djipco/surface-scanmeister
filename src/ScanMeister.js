@@ -83,7 +83,6 @@ export default class ScanMeister {
     this.#scanners = [];
 
     deviceDescriptors.forEach(descriptor => {
-      console.log(descriptor);
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     });
 
