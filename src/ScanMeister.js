@@ -4,7 +4,7 @@ import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
-import {configHubs} from "../config/hubs.js";
+import {hubs as configHubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import process from "node:process";
 import { readFile } from 'fs/promises';
