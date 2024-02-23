@@ -265,11 +265,11 @@ export default class ScanMeister {
 
 
 
-        Object.values(hubs).filter(h => !h.hasSubGroups).entries.forEach(entry => {
+        Object.values(hubs).filter(h => !h.hasSubGroups).forEach(h => {
 
           descriptors
-            .filter(d => d.parent === entry.number)
-            .forEach(child => scanners2[`${entry.port}-${child.port}`] = child);
+            .filter(d => d.parent === h.entry.number)
+            .forEach(child => scanners2[`${h.entry.port}-${child.port}`] = child);
 
         });
 
