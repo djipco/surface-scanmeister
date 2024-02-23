@@ -219,36 +219,70 @@ export default class ScanMeister {
 
 
 
-        // Find all the active hubs that match those configured in /config/hubs.js. Those are the
-        // ones we want to check for connected scanners.
-        let hubGroups = {};
+        // We now need to find all the connected hubs that match those configured for use in the
+        // configuration file (/config/hubs.js.).
+        let hubs = {};
 
-        // Check if the descriptors match one of the configured models
+        // To find them we check if the descriptors match one of the configured models
         descriptors.forEach(d => {
           configHubs.forEach(h => {
 
+            // Some hub models have subgroups and report multiple entries. This is why each hub
+            // contains a list of entries (which may contain one or more elemnent).
             if (d.manufacturerId === h.vendor && d.modelId === h.productId) {
               const id = `${h.vendor}:${h.productId}`;
-              if (!hubGroups[id]) hubGroups[id] = [];
-              hubGroups[id].push(d);
+              if (!hubs[id]) hubs[id] = {hasSubGroups: h.hasSubGroups, entries: []};
+              hubs[id].entries.push(d);
             }
 
           });
         });
 
-
+        // If the hub reports several logical groups, we remove the first one (which is the parent)
+        // and only keep the bottom logical devices.
         configHubs.forEach(ch => {
           if (ch.hasSubGroups) {
             const id = `${ch.vendor}:${ch.productId}`;
-            if (hubGroups[id] && hubGroups[id].length > 1) {
-              hubGroups[id].shift();
+            if (hubs[id] && hubs[id].entries.length > 1) {
+              hubs[id].entries.shift();
             }
           }
         });
 
-        // Some of the hubs have subgroups. This means the have a top entry and sublevel entries
-        // also. We are only interested in the sublevel entries.
-        console.log(hubGroups);
+        console.log(hubs);
+
+
+
+        // Now, we build the list of actual scanner descriptors. We first add to the list all the
+        // devices which do not have subgroups.
+        // const scanners = {};
+        // for (const [key, arr] of Object.entries(hubs)) {
+        //
+        //   if (configHubs[key].hasSubGroups) {
+        //
+        //     descriptors
+        //       .filter(d => d.parent === arr[0].number)
+        //       .forEach(child => scanners[`${item.port}-${child.port}`] = child);
+        //
+        //   } else {
+        //     arr.forEach(h => scanners[d.port] = h);
+        //   }
+        //
+        // }
+
+
+        // We now go through all subgroups and look for connected devices for which the subgroup is
+        // the parent. When we find one, it means it's a scanner connected to the subgroup of the
+        // hub.
+        // const scanners = {};
+        // hubItems.forEach(item => {
+        //   descriptors
+        //     .filter(d => d.parent === item.number)
+        //     .forEach(child => scanners[`${item.port}-${child.port}`] = child);
+        // });
+
+
+
 
 
 
