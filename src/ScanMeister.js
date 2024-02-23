@@ -229,14 +229,20 @@ export default class ScanMeister {
       // device. However, if the device does create logical sub-devices, we must go one level above.
       let parent = this.getDescriptor(scanner.parent);
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
-      if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
 
       // Hardware port (the number physically written on the device)
-      const portId = `${parent.port}-${scanner.port}`;
+
+      // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
+      let portId = scanner.port;
+      if (hub.hasSubGroups) portId = `${parent.port}-${portId}`;
+
+      // Get physical port number
       const port = hub.ports.find(p => p.portId === portId);
       if (port) scanner.hardwarePort = port.physical;
 
-      // Hub model (as handy reference)
+      // Hub model and port. If device has subgroups, we use the parent device port instead of the
+      // subgroup port.
+      if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
       scanner.hub = hub.description;
       scanner.hubPort = parent.port;
 
