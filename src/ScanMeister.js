@@ -167,7 +167,7 @@ export default class ScanMeister {
     await this.quit();
   }
 
-  async #getScannerHardwareDescriptorsOLD() {
+  async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
 
@@ -351,6 +351,7 @@ export default class ScanMeister {
 
         }
 
+        console.log(scanners);
         resolve(scanners);
 
       };
@@ -369,7 +370,7 @@ export default class ScanMeister {
 
 
 
-  async #getScannerHardwareDescriptors() {
+  async #getScannerHardwareDescriptorsNEW() {
 
     return new Promise((resolve, reject) => {
 
@@ -418,86 +419,48 @@ export default class ScanMeister {
         });
 
 
-
-
-
         // Build a flat list of valid device identifiers
         const deviceIDs = models.map(model => model.identifier);
 
         // Only keep scanners whose models are listed in the valid device list
-        const matches = descriptors.filter(d => {
+        const scanners = descriptors.filter(d => {
           return deviceIDs.includes(`${d.manufacturerId}:${d.modelId}`);
         });
 
-        console.log(matches);
-
-
-
-
+        // scanners.forEach(scanner => {
         //
-        //
-        // // From all the found devices, identify the ones that are hubs with scanners connected. For
-        // // this, we use the hub's manufacturer and product IDs.
-        // const hubItems = descriptors.filter(d => {
-        //   return d.manufacturerId === config.get("devices.hub.manufacturerId") &&
-        //     d.modelId === config.get("devices.hub.modelId");
         // });
-        //
-        // // The item with the lowest level (higher up in hierarchy) is the parent (the hub itself),
-        // // the others are subgroups of ports created by the hub. Since the scanners appear within
-        // // subgroups those are the only ones we keep. So we delete the hub's entry (the one with the
-        // // lowest level).
-        // hubItems.sort((a, b) => a.level - b.level);
-        // hubItems.shift();
-        //
-        // // We now go through all subgroups and look for connected devices for which the subgroup is
-        // // the parent. When we find one, it means it's a scanner connected to the subgroup of the
-        // // hub.
-        // const scanners = {};
-        // hubItems.forEach(item => {
-        //   descriptors
-        //     .filter(d => d.parent === item.number)
-        //     .forEach(child => scanners[`${item.port}-${child.port}`] = child);
-        // });
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        // // Add hardwarePort property to the descriptors by looking up our mapping chart
-        // const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
-        // const hub = configHubs.find(hub => hub.identifier === hubId);
-        // for (const key of Object.keys(scanners)) {
-        //   scanners[key].hardwarePort = hub.ports.find(p => p.portId === key).physical
-        // }
-        //
-        // // Add correct model and system name (from the models.js file)
-        // for (const [key, value] of Object.entries(scanners)) {
-        //
-        //   const model = models.find(m => {
-        //     return m.identifier === `${value.manufacturerId}:${value.modelId}`;
-        //   });
-        //
-        //   if (model) {
-        //     scanners[key].model = model.name;
-        //     const formattedBus = value.bus.toString().padStart(3, '0');
-        //     const formattedNumber = value.number.toString().padStart(3, '0');
-        //     scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
-        //   } else {
-        //     reject(
-        //       `No match for manufacturer ${value.manufacturerId} and model ${value.modelId} ` +
-        //       "in models.js file."
-        //     );
-        //     return;
-        //   }
-        //
-        // }
+
+
+
+        // Add hardwarePort property to the descriptors by looking up our mapping chart
+        const hubId = `${config.get("devices.hub.manufacturerId")}:${config.get("devices.hub.modelId")}`;
+        const hub = configHubs.find(hub => hub.identifier === hubId);
+        for (const key of Object.keys(scanners)) {
+          scanners[key].hardwarePort = hub.ports.find(p => p.portId === key).physical
+        }
+
+        // Add correct model and system name (from the models.js file)
+        for (const [key, value] of Object.entries(scanners)) {
+
+          const model = models.find(m => {
+            return m.identifier === `${value.manufacturerId}:${value.modelId}`;
+          });
+
+          if (model) {
+            scanners[key].model = model.name;
+            const formattedBus = value.bus.toString().padStart(3, '0');
+            const formattedNumber = value.number.toString().padStart(3, '0');
+            scanners[key].systemName = model.driverPrefix + `${formattedBus}:${formattedNumber}`;
+          } else {
+            reject(
+              `No match for manufacturer ${value.manufacturerId} and model ${value.modelId} ` +
+              "in models.js file."
+            );
+            return;
+          }
+
+        }
 
         // resolve(scanners);
 
