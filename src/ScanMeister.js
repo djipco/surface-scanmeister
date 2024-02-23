@@ -256,7 +256,7 @@ export default class ScanMeister {
         // Now, we build the list of actual scanner descriptors. We first add to the list all the
         // devices which do not have subgroups.
         const scanners2 = {};
-        Object.values(hubs).filter(h => h.hasSubGroups).forEach(h => {
+        Object.values(hubs).filter(h => !h.hasSubGroups).forEach(h => {
 
           h.entries.forEach(entry => {
             scanners2[`${entry.port}`]
@@ -265,7 +265,7 @@ export default class ScanMeister {
         });
 
 
-        Object.values(hubs).filter(h => !h.hasSubGroups).forEach(h => {
+        Object.values(hubs).filter(h => h.hasSubGroups).forEach(h => {
 
           h.entries.forEach(entry => {
             descriptors
