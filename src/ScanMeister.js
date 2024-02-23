@@ -236,6 +236,16 @@ export default class ScanMeister {
           });
         });
 
+
+        configHubs.forEach(ch => {
+          if (ch.hasSubGroups) {
+            const id = `${ch.vendor}:${ch.productId}`;
+            if (hubGroups[id] && hubGroups[id].length > 1) {
+              hubGroups[id].shift();
+            }
+          }
+        });
+
         // Some of the hubs have subgroups. This means the have a top entry and sublevel entries
         // also. We are only interested in the sublevel entries.
         console.log(hubGroups);
