@@ -460,7 +460,7 @@ export default class ScanMeister {
 
     });
 
-    return scanners;
+    console.log(scanners);
 
   }
 
