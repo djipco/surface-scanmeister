@@ -20,7 +20,6 @@ export class Scanner extends EventEmitter {
   #scanning = false;
   #socket;
   #args;
-
   constructor(oscPort, options = {}) {
 
     super();
@@ -44,7 +43,7 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
 
   get description() {
-    return `${this.manufacturer} ${this.model} on hardware port #${this.hardwarePort} (${this.systemName})`;
+    return `${this.manufacturer} ${this.model} on ${this.description} port #${this.hardwarePort} (${this.systemName})`;
   }
 
   get bus() { return this.#bus; }
