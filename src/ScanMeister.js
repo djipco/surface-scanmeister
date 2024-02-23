@@ -167,7 +167,7 @@ export default class ScanMeister {
     await this.quit();
   }
 
-  async #getScannerHardwareDescriptors() {
+  async #getScannerHardwareDescriptorsOLD() {
 
     return new Promise((resolve, reject) => {
 
@@ -370,7 +370,7 @@ export default class ScanMeister {
 
 
 
-  async #getScannerHardwareDescriptorsNEW() {
+  async #getScannerHardwareDescriptors() {
 
     return new Promise((resolve, reject) => {
 
@@ -392,7 +392,7 @@ export default class ScanMeister {
 
         // Extract relevant data from each block and create description objects
         let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-        let descriptors = blocks.map(b => {
+        this.descriptors = blocks.map(b => {
           const match = b.match(re);
           const all = match[0];
           const bus = parseInt(match[1]);
@@ -408,7 +408,7 @@ export default class ScanMeister {
 
         // Check if manufacturer and product ID can be found for each device (not always the case)
         re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
-        descriptors = descriptors.map(d => {
+        this.descriptors = this.descriptors.map(d => {
           const match = d.all.match(re);
           delete d.all;
           if (match) {
@@ -423,13 +423,35 @@ export default class ScanMeister {
         const deviceIDs = models.map(model => model.identifier);
 
         // Only keep scanners whose models are listed in the valid device list
-        const scanners = descriptors.filter(d => {
+        const scanners = this.descriptors.filter(d => {
           return deviceIDs.includes(`${d.manufacturerId}:${d.modelId}`);
         });
 
-        // scanners.forEach(scanner => {
-        //
-        // });
+        // Add systemName and hardware port properties
+        scanners.forEach(scanner => {
+
+          // System name (e.g. genesys:libusb:001:034)
+          const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
+          const bus = scanner.bus.toString().padStart(3, '0');
+          const number = scanner.number.toString().padStart(3, '0');
+          scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
+
+          // Hardware port (parent_port : scanner_port)
+          // const hub = this.getHubModel(scanner.manufacturerId, scanner.modelId);
+
+          // if (hub.hasSubGroups) {
+          //   const parent = this.getDescriptor(scanner.parent);
+          //   const grandParent = this.getDescriptor(parent.parent);
+          //   scanner.hardwarePort = `${grandParent}-${parent.port}-${scanner.port}`;
+          // } else {
+            const parent = this.getDescriptor(scanner.parent);
+            scanner.hardwarePort = `${parent.port}-${scanner.port}`;
+          // }
+
+        });
+
+        console.log(scanners);
+
 
 
 
@@ -477,8 +499,17 @@ export default class ScanMeister {
   }
 
 
+  getScannerModel(vendor, productId) {
+    return models.find(model => model.vendor === vendor && model.productId === productId);
+  }
 
+  getHubModel(vendor, productId) {
+    return configHubs.find(model => model.vendor === vendor && model.productId === productId);
+  }
 
+  getDescriptor(number) {
+    return this.descriptors.find(d => d.number === number);
+  }
 
   async #updateScannerList(deviceDescriptors) {
 

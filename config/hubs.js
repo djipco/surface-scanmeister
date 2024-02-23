@@ -3,7 +3,7 @@
  */
 const hubs = [
   {
-    identifier: "045b:0209",
+    identifier: "045b:0209",      // <- will be phased out
     vendor: "045b",
     productId: "0209",
     description: "Atolla USB 3.0 16-Port Hub",
