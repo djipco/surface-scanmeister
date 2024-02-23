@@ -19,6 +19,8 @@ export class Scanner extends EventEmitter {
   #scanning = false;
   #socket;
   #args;
+  #hub;
+
   constructor(oscPort, options = {}) {
 
     super();
@@ -29,6 +31,7 @@ export class Scanner extends EventEmitter {
     this.#systemName = options.systemName;
     this.#manufacturer = options.manufacturer;
     this.#model = options.model;
+    this.#hub = options.hub;
 
     this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
     this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
@@ -42,7 +45,7 @@ export class Scanner extends EventEmitter {
   get model() { return this.#model; }
 
   get description() {
-    return `${this.manufacturer} ${this.model} on ${this.description} port #${this.hardwarePort} (${this.systemName})`;
+    return `${this.manufacturer} ${this.model} on ${this.hub} port #${this.hardwarePort} (${this.systemName})`;
   }
 
   get bus() { return this.#bus; }
@@ -50,6 +53,8 @@ export class Scanner extends EventEmitter {
   get hardwarePort() { return this.#hardwarePort; }
 
   get softwarePort() { return this.#softwarePort; }
+
+  get hub() { return this.#hub; }
 
   get scanning() { return this.#scanning; }
 
