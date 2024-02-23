@@ -7,6 +7,7 @@ const hubs = [
     vendor: "045b",
     productId: "0209",
     description: "Atolla USB 3.0 16-Port Hub",
+    hasSubGroups: true,
     ports: [
       {physical: 1,  portId: "3-3"},
       {physical: 2,  portId: "3-2"},
@@ -31,6 +32,7 @@ const hubs = [
     vendor: "0409",
     productId: "0050",
     description: "Dynex USB 2.0 7-Port Hub",
+    hasSubGroups: false,
     ports: [
       {physical: 1,  portId: "3-3"},
       {physical: 2,  portId: "3-2"},

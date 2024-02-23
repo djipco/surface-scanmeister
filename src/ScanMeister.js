@@ -221,16 +221,24 @@ export default class ScanMeister {
 
         // Find all the active hubs that match those configured in /config/hubs.js. Those are the
         // ones we want to check for connected scanners.
-        let hubs = [];
+        let hubGroups = {};
+
+        // Check if the descriptors match one of the configured models
         descriptors.forEach(d => {
           configHubs.forEach(h => {
+
             if (d.manufacturerId === h.vendor && d.modelId === h.productId) {
-              hubs.push(d);
+              const id = `${h.vendor}:${h.productId}`;
+              if (!hubGroups[id]) hubGroups[id] = [];
+              hubGroups[id].push(d);
             }
+
           });
         });
 
-        console.log(hubs);
+        // Some of the hubs have subgroups. This means the have a top entry and sublevel entries
+        // also. We are only interested in the sublevel entries.
+        console.log(hubGroups);
 
 
 
