@@ -31,8 +31,8 @@ export class Scanner extends EventEmitter {
     this.#manufacturer = options.manufacturer;
     this.#model = options.model;
 
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
+    // this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
+    // this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
 
   }
 
