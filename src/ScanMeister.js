@@ -216,7 +216,9 @@ export default class ScanMeister {
       // Hardware port (the number physically written on the device)
       const parent = this.getDescriptor(scanner.parent);
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
+
       const portId = `${parent.port}-${scanner.port}`;
+      console.log(portId);
       const port = hub.ports.find(p => p.portId = portId);
       if (port) scanner.hardwarePort = port.physical;
 
