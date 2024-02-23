@@ -59,22 +59,35 @@ export default class ScanMeister {
       logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
     }
 
-    // // Use the scanner hardware descriptors to build list of Scanner objects
-    // await this.#updateScannerList(shd);
-    //
-    // // Log scanner details to console
-    // this.scanners.forEach((device, index) => {
-    //   logInfo(`    ${index+1}. ${device.description}`, true)
-    // });
-    //
-    // // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
-    // logInfo(
-    //   `Listening for OSC on ` +
-    //   config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    // );
-    //
-    // // Send ready status via OSC
-    // this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+    // Use the scanner hardware descriptors to build list of Scanner objects
+    await this.#updateScannerList(shd);
+
+    // Log scanner details to console
+    this.scanners.forEach((device, index) => {
+      logInfo(`    ${index+1}. ${device.description}`, true)
+    });
+
+    // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
+    logInfo(
+      `Listening for OSC on ` +
+      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    );
+
+    // Send ready status via OSC
+    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+
+  }
+
+  async #updateScannerList(deviceDescriptors) {
+
+    this.#scanners = [];
+
+    deviceDescriptors.forEach(descriptor => {
+      // this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    });
+
+    // Sort by hardware port
+    this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
 
   }
 
@@ -166,7 +179,6 @@ export default class ScanMeister {
   async #onExitRequest() {
     await this.quit();
   }
-
 
   async #getScannerHardwareDescriptors() {
 
@@ -277,19 +289,6 @@ export default class ScanMeister {
 
   getDescriptor(number) {
     return this.descriptors.find(d => d.number === number);
-  }
-
-  async #updateScannerList(deviceDescriptors) {
-
-    this.#scanners = [];
-
-    deviceDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
-    });
-
-    // Sort by hardware port
-    this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
-
   }
 
   async #onOscError(error) {
