@@ -59,22 +59,22 @@ export default class ScanMeister {
       logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
     }
 
-    // Use the scanner hardware descriptors to build list of Scanner objects
-    await this.#updateScannerList(shd);
-
-    // Log scanner details to console
-    this.scanners.forEach((device, index) => {
-      logInfo(`    ${index+1}. ${device.description}`, true)
-    });
-
-    // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
-    logInfo(
-      `Listening for OSC on ` +
-      config.get("osc.local.address") + ":" + config.get("osc.local.port")
-    );
-
-    // Send ready status via OSC
-    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+    // // Use the scanner hardware descriptors to build list of Scanner objects
+    // await this.#updateScannerList(shd);
+    //
+    // // Log scanner details to console
+    // this.scanners.forEach((device, index) => {
+    //   logInfo(`    ${index+1}. ${device.description}`, true)
+    // });
+    //
+    // // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
+    // logInfo(
+    //   `Listening for OSC on ` +
+    //   config.get("osc.local.address") + ":" + config.get("osc.local.port")
+    // );
+    //
+    // // Send ready status via OSC
+    // this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
   }
 
@@ -225,8 +225,6 @@ export default class ScanMeister {
       scanner.hub = hub.description;
 
     });
-
-    console.log(scanners);
 
     return scanners;
 
