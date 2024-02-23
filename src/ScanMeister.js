@@ -50,13 +50,13 @@ export default class ScanMeister {
     const shd = await this.#getScannerHardwareDescriptors();
 
     // Report number of scanners found
-    if (Object.entries(shd).length === 0) {
+    if (shd.length === 0) {
       this.#scanners = [];
       logWarn("No scanners found.");
-    } else if (Object.entries(shd).length === 1) {
-      logInfo(`${Object.entries(shd).length} scanner has been detected. Retrieving details:`);
+    } else if (shd.length === 1) {
+      logInfo(`${shd.length} scanner has been detected. Retrieving details:`);
     } else {
-      logInfo(`${Object.entries(shd).length} scanners have been detected. Retrieving details:`);
+      logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
     }
 
     // Use the scanner hardware descriptors to build list of Scanner objects
@@ -395,39 +395,8 @@ export default class ScanMeister {
 
   #parseUsbDevicesData(data) {
 
-    // Split the long string received from usb-devices into discrete blocks for each device.
-    // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
-    // regex.
-    const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"))
-
-    // Extract relevant data from each block and create description objects
-    let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-    this.descriptors = blocks.map(b => {
-      const match = b.match(re);
-      const all = match[0];
-      const bus = parseInt(match[1]);
-      const level = parseInt(match[2]);
-      const parent = parseInt(match[3]);
-      const port = parseInt(match[4]);
-      const container = parseInt(match[5]);
-      const number = parseInt(match[6]);
-      const manufacturerId = match[7];
-      const modelId = match[8];
-      return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
-    });
-
-    // Check if manufacturer and product ID can be found for each device (not always the case)
-    re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
-    this.descriptors = this.descriptors.map(d => {
-      const match = d.all.match(re);
-      delete d.all;
-      if (match) {
-        d.manufacturer = match[1];
-        d.model = match[2];
-      }
-      return d;
-    });
-
+    // Get device descriptors
+    this.descriptors = this.getDescriptorsFromDataString(data);
 
     // Build a flat list of valid device identifiers
     const deviceIDs = models.map(model => model.identifier);
@@ -446,24 +415,52 @@ export default class ScanMeister {
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
-      // Hardware port (parent_port : scanner_port)
-      // const hub = this.getHubModel(scanner.manufacturerId, scanner.modelId);
-
-      // if (hub.hasSubGroups) {
-      //   const parent = this.getDescriptor(scanner.parent);
-      //   const grandParent = this.getDescriptor(parent.parent);
-      //   scanner.hardwarePort = `${grandParent}-${parent.port}-${scanner.port}`;
-      // } else {
+      // Hardware port
       const parent = this.getDescriptor(scanner.parent);
       scanner.hardwarePort = `${parent.port}-${scanner.port}`;
-      // }
 
     });
 
-    console.log(scanners);
+    return scanners;
 
   }
 
+  getDescriptorsFromDataString(data) {
+
+    // Split the long string received from usb-devices into discrete blocks for each device.
+    // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
+    // regex.
+    const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"));
+
+    // Extract relevant data from each block and create description objects
+    let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
+    let descriptors = blocks.map(b => {
+      const match = b.match(re);
+      const all = match[0];
+      const bus = parseInt(match[1]);
+      const level = parseInt(match[2]);
+      const parent = parseInt(match[3]);
+      const port = parseInt(match[4]);
+      const container = parseInt(match[5]);
+      const number = parseInt(match[6]);
+      const manufacturerId = match[7];
+      const modelId = match[8];
+      return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
+    });
+
+    // Check if manufacturer and product ID can be found for each device (not always the case)
+    re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
+    return descriptors.map(d => {
+      const match = d.all.match(re);
+      delete d.all;
+      if (match) {
+        d.manufacturer = match[1];
+        d.model = match[2];
+      }
+      return d;
+    });
+
+  }
 
   getScannerModel(vendor, productId) {
     return models.find(model => model.vendor === vendor && model.productId === productId);
@@ -481,9 +478,13 @@ export default class ScanMeister {
 
     this.#scanners = [];
 
-    for (const descriptor of Object.values(deviceDescriptors)) {
+    // for (const descriptor of Object.values(deviceDescriptors)) {
+    //   this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    // }
+
+    deviceDescriptors.forEach(descriptor => {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
-    }
+    });
 
     // Sort by hardware port
     this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
