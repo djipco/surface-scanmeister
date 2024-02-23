@@ -88,7 +88,7 @@ export default class ScanMeister {
     });
 
     // Sort by hardware port
-    this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
+    // this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
 
   }
 
