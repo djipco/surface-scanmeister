@@ -419,7 +419,17 @@ export default class ScanMeister {
 
 
 
-        console.log(descriptors);
+
+
+        // Build a flat list of valid device identifiers
+        const deviceIDs = models.map(model => model.identifier);
+
+        // Only keep scanners whose models are listed in the valid device list
+        const matches = descriptors.filter(d => {
+          return deviceIDs.includes(`${d.manufacturerId}:${d.modelId}`);
+        });
+
+        console.log(matches);
 
 
 
