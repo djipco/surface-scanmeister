@@ -218,8 +218,8 @@ export default class ScanMeister {
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
 
       const portId = `${parent.port}-${scanner.port}`;
-      console.log(portId);
       const port = hub.ports.find(p => p.portId = portId);
+      console.log(portId, port);
       if (port) scanner.hardwarePort = port.physical;
 
       // Hub model (as handy reference)
@@ -227,7 +227,6 @@ export default class ScanMeister {
 
     });
 
-    console.log(scanners);
 
     return scanners;
 
