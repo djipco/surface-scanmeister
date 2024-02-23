@@ -64,7 +64,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach((device, index) => {
-      logInfo(`    ${index+1}. ${device.description}`, true);
+      logInfo(`    ${index+1}. `, true);
     });
 
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
