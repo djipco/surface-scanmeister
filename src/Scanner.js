@@ -19,6 +19,7 @@ export class Scanner extends EventEmitter {
   #oscPort;
   #scanning = false;
   #socket;
+  #args;
 
   constructor(oscPort, options = {}) {
 
@@ -69,54 +70,54 @@ export class Scanner extends EventEmitter {
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
-    const args = [];
+    this.#args = [];
 
     // The device name is optional. If not specified, the first found scanner will be used.
     if (this.systemName) {
-      args.push(`--device-name=${this.systemName}`);
+      this.#args.push(`--device-name=${this.systemName}`);
     }
 
     // File format and output
     if (config.get("operation.mode") === "file") {
-      args.push('--format=png');
+      this.#args.push('--format=png');
       if (options.outputFile) {
-        args.push('--output-file=' + options.outputFile)
+        this.#args.push('--output-file=' + options.outputFile)
       }
     } else if (config.get("operation.mode") === "tcp") {
-      args.push('--format=pnm');
+      this.#args.push('--format=pnm');
     } else {
       throw new Error(`Invalid operation mode: ${config.get("operation.mode")}`)
     }
 
     // Color mode
-    args.push('--mode=Color');
+    this.#args.push('--mode=Color');
 
     // Scanning bit depth
-    args.push('--depth=8'); // 8-bit per channel (RGB)
+    this.#args.push('--depth=8'); // 8-bit per channel (RGB)
 
     // Scanning resolution
-    args.push('--resolution=' + config.get("devices.resolution"));
+    this.#args.push('--resolution=' + config.get("devices.resolution"));
 
     // Brightness (-100...100)
-    args.push('--brightness=' + config.get("devices.brightness"));
+    this.#args.push('--brightness=' + config.get("devices.brightness"));
 
     // Contrast (-100...100)
-    args.push('--contrast=' + config.get("devices.contrast"));
+    this.#args.push('--contrast=' + config.get("devices.contrast"));
 
     // Lamp off time
 
     // Lamp off scan
     if (config.get("devices.lampOffScan")) {
-      args.push('--lamp-off-scan=yes');
+      this.#args.push('--lamp-off-scan=yes');
     } else {
-      args.push('--lamp-off-scan=no');
+      this.#args.push('--lamp-off-scan=no');
     }
 
     // Ask to report progress on stderr
-    args.push('--progress');
+    this.#args.push('--progress');
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    args.push('--buffer-size=8'); // default is 32KB
+    this.#args.push('--buffer-size=8'); // default is 32KB
 
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
@@ -141,11 +142,11 @@ export class Scanner extends EventEmitter {
 
     scanImageSpawner.execute(
       "scanimage",
-      args,
+      this.#args,
       {
         // detached: true,
         detached: false,
-        shell: true,
+        shell: false,
         sucessCallback: this.#onScanImageEnd.bind(this),
         errorCallback: this.#onScanImageError.bind(this),
         stderrCallback: this.#onScanImageStderr.bind(this)
@@ -163,7 +164,7 @@ export class Scanner extends EventEmitter {
     // When called with the --progress switch, scanimage reports progress on stderr
     if (prefix !== "Progress") {
       this.emit("error", data);
-      logError("STDERR: " + data);
+      logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#args}`);
     } else {
       percentage = parseFloat(percentage.slice(0, -1)) / 100;
       this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: percentage}]);
