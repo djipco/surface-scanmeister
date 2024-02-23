@@ -22,8 +22,8 @@ export class Scanner extends EventEmitter {
   #args;
   constructor(oscPort, options = {}) {
 
-    // super();
-    //
+    super();
+
     // this.#oscPort = oscPort;
     // this.#softwarePort = options.port;
     // this.#hardwarePort = options.hardwarePort;
