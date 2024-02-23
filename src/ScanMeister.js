@@ -415,11 +415,19 @@ export default class ScanMeister {
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
-      // Hardware port
+      // Hardware port (the number physically written on the device)
       const parent = this.getDescriptor(scanner.parent);
-      scanner.hardwarePort = `${parent.port}-${scanner.port}`;
+      const hub = this.getHubModel(parent.vendor, parent.productId);
+      const portId = `${parent.port}-${scanner.port}`;
+      const port = hub.ports.find(p => p.portId = portId);
+      if (port) scanner.hardwarePort = port.physical;
+
+      // Hub model (as handy reference)
+      scanner.hub = hub.description;
 
     });
+
+    console.log(scanners);
 
     return scanners;
 
