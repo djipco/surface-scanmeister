@@ -56,7 +56,7 @@ export class Scanner extends EventEmitter {
 
   get description() {
     return `"${this.manufacturer} ${this.model}" connected to port #${this.hardwarePort} ` +
-      `(${this.systemName}) of "${this.hub}" via port ${this.#hubPort} of host.`;
+      `(${this.systemName}) of "${this.hubName}" via port ${this.#hubPort} of host.`;
   }
 
   get hardwarePort() { return this.#hardwarePort; }
