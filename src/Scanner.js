@@ -170,6 +170,7 @@ export class Scanner extends EventEmitter {
     //
     // // When called with the --progress switch, scanimage reports progress on stderr
     // if (prefix !== "Progress") {
+      this.#scanning = false;
       this.emit("error", data);
       logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#args}`);
     // } else {
