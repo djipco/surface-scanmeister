@@ -25,6 +25,9 @@ export class Scanner extends EventEmitter {
 
     super();
 
+
+    console.log(options);
+
     // OSC port object for communication
     this.#osc = osc;
 
