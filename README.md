@@ -32,15 +32,21 @@ sudo apt install -y nodejs
 
 ### Scanmeister
 
-Clone repo:
+To install `scanmeister`, open a terminal, go to desktop and clone from repo:
 
-```git clone https://github.com/djipco/surface-scanmeister```
+```
+cd Desktop
+git clone https://github.com/djipco/surface-scanmeister
+```
 
-Once the repo is cloned, install all modules by issuing the following command in the scanmeister folder:
+Once the repo is cloned, go inside folder and install all modules:
 
-```npm install```
+```
+cd surface-scanmeister
+npm install
+```
 
-Make sure `scanmeister` starts at boot. In Terminal:
+To start `scanmeister` at boot, in Terminal:
 
 ```bash
 crontab -e
