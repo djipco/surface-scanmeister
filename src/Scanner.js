@@ -128,6 +128,12 @@ export class Scanner extends EventEmitter {
     // Ask to report progress on stderr
     // this.#args.push('--progress');
 
+
+    // Prevent cached calibration from expiring
+    this.#args.push('--expiration-time=-1');
+
+
+
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
     this.#args.push('--buffer-size=8'); // default is 32KB
 
