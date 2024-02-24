@@ -357,7 +357,7 @@ export default class ScanMeister {
 
       // Find scanner by port
       const scanner = this.scanners[port];
-      if (!scanner) {
+      if (!scanner || port === 0) {
         logWarn(
           "Unable to execute OSC command. No device connected to specified port (" +
           message.address + ")."
