@@ -114,7 +114,9 @@ export default class ScanMeister {
     process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
 
     // Destroy scanners and remove callbacks
-    this.scanners.forEach(async device => await device.destroy());
+    this.scanners.forEach(async device => {
+      if (device && device.destroy) await device.destroy()
+    });
     this.#removeOscCallbacks();
 
     // Send notification and close OSC
