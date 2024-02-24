@@ -24,7 +24,7 @@
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-Then, we can install it:
+Then, we can install Node.js and `npm`:
 
 ```
 sudo apt install -y nodejs
