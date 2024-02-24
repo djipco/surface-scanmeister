@@ -139,7 +139,7 @@ export class Scanner extends EventEmitter {
 
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    this.#args.push('--buffer-size=8'); // default is 32KB
+    this.#args.push('--buffer-size=32');
 
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
