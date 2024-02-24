@@ -51,10 +51,10 @@ const hubs = [
     description: "xHCI Host Controller",
     hasSubGroups: false,
     ports: [
+      {physical: 0,  portId: "0"},
       {physical: 1,  portId: "1"},
       {physical: 2,  portId: "2"},
-      {physical: 3,  portId: "3"},
-      {physical: 4,  portId: "4"}
+      {physical: 3,  portId: "3"}
     ]
   }
 
