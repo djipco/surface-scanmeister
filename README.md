@@ -16,12 +16,6 @@
   sudo apt upgrade -y
   ```
 
-## Remote Access
-
-* Use the built-in VNC server (set a password)
-* To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution,
-  typically 1280x720 (this is done automatically in newer Raspbian versions)
-
 ## Node.js
 
 The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
