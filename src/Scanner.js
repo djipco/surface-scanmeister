@@ -132,14 +132,11 @@ export class Scanner extends EventEmitter {
     // Ask to report progress on stderr
     // this.#args.push('--progress');
 
-
-    // Prevent cached calibration from expiring
+    // Prevent cached calibration from expiring (not sure what it does!)
     this.#args.push('--expiration-time=-1');
 
-
-
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    this.#args.push('--buffer-size=32');
+    this.#args.push('--buffer-size=16');
 
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server

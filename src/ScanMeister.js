@@ -230,7 +230,7 @@ export default class ScanMeister {
     this.descriptors = this.getDescriptorsFromDataString(data);
 
     // Build a flat list of valid device identifiers
-    const deviceIDs = models.map(model => model.identifier);
+    const deviceIDs = models.map(model => `${model.vendor}:${model.productId}`);
 
     // Only keep scanners whose models are listed in the valid device list
     const scanners = this.descriptors.filter(d => {
