@@ -23,11 +23,10 @@ export class Scanner extends EventEmitter {
   #hubPort;
   #channel;
 
-  constructor(channel, oscPort, options = {}) {
+  constructor(oscPort, options = {}) {
 
     super();
 
-    this.#channel = channel;
     this.#oscPort = oscPort;
     this.#softwarePort = parseInt(options.port);
     this.#hardwarePort = parseInt(options.hardwarePort);
@@ -37,6 +36,11 @@ export class Scanner extends EventEmitter {
     this.#hub = options.hub;
     this.#hubPort = parseInt(options.hubPort);
 
+  }
+
+  start(channel) {
+
+    this.#channel = channel;
 
     this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);

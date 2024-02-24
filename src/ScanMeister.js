@@ -83,8 +83,8 @@ export default class ScanMeister {
 
     this.#scanners = [];
 
-    deviceDescriptors.forEach((descriptor, index) => {
-      this.#scanners.push(new Scanner(index + 1, this.#oscPort, descriptor));
+    deviceDescriptors.forEach(descriptor => {
+      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     });
 
     // Sort by hardware port
@@ -101,6 +101,12 @@ export default class ScanMeister {
 
     // Add bogus element in position zero
     this.scanners.unshift({});
+
+    // Start the scanner and assign the correct channel
+    this.scanners.forEach((scanner, index) => {
+      if (index === 0) return;
+      scanner.start(index);
+    })
 
   }
 
