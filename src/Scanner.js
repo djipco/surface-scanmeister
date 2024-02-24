@@ -25,9 +25,6 @@ export class Scanner extends EventEmitter {
 
     super();
 
-
-    console.log(options);
-
     // OSC port object for communication
     this.#osc = osc;
 
@@ -35,7 +32,7 @@ export class Scanner extends EventEmitter {
     this.#hardwarePort = parseInt(options.hardwarePort);
 
     // Name and model of the USB hub the device is connected to
-    this.#hubName = options.hub;
+    this.#hubName = options.hubName;
 
     // Port number of the hub
     this.#hubPort = parseInt(options.hubPort);
