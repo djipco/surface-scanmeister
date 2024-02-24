@@ -11,6 +11,7 @@ export class Scanner extends EventEmitter {
 
   #args;
   #bus;
+  #callbacks = {};
   #channel;
   #hardwarePort;
   #hub;
@@ -144,6 +145,9 @@ export class Scanner extends EventEmitter {
           resolve
         );
 
+        this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
+        this.socket.on("error", this.#callbacks.onTcpSocketError);
+
       });
 
     }
@@ -169,6 +173,14 @@ export class Scanner extends EventEmitter {
 
     this.scanImageSpawner.pipe(this.socket, "stdout");
 
+  }
+
+  #onTcpSocketError(error) {
+    if (error.code === "EHOSTUNREACH") {
+      logWarn(`Unable to open TCP connection to ${error.address}:${error.port}.`)
+    } else {
+      logWarn(error);
+    }
   }
 
   #onScanImageStderr(data) {
