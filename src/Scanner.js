@@ -26,7 +26,7 @@ export class Scanner extends EventEmitter {
 
     super();
 
-    this.#oscPort = parseInt(oscPort);
+    this.#oscPort = oscPort;
     this.#softwarePort = parseInt(options.port);
     this.#hardwarePort = parseInt(options.hardwarePort);
     this.#systemName = options.systemName;
