@@ -2,18 +2,19 @@
 
 ## Raspbian
 
-* Use **Raspberry Pi Imager.app** (or similar) to create brand new boot medium for the Raspberry Pi 
-  2 Model B (this is the model we are currently using).
-* Create account named **surface**
-* Connect to wifi
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software:
+  * Name host to: **scanmesiter0x**
+  * Create user account named **scanmeister** (with no password)
+* Boot Pi and connect to network
+* Go to Pi config:
+  * Enable SSH and VNC (in "Interfaces" section)
+  * Set timezone (in "Localisation" section)  
 * Update everything:
 
   ```
   sudo apt update
   sudo apt upgrade -y
   ```
-  
-* Disable screen blanking by going to Menu -> Prefs -> RasPi Config -> Display
 
 ## Remote Access
 
