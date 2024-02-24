@@ -94,7 +94,7 @@ export default class ScanMeister {
       if (a.hubPort > b.hubPort) return 1;
 
       // If hub port is the same, sort by port
-      return a.hardwarePort - b.hardwarePort;
+      return b.hardwarePort - a.hardwarePort;
 
     });
 
