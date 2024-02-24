@@ -7,7 +7,7 @@ const hubs = [
   {
     vendor: "045b",
     productId: "0209",
-    description: "Atolla USB 3.0 16-Port Hub",
+    // description: "Atolla USB 3.0 16-Port Hub",
     hasSubGroups: true,
     ports: [
       {physical: 1,  portId: "3-3"},
@@ -32,7 +32,7 @@ const hubs = [
   {
     vendor: "0409",
     productId: "0050",
-    description: "Dynex USB 2.0 7-Port Hub",
+    // description: "Dynex USB 2.0 7-Port Hub",
     hasSubGroups: false,
     ports: [
       {physical: 0,  portId: "0"},
@@ -45,18 +45,18 @@ const hubs = [
     ]
   },
 
-  // {
-  //   vendor: "1d6b",
-  //   productId: "0002",
-  //   description: "xHCI Host Controller",
-  //   hasSubGroups: false,
-  //   ports: [
-  //     {physical: 0,  portId: "0"},
-  //     {physical: 1,  portId: "1"},
-  //     {physical: 2,  portId: "2"},
-  //     {physical: 3,  portId: "3"}
-  //   ]
-  // }
+  {
+    vendor: "1d6b",
+    productId: "0002",
+    // description: "xHCI Host Controller",
+    hasSubGroups: false,
+    ports: [
+      {physical: 0,  portId: "0"},
+      {physical: 1,  portId: "1"},
+      {physical: 2,  portId: "2"},
+      {physical: 3,  portId: "3"}
+    ]
+  }
 
 ]
 
