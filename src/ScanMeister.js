@@ -64,6 +64,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach((device, index) => {
+      if (index === 0) return; // because position 0 is occupied by a bogus placeholder
       logInfo(`    ${index}. ${device.description}`, true);
     });
 
@@ -97,6 +98,9 @@ export default class ScanMeister {
       return a.hardwarePort - b.hardwarePort;
 
     });
+
+    // Add bogus element in position zero
+    this.scanners.unshift({});
 
   }
 
