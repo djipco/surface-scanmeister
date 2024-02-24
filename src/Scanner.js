@@ -9,50 +9,40 @@ import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
-  #args; /////////////// <-
-  #callbacks = {};
-  #channel;
-  #hardwarePort;
-  #hubName;
-  #hubPort;
-  #manufacturer;
-  #model;
-  #osc;
-  #scanning = false;
-  #systemName;
+  #callbacks = {};      // Object to store callbacks defined internally
+  #channel;             // Channel number (identifies the device in OSC and over TCP)
+  #hardwarePort;        // Physical USB port as printed on the USB hub
+  #hubName;             // Name and model of the USB hub the device is connected to
+  #hubPort;             // Port number of the hub this device is connected to
+  #manufacturer;        // Manufacturer name of the device
+  #model;               // Model name of the device
+  #osc;                 // OSC port object for communication
+  #scanArgs;            // Arguments passed to 'scanimage' (kept for error reporting)
+  #scanning = false;    // Whether the device is currently scanning
+  #systemName;          // System name (e.g. genesys:libusb:001:071)
 
   constructor(osc, options = {}) {
 
     super();
 
-    // OSC port object for communication
     this.#osc = osc;
-
-    // Physical USB port as printed on the USB hub
     this.#hardwarePort = parseInt(options.hardwarePort);
-
-    // Name and model of the USB hub the device is connected to
     this.#hubName = options.hubName;
-
-    // Port number of the hub
     this.#hubPort = parseInt(options.hubPort);
-
-    // Manufacturer name of the device
     this.#manufacturer = options.manufacturer;
-
-    // Model name of the device
     this.#model = options.model;
-
-    // System name (e.g. genesys:libusb:001:071)
     this.#systemName = options.systemName;
 
   }
 
-  get systemName() { return this.#systemName; }
-
-  get manufacturer() { return this.#manufacturer; }
-
-  get model() { return this.#model; }
+  get channel() { return this.#channel; }
+  set channel(value) {
+    this.#channel = parseInt(value);
+    this.#sendOscMessage(
+      `/device/${this.channel}/scanning`,
+      [{type: "i", value: this.scanning ? 1 : 0}]
+    );
+  }
 
   get description() {
     return `"${this.manufacturer} ${this.model}" connected to port #${this.hardwarePort} ` +
@@ -62,18 +52,16 @@ export class Scanner extends EventEmitter {
   get hardwarePort() { return this.#hardwarePort; }
 
   get hubName() { return this.#hubName; }
+
   get hubPort() { return this.#hubPort; }
+
+  get manufacturer() { return this.#manufacturer; }
+
+  get model() { return this.#model; }
 
   get scanning() { return this.#scanning; }
 
-  get channel() { return this.#channel; }
-  set channel(value) {
-    this.#channel = parseInt(value);
-    this.sendOscMessage(
-      `/device/${this.channel}/scanning`,
-      [{type: "i", value: this.scanning ? 1 : 0}]
-    );
-  }
+  get systemName() { return this.#systemName; }
 
   async scan(options = {}) {
 
@@ -86,58 +74,56 @@ export class Scanner extends EventEmitter {
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
-    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
-    this.emit("scanstarted", {target: this});
+    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
-    // Prepare args array
-    this.#args = [];
+    // Prepare 'scanimage' args array
+    this.#scanArgs = [];
 
     // The device name is optional. If not specified, the first found scanner will be used.
     if (this.systemName) {
-      this.#args.push(`--device-name=${this.systemName}`);
+      this.#scanArgs.push(`--device-name=${this.systemName}`);
     }
 
     // File format and output
     if (config.get("operation.mode") === "file") {
-      this.#args.push('--format=png');
-      if (options.outputFile) {
-        this.#args.push('--output-file=' + options.outputFile)
-      }
+      this.#scanArgs.push('--format=png');
+      if (options.outputFile) this.#scanArgs.push('--output-file=' + options.outputFile);
     } else if (config.get("operation.mode") === "tcp") {
-      this.#args.push('--format=pnm');
+      this.#scanArgs.push('--format=pnm');
     } else {
       throw new Error(`Invalid operation mode: ${config.get("operation.mode")}`)
     }
 
     // Color mode
-    this.#args.push('--mode=Color');
+    this.#scanArgs.push('--mode=Color');
 
-    // Scanning bit depth
-    this.#args.push('--depth=8'); // 8-bit per channel (RGB)
+    // Scanning bit depth (8-bit per channel, RGB)
+    this.#scanArgs.push('--depth=8');
 
     // Scanning resolution
-    this.#args.push('--resolution=' + config.get("devices.resolution"));
+    this.#scanArgs.push('--resolution=' + config.get("devices.resolution"));
 
     // Brightness (-100...100)
-    this.#args.push('--brightness=' + config.get("devices.brightness"));
+    this.#scanArgs.push('--brightness=' + config.get("devices.brightness"));
 
     // Contrast (-100...100)
-    this.#args.push('--contrast=' + config.get("devices.contrast"));
-
-    // Lamp off time
+    this.#scanArgs.push('--contrast=' + config.get("devices.contrast"));
 
     // Lamp off scan
     if (config.get("devices.lampOffScan")) {
-      this.#args.push('--lamp-off-scan=yes');
+      this.#scanArgs.push('--lamp-off-scan=yes');
     } else {
-      this.#args.push('--lamp-off-scan=no');
+      this.#scanArgs.push('--lamp-off-scan=no');
     }
 
+    // Lamp off time
+    this.#scanArgs.push('--lamp-off-time=' + config.get("devices.lampOffTime"));
+
     // Prevent cached calibration from expiring (not sure what it does!)
-    this.#args.push('--expiration-time=-1');
+    this.#scanArgs.push('--expiration-time=-1');
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    this.#args.push('--buffer-size=16');
+    this.#scanArgs.push('--buffer-size=16');
 
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
@@ -165,7 +151,7 @@ export class Scanner extends EventEmitter {
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.#args,
+      this.#scanArgs,
       {
         // detached: true,
         detached: false,
@@ -180,6 +166,12 @@ export class Scanner extends EventEmitter {
 
   }
 
+  async destroy() {
+    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    this.removeListener();
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+
   #onTcpSocketError(error) {
     if (error.code === "EHOSTUNREACH") {
       logWarn(`Unable to open TCP connection to ${error.address}:${error.port}.`)
@@ -191,7 +183,7 @@ export class Scanner extends EventEmitter {
   #onScanImageStderr(data) {
     this.#scanning = false;
     this.emit("error", data);
-    logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#args}`);
+    logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#scanArgs}`);
   }
 
   #onScanImageError(error) {
@@ -202,23 +194,17 @@ export class Scanner extends EventEmitter {
 
   #onScanImageEnd() {
     this.#scanning = false;
-    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
 
-  sendOscMessage(address, args = []) {
+  #sendOscMessage(address, args = []) {
     if (!this.#osc || !this.#osc.socket) {
       logWarn("Impossible to send OSC, no socket available.")
       return;
     }
     this.#osc.send({address: address, args: args});
-  }
-
-  async destroy() {
-    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
-    this.removeListener();
-    await new Promise(resolve => setTimeout(resolve, 25));
   }
 
 }

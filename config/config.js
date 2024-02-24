@@ -79,21 +79,14 @@ const config = convict({
       default: 25
     },
     lampOffScan: {
-      doc: 'Whether open lamp while scanning (-100...100)',
+      doc: 'Whether to open the lamp while scanning',
       format: 'Boolean',
       default: false
     },
-    hub: {
-      manufacturerId: {
-        doc: 'A hex string that identifier the vendor of the hub',
-        format: String,
-        default: "045b"
-      },
-      modelId: {
-        doc: "A hex string that identifier the hub's product ID",
-        format: String,
-        default: "0209"
-      }
+    lampOffTime: {
+      doc: 'Number of minutes after which the lamp is turned off (0...60)',
+      format: 'int',
+      default: 15
     },
   }
 
