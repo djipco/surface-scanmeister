@@ -70,18 +70,6 @@ sudo sane-find-scanner -q
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
 
-#### Debugging
-
-You can debug by adding environment variables like so:
-
-```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
-
-More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
-
-
-
-
-
 
 
 # OSC Schema
@@ -179,6 +167,14 @@ Options specific to device 'genesys:libusb:001:008':
         Time (in minutes) before a cached calibration expires. A value of 0
         means cache is not used. A negative value means cache never expires.
 ```
+
+#### Debugging
+
+You can debug by adding environment variables like so:
+
+```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
+
+More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
 
 ### Perform a manual scan
