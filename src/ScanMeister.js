@@ -65,7 +65,7 @@ export default class ScanMeister {
     // Log scanner details to console
     this.scanners.forEach((device, index) => {
       if (index === 0) return; // because position 0 is occupied by a bogus placeholder
-      logInfo(`    ${index}. ${device.description}`, true);
+      logInfo(`    Channel ${index}. ${device.description}`, true);
     });
 
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
@@ -83,8 +83,8 @@ export default class ScanMeister {
 
     this.#scanners = [];
 
-    deviceDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    deviceDescriptors.forEach((descriptor, index) => {
+      this.#scanners.push(new Scanner(index + 1, this.#oscPort, descriptor));
     });
 
     // Sort by hardware port
@@ -351,11 +351,9 @@ export default class ScanMeister {
     const port = parseInt(segments[1]);
 
     // Execute command
-    // if (command === "scan" && message.args[0].value === 1) {
     if (command === "scan") {
 
       // Find scanner by port
-      // const scanner = this.getDeviceByHardwarePort(port);
       const scanner = this.scanners[port];
       if (!scanner) {
         logWarn(

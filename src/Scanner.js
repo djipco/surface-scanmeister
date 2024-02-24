@@ -20,12 +20,14 @@ export class Scanner extends EventEmitter {
   #socket;
   #args;
   #hub;
-  #hubPort
+  #hubPort;
+  #channel;
 
-  constructor(oscPort, options = {}) {
+  constructor(channel, oscPort, options = {}) {
 
     super();
 
+    this.#channel = channel;
     this.#oscPort = oscPort;
     this.#softwarePort = parseInt(options.port);
     this.#hardwarePort = parseInt(options.hardwarePort);
@@ -35,8 +37,9 @@ export class Scanner extends EventEmitter {
     this.#hub = options.hub;
     this.#hubPort = parseInt(options.hubPort);
 
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
+
+    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
 
   }
 
@@ -62,6 +65,8 @@ export class Scanner extends EventEmitter {
 
   get scanning() { return this.#scanning; }
 
+  get channel() { return this.#channel; }
+
   async scan(options = {}) {
 
     // Ignore if already scanning
@@ -73,7 +78,7 @@ export class Scanner extends EventEmitter {
     // Start scan
     this.#scanning = true;
     logInfo(`Initiating scan on ${this.description}...`);
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 1}]);
+    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
     this.emit("scanstarted", {target: this});
 
     // Prepare args array
@@ -142,7 +147,7 @@ export class Scanner extends EventEmitter {
     }
 
     // Send the device's hardware port so TD knows which scanners it's receiving from
-    this.socket.write("# Channel = " + this.hardwarePort + "\n");
+    this.socket.write("# Channel = " + this.channel + "\n");
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
@@ -188,8 +193,8 @@ export class Scanner extends EventEmitter {
 
   #onScanImageEnd() {
     this.#scanning = false;
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
-    // this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    // this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
@@ -203,8 +208,8 @@ export class Scanner extends EventEmitter {
   }
 
   async destroy() {
-    this.sendOscMessage(`/device/${this.hardwarePort}/scanning`, [{type: "i", value: 0}]);
-    // this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: 0}]);
+    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    // this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
     this.removeListener();
     await new Promise(resolve => setTimeout(resolve, 25));
   }
