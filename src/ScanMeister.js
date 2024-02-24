@@ -156,6 +156,7 @@ export default class ScanMeister {
       }
 
     };
+
     this.#oscPort.once("error", this.#callbacks.onInitialOscError);
     this.#oscPort.open();
     await new Promise(resolve => this.#oscPort.once("ready", resolve));
@@ -177,6 +178,7 @@ export default class ScanMeister {
       logWarn("Impossible to send OSC, no socket available.")
       return;
     }
+    console.log("sendOscMessage");
     this.#oscPort.send({address: address, args: args});
   }
 
