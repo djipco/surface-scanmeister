@@ -134,6 +134,8 @@ export default class ScanMeister {
 
   async setupOsc() {
 
+    console.log("setupOsc");
+
     // Instantiate OSC UDP port
     this.#oscPort = new osc.UDPPort({
       localAddress: config.get("osc.local.address"),
@@ -343,6 +345,8 @@ export default class ScanMeister {
   }
 
   #onOscMessage(message) {
+
+    console.log("onOscMessage");
 
     const segments = message.address.split("/").slice(1);
 
