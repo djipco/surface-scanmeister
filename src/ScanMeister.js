@@ -233,6 +233,15 @@ export default class ScanMeister {
       let parent = this.getDescriptor(scanner.parent);
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
 
+      // If the hub is not configured in /config/hubs.js, report the vendor and model so we can add
+      // it to the config.
+      if (hub === undefined) {
+        logWarn(
+          `USB hub not configured. Vendor: ${parent.manufacturer} (${parent.manufacturerId}), ` +
+          `model: (${parent.model}).`
+        );
+      }
+
       // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
       let portId = scanner.port.toString();
       if (hub.hasSubGroups) portId = `${parent.port}-${portId}`;

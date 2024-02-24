@@ -45,18 +45,18 @@ const hubs = [
     ]
   },
 
-  {
-    vendor: "1d6b",
-    productId: "0002",
-    description: "xHCI Host Controller",
-    hasSubGroups: false,
-    ports: [
-      {physical: 0,  portId: "0"},
-      {physical: 1,  portId: "1"},
-      {physical: 2,  portId: "2"},
-      {physical: 3,  portId: "3"}
-    ]
-  }
+  // {
+  //   vendor: "1d6b",
+  //   productId: "0002",
+  //   description: "xHCI Host Controller",
+  //   hasSubGroups: false,
+  //   ports: [
+  //     {physical: 0,  portId: "0"},
+  //     {physical: 1,  portId: "1"},
+  //     {physical: 2,  portId: "2"},
+  //     {physical: 3,  portId: "3"}
+  //   ]
+  // }
 
 ]
 
