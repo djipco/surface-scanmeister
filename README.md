@@ -1,43 +1,66 @@
-# INITIAL CONFIGURATION OF THE SYSTEM
+# INITIAL CONFIGURATION
 
-## Raspbian
+### Raspbian
 
-* Use **Raspberry Pi Imager.app** (or similar) to create brand new boot medium for the Raspberry Pi 
-  2 Model B (this is the model we are currently using).
-* Create account named **surface**
-* Connect to wifi
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software:
+  * Name host to: **scanmesiter0x**
+  * Create user account named **scanmeister** (with no password)
+* Boot Pi and connect to network
+* Go to Pi config:
+  * Enable SSH and VNC (in "Interfaces" section)
+  * Set timezone (in "Localisation" section)  
 * Update everything:
 
   ```
   sudo apt update
   sudo apt upgrade -y
   ```
-  
-* Disable screen blanking by going to Menu -> Prefs -> RasPi Config -> Display
 
-## Remote Access
+### Node.js
 
-* Use the built-in VNC server (set a password)
-* To run headless, you must go to Menu -> Prefs -> RasPi Config -> Display and select a headless resolution
-  (1280x720)
-
-
-## Node.js
-
-The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
-we need to add the source for Node's latest LTS version:
+`scanmeister` needs Node.js to be installed. First, we need to add the source for Node's latest LTS version:
 
 ```
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-Then, we can install it:
+Then, we can install Node.js and `npm`:
 
 ```
 sudo apt install -y nodejs
+sudo apt install -y npm
 ```
 
-## SANE
+### Scanmeister
+
+To install `scanmeister`, open a terminal, go to desktop and clone from repo:
+
+```
+cd Desktop
+git clone https://github.com/djipco/surface-scanmeister
+```
+
+Once the repo is cloned, go inside folder and install all modules:
+
+```
+cd surface-scanmeister
+npm install
+```
+
+To start `scanmeister` at boot, in Terminal:
+
+```bash
+crontab -e
+```
+
+Insert:
+
+```
+@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
+```
+
+
+### SANE
 
 SANE is the framework that provides support for a variety of scanners (and cameras):
 
@@ -53,58 +76,6 @@ sudo sane-find-scanner -q
 
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
-
-You can debug by adding environment variables like so:
-
-```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
-
-#### Debugging
-
-More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
-
-## Git
-
-Ask for credentials to be stored locally:
-
-```
-git config credential.helper store
-```
-
-
-## Installing the scanmeister daemon
-
-Clone repo:
-
-```
-git clone https://github.com/djipco/surface-scanmeister
-```
-Enter credentials (once).
-
-Update from repo (put it in folder called `code`):
-
-```
-git pull https://github.com/djipco/surface-scanmeister code
-```
-
-To install all the modules required by the app, go to root of project and run:
-
-```npm install```
-
-## Make sure scanmeister starts at boot
-
-In Terminal:
-
-```bash
-crontab -e
-```
-
-Insert:
-
-```
-@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
-```
-
-
 
 
 
@@ -203,6 +174,14 @@ Options specific to device 'genesys:libusb:001:008':
         Time (in minutes) before a cached calibration expires. A value of 0
         means cache is not used. A negative value means cache never expires.
 ```
+
+#### Debugging
+
+You can debug by adding environment variables like so:
+
+```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
+
+More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
 
 ### Perform a manual scan
