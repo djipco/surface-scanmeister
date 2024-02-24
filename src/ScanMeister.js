@@ -87,7 +87,16 @@ export default class ScanMeister {
     });
 
     // Sort by hardware port
-    // this.#scanners.sort((a, b) => a.hardwarePort - b.hardwarePort);
+    this.#scanners.sort((a, b) => {
+
+      // Sort by hub port first
+      if (a.hubPort < b.hubPort) return -1;
+      if (a.hubPort > b.hubPort) return 1;
+
+      // If hub port is the same, sort by port
+      return a.hardwarePort - b.hardwarePort;
+
+    });
 
   }
 
@@ -225,13 +234,9 @@ export default class ScanMeister {
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
-
-
       // "parent" is the hub or subgroup
       let parent = this.getDescriptor(scanner.parent);
       const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
-
-
 
       // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
       let portId = scanner.port.toString();
