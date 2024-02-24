@@ -51,9 +51,16 @@ Once it's installed, you can check available devices with:
 sudo sane-find-scanner -q
 ```
 
-There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the SANE website.
+There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
+SANE website.
 
+You can debug by adding environment variables like so:
 
+```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
+
+#### Debugging
+
+More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
 ## Git
 
