@@ -1,9 +1,10 @@
 /**
- * Array describing how the physical ports on the device map to the software-reported ports
+ * Array describing how the physical ports on the device map to the software-reported ports. The
+ * software checks for all these hubs. If you do not want ScanMeister to use a model, remove it from
+ * the file or comment it out.
  */
 const hubs = [
   {
-    identifier: "045b:0209",      // <- will be phased out
     vendor: "045b",
     productId: "0209",
     description: "Atolla USB 3.0 16-Port Hub",
@@ -28,7 +29,6 @@ const hubs = [
     ]
   },
   {
-    identifier: "0409:0050",
     vendor: "0409",
     productId: "0050",
     description: "Dynex USB 2.0 7-Port Hub",

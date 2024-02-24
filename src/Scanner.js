@@ -9,19 +9,19 @@ import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
-  #systemName;
+  #args;
+  #bus;
+  #channel;
+  #hardwarePort;
+  #hub;
+  #hubPort;
   #manufacturer;
   #model;
-  #bus;
-  #hardwarePort;
-  #softwarePort;
   #oscPort;
   #scanning = false;
   #socket;
-  #args;
-  #hub;
-  #hubPort;
-  #channel;
+  #softwarePort;
+  #systemName;
 
   constructor(oscPort, options = {}) {
 
@@ -35,15 +35,6 @@ export class Scanner extends EventEmitter {
     this.#model = options.model;
     this.#hub = options.hub;
     this.#hubPort = parseInt(options.hubPort);
-
-  }
-
-  start(channel) {
-
-    this.#channel = channel;
-
-    this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
-    this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
 
   }
 
@@ -70,6 +61,13 @@ export class Scanner extends EventEmitter {
   get scanning() { return this.#scanning; }
 
   get channel() { return this.#channel; }
+  set channel(value) {
+    this.#channel = parseInt(value);
+    this.sendOscMessage(
+      `/device/${this.channel}/scanning`,
+      [{type: "i", value: this.scanning ? 1 : 0}]
+    );
+  }
 
   async scan(options = {}) {
 
@@ -129,9 +127,6 @@ export class Scanner extends EventEmitter {
       this.#args.push('--lamp-off-scan=no');
     }
 
-    // Ask to report progress on stderr
-    // this.#args.push('--progress');
-
     // Prevent cached calibration from expiring (not sure what it does!)
     this.#args.push('--expiration-time=-1');
 
@@ -177,19 +172,9 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageStderr(data) {
-
-    // let [prefix, percentage] = data.split(": ");
-    //
-    // // When called with the --progress switch, scanimage reports progress on stderr
-    // if (prefix !== "Progress") {
-      this.#scanning = false;
-      this.emit("error", data);
-      logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#args}`);
-    // } else {
-    //   percentage = parseFloat(percentage.slice(0, -1)) / 100;
-    //   this.sendOscMessage(`/device/${this.hardwarePort}/progress`, [{type: "f", value: percentage}]);
-    // }
-
+    this.#scanning = false;
+    this.emit("error", data);
+    logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#args}`);
   }
 
   #onScanImageError(error) {
@@ -201,7 +186,6 @@ export class Scanner extends EventEmitter {
   #onScanImageEnd() {
     this.#scanning = false;
     this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
-    // this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed on ${this.description}`);
   }
@@ -216,7 +200,6 @@ export class Scanner extends EventEmitter {
 
   async destroy() {
     this.sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
-    // this.sendOscMessage(`/device/${this.channel}/progress`, [{type: "f", value: 0}]);
     this.removeListener();
     await new Promise(resolve => setTimeout(resolve, 25));
   }

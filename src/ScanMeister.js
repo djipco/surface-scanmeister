@@ -63,9 +63,8 @@ export default class ScanMeister {
     await this.#updateScannerList(shd);
 
     // Log scanner details to console
-    this.scanners.forEach((device, index) => {
-      if (index === 0) return; // because position 0 is occupied by a bogus placeholder
-      logInfo(`    Channel ${index}. ${device.description}`, true);
+    this.scanners.forEach(device => {
+      logInfo(`    Channel ${device.channel}. ${device.description}`, true);
     });
 
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
@@ -87,26 +86,15 @@ export default class ScanMeister {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     });
 
-    // Sort by hardware port
+    // Sort by hub port then by device port
     this.#scanners.sort((a, b) => {
-
-      // Sort by hub port first
       if (a.hubPort < b.hubPort) return -1;
       if (a.hubPort > b.hubPort) return 1;
-
-      // If hub port is the same, sort by port
       return a.hardwarePort - b.hardwarePort;
-
     });
 
-    // Add bogus element in position zero
-    this.scanners.unshift({});
-
-    // Start the scanner and assign the correct channel
-    this.scanners.forEach((scanner, index) => {
-      if (index === 0) return;
-      scanner.start(index);
-    })
+    // Assign desired channels to scanners
+    this.scanners.forEach((scanner, index) => scanner.channel = index + 1);
 
   }
 
@@ -120,9 +108,7 @@ export default class ScanMeister {
     process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
 
     // Destroy scanners and remove callbacks
-    this.scanners.forEach(async device => {
-      if (device && device.destroy) await device.destroy()
-    });
+    this.scanners.forEach(async device => await device.destroy());
     this.#removeOscCallbacks();
 
     // Send notification and close OSC
@@ -192,10 +178,6 @@ export default class ScanMeister {
     }
     this.#oscPort.send({address: address, args: args});
   }
-
-  // getDeviceByHardwarePort(port) {
-  //   return this.scanners.find(device => device.hardwarePort === port);
-  // }
 
   async #onExitRequest() {
     await this.quit();
@@ -346,8 +328,11 @@ export default class ScanMeister {
 
   }
 
+  getScannerByChannel(channel) {
+    return this.#scanners.find(scanner => scanner.channel === channel);
+  }
+
   #onOscMessage(message) {
-  // #onOscMessage(message, timetag, info) {
 
     const segments = message.address.split("/").slice(1);
 
@@ -356,23 +341,23 @@ export default class ScanMeister {
     if (!this.oscCommands.includes(command)) return;
 
     // Fetch device index
-    const port = parseInt(segments[1]);
+    const channel = parseInt(segments[1]);
 
     // Execute command
     if (command === "scan") {
 
       // Find scanner by port
-      const scanner = this.scanners[port];
-      if (!scanner || port === 0) {
+      const scanner = this.getScannerByChannel(channel);
+      if (!scanner) {
         logWarn(
-          "Unable to execute OSC command. No device connected to specified port (" +
+          "Unable to execute OSC command. No device connected tied to channel (" +
           message.address + ")."
         );
         return;
       }
 
       const options = {
-        outputFile: config.get("paths.scansDir") + `/scanner${port}.png`
+        outputFile: config.get("paths.scansDir") + `/scanner${channel}.png`
       }
       scanner.scan(options);
 
