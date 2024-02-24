@@ -1,6 +1,6 @@
 # INITIAL CONFIGURATION
 
-## Raspbian
+### Raspbian
 
 * Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software:
   * Name host to: **scanmesiter0x**
@@ -16,7 +16,7 @@
   sudo apt upgrade -y
   ```
 
-## Node.js
+### Node.js
 
 `scanmeister` needs Node.js to be installed. First, we need to add the source for Node's latest LTS version:
 
@@ -30,7 +30,7 @@ Then, we can install it:
 sudo apt install -y nodejs
 ```
 
-## Scanmeister
+### Scanmeister
 
 Clone repo:
 
@@ -53,7 +53,7 @@ Insert:
 ```
 
 
-## SANE
+### SANE
 
 SANE is the framework that provides support for a variety of scanners (and cameras):
 
