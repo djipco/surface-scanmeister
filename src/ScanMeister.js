@@ -254,9 +254,11 @@ export default class ScanMeister {
 
       // Hub model and port. If device has subgroups, we use the parent device port instead of the
       // subgroup port.
-      if (hub && hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
-      scanner.hubName = hub.description;
-      scanner.hubPort = parent.port;
+      if (hub) {
+        if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
+        scanner.hubName = hub.description;
+        scanner.hubPort = parent.port;
+      }
 
     });
 
