@@ -238,21 +238,23 @@ export default class ScanMeister {
       if (hub === undefined) {
         logWarn(
           `USB hub not configured. Vendor: ${parent.manufacturer} (${parent.manufacturerId}), ` +
-          `model: (${parent.model}).`
+          `model: ${parent.model} (${parent.modelId}).`
         );
       }
 
       // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
       let portId = scanner.port.toString();
-      if (hub.hasSubGroups) portId = `${parent.port}-${portId}`;
+      if (hub && hub.hasSubGroups) portId = `${parent.port}-${portId}`;
 
       // Get physical port number (the number physically written on the device)
-      const port = hub.ports.find(p => p.portId === portId);
-      if (port) scanner.hardwarePort = port.physical;
+      if (hub) {
+        const port = hub.ports.find(p => p.portId === portId);
+        if (port) scanner.hardwarePort = port.physical;
+      }
 
       // Hub model and port. If device has subgroups, we use the parent device port instead of the
       // subgroup port.
-      if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
+      if (hub && hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
       scanner.hubName = hub.description;
       scanner.hubPort = parent.port;
 
