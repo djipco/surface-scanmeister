@@ -18,8 +18,7 @@
 
 ## Node.js
 
-The control program (`scanmeister`) is written in JavaScript so Node.js must be installed. First, 
-we need to add the source for Node's latest LTS version:
+`scanmeister` needs Node.js to be installed. First, we need to add the source for Node's latest LTS version:
 
 ```
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
