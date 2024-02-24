@@ -1,4 +1,4 @@
-# INITIAL CONFIGURATION OF THE SYSTEM
+# INITIAL CONFIGURATION
 
 ## Raspbian
 
@@ -30,7 +30,7 @@ Then, we can install it:
 sudo apt install -y nodejs
 ```
 
-## scanmeister
+## Scanmeister
 
 Clone repo:
 
@@ -40,7 +40,7 @@ Once the repo is cloned, install all modules by issuing the following command in
 
 ```npm install```
 
-Make sure scanmeister starts at boot. In Terminal:
+Make sure `scanmeister` starts at boot. In Terminal:
 
 ```bash
 crontab -e
@@ -51,8 +51,6 @@ Insert:
 ```
 @reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
-
-
 
 
 ## SANE
