@@ -61,7 +61,7 @@ export class Scanner extends EventEmitter {
 
   get hardwarePort() { return this.#hardwarePort; }
 
-  get hub() { return this.#hubName; }
+  get hubName() { return this.#hubName; }
   get hubPort() { return this.#hubPort; }
 
   get scanning() { return this.#scanning; }

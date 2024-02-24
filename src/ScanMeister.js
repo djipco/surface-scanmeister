@@ -247,8 +247,6 @@ export default class ScanMeister {
       scanner.hubName = hub.description;
       scanner.hubPort = parent.port;
 
-      console.log(hub.description);
-
     });
 
     return scanners;
