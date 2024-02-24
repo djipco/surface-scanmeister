@@ -1,41 +1,50 @@
 // Node.js modules
 import net from "net";
+import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
 // Project classes
-import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
-  #args;
-  #bus;
+  #args; /////////////// <-
   #callbacks = {};
   #channel;
   #hardwarePort;
-  #hub;
+  #hubName;
   #hubPort;
   #manufacturer;
   #model;
-  #oscPort;
+  #osc;
   #scanning = false;
-  #socket;
-  #softwarePort;
   #systemName;
 
-  constructor(oscPort, options = {}) {
+  constructor(osc, options = {}) {
 
     super();
 
-    this.#oscPort = oscPort;
-    this.#softwarePort = parseInt(options.port);
+    // OSC port object for communication
+    this.#osc = osc;
+
+    // Physical USB port as printed on the USB hub
     this.#hardwarePort = parseInt(options.hardwarePort);
-    this.#systemName = options.systemName;
-    this.#manufacturer = options.manufacturer;
-    this.#model = options.model;
-    this.#hub = options.hub;
+
+    // Name and model of the USB hub the device is connected to
+    this.#hubName = options.hub;
+
+    // Port number of the hub
     this.#hubPort = parseInt(options.hubPort);
+
+    // Manufacturer name of the device
+    this.#manufacturer = options.manufacturer;
+
+    // Model name of the device
+    this.#model = options.model;
+
+    // System name (e.g. genesys:libusb:001:071)
+    this.#systemName = options.systemName;
 
   }
 
@@ -50,13 +59,9 @@ export class Scanner extends EventEmitter {
       `(${this.systemName}) of "${this.hub}" via port ${this.#hubPort} of host.`;
   }
 
-  get bus() { return this.#bus; }
-
   get hardwarePort() { return this.#hardwarePort; }
 
-  get softwarePort() { return this.#softwarePort; }
-
-  get hub() { return this.#hub; }
+  get hub() { return this.#hubName; }
   get hubPort() { return this.#hubPort; }
 
   get scanning() { return this.#scanning; }
@@ -140,20 +145,20 @@ export class Scanner extends EventEmitter {
 
       await new Promise(resolve => {
 
-        this.socket = net.createConnection(
+        this.tcpSocket = net.createConnection(
           { port: config.get("tcp.port"), host: config.get("tcp.address") },
           resolve
         );
 
         this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
-        this.socket.on("error", this.#callbacks.onTcpSocketError);
+        this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
 
       });
 
     }
 
     // Send the device's hardware port so TD knows which scanners it's receiving from
-    this.socket.write("# Channel = " + this.channel + "\n");
+    this.tcpSocket.write("# Channel = " + this.channel + "\n");
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
@@ -171,7 +176,7 @@ export class Scanner extends EventEmitter {
       }
     );
 
-    this.scanImageSpawner.pipe(this.socket, "stdout");
+    this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
 
   }
 
@@ -203,11 +208,11 @@ export class Scanner extends EventEmitter {
   }
 
   sendOscMessage(address, args = []) {
-    if (!this.#oscPort || !this.#oscPort.socket) {
+    if (!this.#osc || !this.#osc.socket) {
       logWarn("Impossible to send OSC, no socket available.")
       return;
     }
-    this.#oscPort.send({address: address, args: args});
+    this.#osc.send({address: address, args: args});
   }
 
   async destroy() {

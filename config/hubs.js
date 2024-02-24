@@ -28,6 +28,7 @@ const hubs = [
       {physical: 16, portId: "0-0"},
     ]
   },
+
   {
     vendor: "0409",
     productId: "0050",
@@ -42,7 +43,24 @@ const hubs = [
       {physical: 5,  portId: "5"},
       {physical: 6,  portId: "6"}
     ]
+  },
+
+  {
+    vendor: "1d6b",
+    productId: "0002",
+    description: "xHCI Host Controller",
+    hasSubGroups: false,
+    ports: [
+      {physical: 0,  portId: "0"},
+      {physical: 1,  portId: "1"},
+      {physical: 2,  portId: "2"},
+      {physical: 3,  portId: "3"},
+      {physical: 4,  portId: "4"},
+      {physical: 5,  portId: "5"},
+      {physical: 6,  portId: "6"}
+    ]
   }
+
 ]
 
 export {hubs};
