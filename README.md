@@ -240,20 +240,4 @@ which port:
 usb-devices
 ```
 
-## Testing OSC
 
-You can install `sendosc` to test sending OSC commands to `scanmeister`. 
-
-```
-sudo apt-get install liboscpack-dev
-sudo apt-get install cmake
-```
-
-```
-cd ~
-git clone https://github.com/yoggy/sendosc.git
-cd sendosc
-cmake .
-make
-sudo make install 
-```
