@@ -166,6 +166,7 @@ export default class ScanMeister {
     // scanner objects)
     this.#callbacks.onOscError = this.#onOscError.bind(this);
     this.#oscPort.on("error", this.#callbacks.onOscError);
+    this.#oscPort.socket.on("error", this.#callbacks.onOscError);
     this.#callbacks.onOscMessage = this.#onOscMessage.bind(this);
     this.#oscPort.on("message", this.#callbacks.onOscMessage);
 
@@ -302,7 +303,14 @@ export default class ScanMeister {
   }
 
   async #onOscError(error) {
-    logWarn(error);
+
+    if (error.code === "EHOSTUNREACH") {
+      logWarn(`Unable to open OSC connection to ${error.address}:${error.port}.`)
+    } else {
+      logWarn(error);
+    }
+
+
   }
 
   #removeOscCallbacks() {
