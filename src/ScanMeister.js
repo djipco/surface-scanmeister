@@ -64,7 +64,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach((device, index) => {
-      logInfo(`    ${index+1}. ${device.description}`, true);
+      logInfo(`    ${index}. ${device.description}`, true);
     });
 
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
@@ -181,9 +181,9 @@ export default class ScanMeister {
     this.#oscPort.send({address: address, args: args});
   }
 
-  getDeviceByHardwarePort(port) {
-    return this.scanners.find(device => device.hardwarePort === port);
-  }
+  // getDeviceByHardwarePort(port) {
+  //   return this.scanners.find(device => device.hardwarePort === port);
+  // }
 
   async #onExitRequest() {
     await this.quit();
@@ -351,7 +351,8 @@ export default class ScanMeister {
     if (command === "scan") {
 
       // Find scanner by port
-      const scanner = this.getDeviceByHardwarePort(port);
+      // const scanner = this.getDeviceByHardwarePort(port);
+      const scanner = this.scanners[port];
       if (!scanner) {
         logWarn(
           "Unable to execute OSC command. No device connected to specified port (" +
