@@ -53,35 +53,16 @@ You can debug by adding environment variables like so:
 
 ```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
 
-
-
 More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
-
-## Git
-
-Ask for credentials to be stored locally:
-
-```
-git config credential.helper store
-```
 
 
 ## Installing the scanmeister daemon
 
 Clone repo:
 
-```
-git clone https://github.com/djipco/surface-scanmeister
-```
-Enter credentials (once).
+```git clone https://github.com/djipco/surface-scanmeister```
 
-Update from repo (put it in folder called `code`):
-
-```
-git pull https://github.com/djipco/surface-scanmeister code
-```
-
-To install all the modules required by the app, go to root of project and run:
+Once the repo is cloned, install all modules by issuing the following command in the scanmeister folder:
 
 ```npm install```
 
