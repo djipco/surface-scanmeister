@@ -30,6 +30,31 @@ Then, we can install it:
 sudo apt install -y nodejs
 ```
 
+## scanmeister
+
+Clone repo:
+
+```git clone https://github.com/djipco/surface-scanmeister```
+
+Once the repo is cloned, install all modules by issuing the following command in the scanmeister folder:
+
+```npm install```
+
+Make sure scanmeister starts at boot. In Terminal:
+
+```bash
+crontab -e
+```
+
+Insert:
+
+```
+@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
+```
+
+
+
+
 ## SANE
 
 SANE is the framework that provides support for a variety of scanners (and cameras):
@@ -56,29 +81,6 @@ You can debug by adding environment variables like so:
 More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
 
-## Installing the scanmeister daemon
-
-Clone repo:
-
-```git clone https://github.com/djipco/surface-scanmeister```
-
-Once the repo is cloned, install all modules by issuing the following command in the scanmeister folder:
-
-```npm install```
-
-## Make sure scanmeister starts at boot
-
-In Terminal:
-
-```bash
-crontab -e
-```
-
-Insert:
-
-```
-@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
-```
 
 
 
