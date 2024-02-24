@@ -239,7 +239,6 @@ export default class ScanMeister {
 
       // Get physical port number (the number physically written on the device)
       const port = hub.ports.find(p => p.portId === portId);
-      console.log(portId, port);
       if (port) scanner.hardwarePort = port.physical;
 
       // Hub model and port. If device has subgroups, we use the parent device port instead of the
@@ -248,6 +247,7 @@ export default class ScanMeister {
       scanner.hubName = hub.description;
       scanner.hubPort = parent.port;
 
+      console.log(portId, port, hub.description);
     });
 
     return scanners;
