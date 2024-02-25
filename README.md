@@ -71,7 +71,7 @@ set some options:
   needed in 'tcp' mode**).
 
 * Set the directory where scans will be saved by modifying the `scansDir` option (**only needed
-  in 'file' mode**)
+  in 'file' mode**). The directory must be created if it does not exist.
 
 * Set the address and port of the computer receiving OSC updates must be set.
 
