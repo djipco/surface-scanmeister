@@ -41,6 +41,8 @@ sudo apt install -y nodejs
 
 ### Scanmeister
 
+#### Installation
+
 To install `scanmeister`, open a terminal, go to desktop and clone from repo:
 
 ```sh
@@ -55,11 +57,13 @@ cd surface-scanmeister
 npm install
 ```
 
-A few parameters will probably need to be changed. Open `config/config.js` in the Geany 
-editor to change some options:
+#### Configuration
 
-* in 'tcp" mode (default), you must set the IP address and port of the computer that will
-  receive the files (typically: TouchDesigner).
+A few parameters will probably need to be changed. Open `surface-scanmeister/config/config.js` 
+in the Geany text editor to change some options:
+
+* in 'tcp" mode (default), set the correct IP address and port of the computer that will
+  receive the files over TCP (typically: TouchDesigner).
 
 * The remote address of the computer receiving OSC updates must be set (typically:
   TouchDesigner).
@@ -67,7 +71,7 @@ editor to change some options:
 * `scansDir` needs to be set to the proper directory if 'file' mode is used (the directory
   needs to be created).
 
-
+#### Launch
 
 That's it! To start `scanmeister` simply issue the following command in a Terminal inside the 
 `surface-scanmeister` directory:
