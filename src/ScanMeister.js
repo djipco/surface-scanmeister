@@ -44,6 +44,7 @@ export default class ScanMeister {
       logError(
         `The directory to save images in cannot be found (${config.get("paths.scansDir")})`
       );
+      return;
     }
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
