@@ -126,10 +126,10 @@ export class Scanner extends EventEmitter {
     this.#scanArgs.push('--buffer-size=16');
 
     // Geometry
-    this.#scanArgs.push('-l ' + config.get("devices.x"));
-    this.#scanArgs.push('-t ' + config.get("devices.y"));
-    this.#scanArgs.push('-x ' + config.get("devices.width"));
-    this.#scanArgs.push('-y ' + config.get("devices.height"));
+    // this.#scanArgs.push('-l ' + config.get("devices.x"));
+    // this.#scanArgs.push('-t ' + config.get("devices.y"));
+    // this.#scanArgs.push('-x ' + config.get("devices.width"));
+    // this.#scanArgs.push('-y ' + config.get("devices.height"));
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
     if (config.get("operation.mode") === "tcp") {
