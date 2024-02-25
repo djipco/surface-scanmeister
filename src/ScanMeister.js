@@ -8,7 +8,7 @@ import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import process from "node:process";
-import { readFile, access, constants } from 'fs/promises';
+import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
 export default class ScanMeister {
@@ -29,15 +29,6 @@ export default class ScanMeister {
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
 
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
-
-    // Check if modules have been installed
-    try {
-      await access("node_modules", constants.F_OK);
-    } catch (error) {
-      logError(`The modules have not been installed. Install them with: npm install`);
-      logInfo("Exiting...");
-      setTimeout(() => process.exit(1), 500); // wait for log files to be written
-    }
 
     // Check platform
     if (process.platform !== "linux") {
