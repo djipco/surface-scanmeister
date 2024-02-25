@@ -44,6 +44,7 @@ export default class ScanMeister {
       logError(
         `The directory to save images in cannot be found (${config.get("paths.scansDir")})`
       );
+      await this.quit(1);
       return;
     }
 
