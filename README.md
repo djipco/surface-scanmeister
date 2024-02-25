@@ -47,6 +47,7 @@ Once the repo is cloned, go inside folder and install all modules:
 cd surface-scanmeister
 npm install
 ```
+### ~~crontab~~
 
 ~~To start `scanmeister` at boot, in Terminal:~~
 
