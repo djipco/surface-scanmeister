@@ -13,23 +13,27 @@
   * Set timezone (in "Localisation" section)  
 * Update everything:
 
-  ```
+  ```sh
   sudo apt update
   sudo apt upgrade -y
   ```
-* Remove password for user `scanmeister`
+* Remove password for user `scanmeister` by issuing the following in a terminal
+
+  ```sh
+  sudo passwd -d scanmeister
+  ```
 
 ### Node.js
 
 `scanmeister` needs Node.js to be installed. First, we need to add the source for Node's latest LTS version:
 
-```
+```sh
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
 Then, we can install Node.js and `npm`:
 
-```
+```sh
 sudo apt install -y nodejs
 sudo apt install -y npm
 ```
@@ -38,14 +42,14 @@ sudo apt install -y npm
 
 To install `scanmeister`, open a terminal, go to desktop and clone from repo:
 
-```
+```sh
 cd ~/Desktop
 git clone https://github.com/djipco/surface-scanmeister
 ```
 
 Once the repo is cloned, go inside folder and install all modules:
 
-```
+```sh
 cd surface-scanmeister
 npm install
 ```
@@ -53,7 +57,7 @@ npm install
 
 ~~To start `scanmeister` at boot, in Terminal:~~
 
-```
+```sh
 bash
 crontab -e
 ```
@@ -69,19 +73,19 @@ crontab -e
 
 ~~SANE is the framework that provides support for a variety of scanners (and cameras). **It should already be installed**. If not:~~
 
-```
+```sh
 sudo apt install sane
 ```
 
 ~~Once it's installed, you can check available devices with:~~
 
-```
+```sh
 sudo sane-find-scanner -q
 ```
 
 or
 
-```
+```sh
 scanimage -L
 ```
 
