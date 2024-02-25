@@ -33,8 +33,6 @@ export class Scanner extends EventEmitter {
     this.#model = options.model;
     this.#systemName = options.systemName;
 
-    console.log(this.#hub);
-
   }
 
   get channel() { return this.#channel; }
@@ -57,7 +55,9 @@ export class Scanner extends EventEmitter {
 
   get hardwarePort() { return this.#hardwarePort; }
 
-  get hubName() { return `${this.#hub.manufacturer} ${this.#hub.model}`}
+  get hubName() {
+    return `${this.#hub.manufacturer} ${this.#hub.model}`
+  }
 
   get hubPort() { return this.#hub.port; }
 
