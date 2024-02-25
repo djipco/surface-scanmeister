@@ -45,8 +45,12 @@ export class Scanner extends EventEmitter {
   }
 
   get description() {
-    return `"${this.name}" on USB #${this.hardwarePort} (${this.systemName}). ` +
-      `Connected via hub "${this.hubName}" on bus ${this.#hub.bus}, port ${this.hubPort}.`;
+    return `"${this.nameAndPort}" (${this.systemName}). ` +
+      `Connected via "${this.hubName}" on bus ${this.#hub.bus}, port ${this.hubPort}.`;
+  }
+
+  get nameAndPort() {
+    return `${this.name} on USB #${this.hardwarePort}`;
   }
 
   get name() {
@@ -73,13 +77,13 @@ export class Scanner extends EventEmitter {
 
     // Ignore if already scanning
     if (this.scanning) {
-      logWarn(`Already scanning with device ${this.description}. Ignoring.`)
+      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring.`)
       return;
     }
 
     // Start scan
     this.#scanning = true;
-    logInfo(`Initiating scan on ${this.description}...`);
+    logInfo(`Initiating scan on ${this.nameAndPort}...`);
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
     // Prepare 'scanimage' args array
@@ -209,7 +213,7 @@ export class Scanner extends EventEmitter {
     this.#scanning = false;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
-    logInfo(`Scan completed on ${this.description}`);
+    logInfo(`Scan completed on ${this.nameAndPort}`);
   }
 
   #sendOscMessage(address, args = []) {
