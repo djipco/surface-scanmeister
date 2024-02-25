@@ -28,7 +28,7 @@ export default class ScanMeister {
     process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
 
-    logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}'...`);
+    logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
 
     // Check platform
     if (process.platform !== "linux") {
