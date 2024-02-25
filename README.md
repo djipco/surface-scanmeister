@@ -54,6 +54,14 @@ Once the repo is cloned, go inside folder and install all modules:
 cd surface-scanmeister
 npm install
 ```
+
+That's it! To start `scanmeister` simply issue the following command in a Terminal inside the 
+`surface-scanmeister` directory:
+
+```sh
+node index.js
+```
+
 ### ~~crontab~~
 
 ~~To start `scanmeister` at boot, in Terminal:~~
