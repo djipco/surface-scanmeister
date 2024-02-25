@@ -250,7 +250,7 @@ The **scanmeister** daemon running on the Pi does the same thing behind the scen
 device the image is coming from, **scanmeister** adds a comment on the first line of the output. This
 is why images sent by **scanmeister** are properly indexed from 1 to 16 (matching the channel).
 
-## USB Devices
+## USB Devices & USB Physical Ports
 
 USB devices are listed in `/dev/bus/usb`. You can also list them with:
 
@@ -263,8 +263,6 @@ Hierachical view (tree view):
 ```shell
 lsusb -t
 ```
-
-## USB Physical Ports
 
 `scanimage` does not provide physical port information. This information can be fetched with 
 `usb-devices` (also installed by default). This is what the code uses to figure which device is on 
