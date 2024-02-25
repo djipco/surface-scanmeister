@@ -250,7 +250,7 @@ export default class ScanMeister {
         if (h) {
           scanner.hub.manufacturer = h.manufacturer;
         } else {
-          scanner.hub.manufacturer = `Unknown ${scanner.hub.manufacturerId}`;
+          scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
         }
       }
 
@@ -260,7 +260,7 @@ export default class ScanMeister {
         if (h) {
           scanner.hub.model = h.model;
         } else {
-          scanner.hub.model = `Unknown ${scanner.hub.modelId}`;
+          scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
         }
       }
 
