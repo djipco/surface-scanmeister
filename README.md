@@ -37,7 +37,7 @@ sudo apt install -y npm
 To install `scanmeister`, open a terminal, go to desktop and clone from repo:
 
 ```
-cd Desktop
+cd ~/Desktop
 git clone https://github.com/djipco/surface-scanmeister
 ```
 
