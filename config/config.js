@@ -96,7 +96,7 @@ const config = convict({
     y: {
       doc: 'The y position to start the scan at (0...297.5mm)',
       format: 'Number',
-      default: 297.5
+      default: 0
     },
     width: {
       doc: 'Width of scan area (0...216.7mm)',
