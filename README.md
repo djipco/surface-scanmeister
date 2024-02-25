@@ -17,7 +17,7 @@
   sudo apt update
   sudo apt upgrade -y
   ```
-* Remove password for user `scanmeister` by issuing the following in a terminal
+* Remove password for user `scanmeister` by issuing the following command in a terminal
 
   ```sh
   sudo passwd -d scanmeister
