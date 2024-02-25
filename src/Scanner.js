@@ -46,7 +46,7 @@ export class Scanner extends EventEmitter {
 
   get description() {
     return `${this.nameAndPort} (${this.systemName}). ` +
-      `Connected via "${this.hubName}" on bus ${this.#hub.bus}, port ${this.hubPort}.`;
+      `Connected via ${this.hubName} on bus ${this.#hub.bus}, port ${this.hubPort}.`;
   }
 
   get nameAndPort() {
@@ -213,7 +213,7 @@ export class Scanner extends EventEmitter {
     this.#scanning = false;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
-    logInfo(`Scan completed on ${this.nameAndPort}`);
+    logInfo(`Scan completed with ${this.nameAndPort}`);
   }
 
   #sendOscMessage(address, args = []) {

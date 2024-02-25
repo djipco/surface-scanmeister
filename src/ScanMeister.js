@@ -368,7 +368,7 @@ export default class ScanMeister {
       const scanner = this.getScannerByChannel(channel);
       if (!scanner) {
         logWarn(
-          "Unable to execute OSC command. No device connected tied to channel (" +
+          "Unable to execute OSC command: no device tied to requested channel (" +
           message.address + ")."
         );
         return;
