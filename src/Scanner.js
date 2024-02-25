@@ -45,12 +45,12 @@ export class Scanner extends EventEmitter {
   }
 
   get description() {
-    return `"${this.nameAndPort}" (${this.systemName}). ` +
+    return `${this.nameAndPort} (${this.systemName}). ` +
       `Connected via "${this.hubName}" on bus ${this.#hub.bus}, port ${this.hubPort}.`;
   }
 
   get nameAndPort() {
-    return `${this.name} on USB #${this.hardwarePort}`;
+    return `${this.name} on port #${this.hardwarePort}`;
   }
 
   get name() {
@@ -83,7 +83,7 @@ export class Scanner extends EventEmitter {
 
     // Start scan
     this.#scanning = true;
-    logInfo(`Initiating scan on ${this.nameAndPort}...`);
+    logInfo(`Initiating scan with ${this.nameAndPort}...`);
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
     // Prepare 'scanimage' args array
