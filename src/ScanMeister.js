@@ -243,6 +243,7 @@ export default class ScanMeister {
 
       //
       scanner.hub = this.getDescriptor(scanner.parent);
+      console.log(scanner.hub);
       if (!scanner.hub.manufacturer) {
         scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
       }
