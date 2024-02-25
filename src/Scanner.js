@@ -28,12 +28,12 @@ export class Scanner extends EventEmitter {
 
     this.#osc = osc;
     this.#hardwarePort = parseInt(options.port);
-    // this.#hubName = options.hubName;
     this.#hub = options.hub;
-    // this.#hubPort = parseInt(options.hubPort);
     this.#manufacturer = options.manufacturer;
     this.#model = options.model;
     this.#systemName = options.systemName;
+
+    console.log(this.#hub);
 
   }
 
