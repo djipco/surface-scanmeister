@@ -9,7 +9,7 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
   
   * Host: **scanmeister0x** (change "x" by integer)
   * User account: **scanmeister**
-  * Password: **12345** (password is mandatory, but we will remove it later)
+  * Password: use what you want (write it on device)
 
 * Boot Pi from the SDHC card and connect to network
 
@@ -23,11 +23,6 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
   ```sh
   sudo apt update
   sudo apt upgrade -y
-  ```
-* Remove password for user `scanmeister` by issuing the following command in a terminal
-
-  ```sh
-  sudo passwd -d scanmeister
   ```
 
 ### Node.js
