@@ -2,10 +2,11 @@
 
 ### Raspbian
 
-* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software:
-  * Name host to: **scanmesiter0x**
-  * Create user account named **scanmeister** (with no password)
-* Boot Pi and connect to network
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software,
+* click on "Modify Settings" and:
+  * Name host to: **scanmeister0x**
+  * Create user account named **scanmeister** (you must specify it but we will remove it later)
+* Boot Pi from the SDHC card and connect to network
 * Go to Pi config:
   * Enable SSH and VNC (in "Interfaces" section)
   * Set timezone (in "Localisation" section)  
