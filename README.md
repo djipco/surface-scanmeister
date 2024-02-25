@@ -2,7 +2,7 @@
 
 ### Raspbian
 
-These instructions apply to the Raspberry Pi OS refered to as "bookworm".
+These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bookworm").
 
 * Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. During the
   process click on "Modify Settings":
