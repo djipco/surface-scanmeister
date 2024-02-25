@@ -259,26 +259,3 @@ which port:
 ```
 usb-devices
 ```
-
-
-
-
-
-
-
-
-### ~~crontab~~
-
-~~To start `scanmeister` at boot, in Terminal:~~
-
-```sh
-bash
-crontab -e
-```
-
-~~Insert:~~
-
-```
-@reboot (sleep 20; /home/scanmeister/surface-scanmeister/index.js) >> /home/scanmeister/surface-scanmeister/logs/scanmeister.log 2>&1
-```
-
