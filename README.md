@@ -17,6 +17,7 @@
   sudo apt update
   sudo apt upgrade -y
   ```
+* Remove password for user `scanmeister`
 
 ### Node.js
 
