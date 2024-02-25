@@ -63,15 +63,15 @@ crontab -e
 ```
 
 
-### SANE
+### ~~SANE~~
 
-SANE is the framework that provides support for a variety of scanners (and cameras). **It should already be installed**. If not:
+~~SANE is the framework that provides support for a variety of scanners (and cameras). **It should already be installed**. If not:~~
 
 ```
 sudo apt install sane
 ```
 
-Once it's installed, you can check available devices with: 
+~~Once it's installed, you can check available devices with:~~
 
 ```
 sudo sane-find-scanner -q
@@ -82,12 +82,6 @@ or
 ```
 scanimage -L
 ```
-
-
-There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
-SANE website.
-
-
 
 # OSC Schema
 
@@ -116,6 +110,9 @@ Result:
 device `genesys:libusb:001:009' is a Canon LiDE 210 flatbed scanner
 device `genesys:libusb:001:008' is a Canon LiDE 210 flatbed scanner
 ```
+
+There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
+SANE website.
 
 ### Retrieve options for device (the options varies from device to device)
 
