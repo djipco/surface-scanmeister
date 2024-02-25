@@ -227,7 +227,7 @@ export default class ScanMeister {
     // Build a flat list of valid device identifiers
     const deviceIDs = models.map(model => `${model.vendor}:${model.productId}`);
 
-    // Only keep scanners whose models are listed in the valid device list
+    // Only keep scanners whose models are listed in the device list (/config/models.js)
     const scanners = this.descriptors.filter(d => {
       return deviceIDs.includes(`${d.manufacturerId}:${d.modelId}`);
     });
@@ -241,36 +241,42 @@ export default class ScanMeister {
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
-      // "parent" is the hub or subgroup
-      let parent = this.getDescriptor(scanner.parent);
-      const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
+      //
+      scanner.hub = this.getDescriptor(scanner.parent);
 
-      // If the hub is not configured in /config/hubs.js, report the vendor and model so we can add
-      // it to the config.
-      if (hub === undefined) {
-        logWarn(
-          `USB hub not configured. Vendor: ${parent.manufacturer} (${parent.manufacturerId}), ` +
-          `model: ${parent.model} (${parent.modelId}).`
-        );
-      }
+      // // "parent" is the hub or subgroup
+      // let parent = this.getDescriptor(scanner.parent);
+      // const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
 
+      // // If the hub is not configured in /config/hubs.js, report the vendor and model so we can add
+      // // it to the config.
+      // if (hub === undefined) {
+      //   logWarn(
+      //     `USB hub not configured. Vendor: ${parent.manufacturer} (${parent.manufacturerId}), ` +
+      //     `model: ${parent.model} (${parent.modelId}).`
+      //   );
+      // }
+      //
       // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
-      let portId = scanner.port.toString();
-      if (hub && hub.hasSubGroups) portId = `${parent.port}-${portId}`;
+      // let portId = scanner.port.toString();
+      // if (hub && hub.hasSubGroups) portId = `${parent.port}-${portId}`;
+      //
+      // // Get physical port number (the number physically written on the device)
+      // if (hub) {
+      //   const port = hub.ports.find(p => p.portId === portId);
+      //   if (port) scanner.hardwarePort = port.physical;
+      // }
+      //
+      // // Hub model and port. If device has subgroups, we use the parent device port instead of the
+      // // subgroup port.
+      // if (hub) {
+      //   if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
+      //   scanner.hubName = `${parent.manufacturer} ${parent.model}`;
+      //   scanner.hubPort = parent.port;
+      // }
 
-      // Get physical port number (the number physically written on the device)
-      if (hub) {
-        const port = hub.ports.find(p => p.portId === portId);
-        if (port) scanner.hardwarePort = port.physical;
-      }
-
-      // Hub model and port. If device has subgroups, we use the parent device port instead of the
-      // subgroup port.
-      if (hub) {
-        if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
-        scanner.hubName = `${parent.manufacturer} ${parent.model}`;
-        scanner.hubPort = parent.port;
-      }
+      // hardwarePort
+      // hub
 
     });
 

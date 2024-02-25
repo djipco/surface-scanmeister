@@ -12,8 +12,9 @@ export class Scanner extends EventEmitter {
   #callbacks = {};      // Object to store callbacks defined internally
   #channel;             // Channel number (identifies the device in OSC and over TCP)
   #hardwarePort;        // Physical USB port as printed on the USB hub
-  #hubName;             // Name and model of the USB hub the device is connected to
-  #hubPort;             // Port number of the hub this device is connected to
+  #hub;
+  // #hubName;             // Name and model of the USB hub the device is connected to
+  // #hubPort;             // Port number of the hub this device is connected to
   #manufacturer;        // Manufacturer name of the device
   #model;               // Model name of the device
   #osc;                 // OSC port object for communication
@@ -26,9 +27,10 @@ export class Scanner extends EventEmitter {
     super();
 
     this.#osc = osc;
-    this.#hardwarePort = parseInt(options.hardwarePort);
-    this.#hubName = options.hubName;
-    this.#hubPort = parseInt(options.hubPort);
+    this.#hardwarePort = parseInt(options.port);
+    // this.#hubName = options.hubName;
+    this.#hub = options.hub;
+    // this.#hubPort = parseInt(options.hubPort);
     this.#manufacturer = options.manufacturer;
     this.#model = options.model;
     this.#systemName = options.systemName;
@@ -45,15 +47,19 @@ export class Scanner extends EventEmitter {
   }
 
   get description() {
-    return `"${this.manufacturer} ${this.model}" on port #${this.hardwarePort} ` +
-      `(${this.systemName}) of "${this.hubName}" via port ${this.#hubPort} of host.`;
+    return `"${this.name}" on port #${this.hardwarePort} ` +
+      `(${this.systemName}) of "${this.hubName}" via port ${this.hubPort} of host.`;
+  }
+
+  get name() {
+    return `${this.manufacturer} ${this.model}`
   }
 
   get hardwarePort() { return this.#hardwarePort; }
 
-  get hubName() { return this.#hubName; }
+  get hubName() { return `${this.#hub.manufacturer} ${this.#hub.model}`}
 
-  get hubPort() { return this.#hubPort; }
+  get hubPort() { return this.#hub.port; }
 
   get manufacturer() { return this.#manufacturer; }
 

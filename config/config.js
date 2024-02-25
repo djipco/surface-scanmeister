@@ -106,7 +106,7 @@ const config = convict({
     height: {
       doc: 'Height of scan area (0...297.5mm)',
       format: 'Number',
-      default: 400
+      default: 297.5
     },
   }
 
