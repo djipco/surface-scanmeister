@@ -9,7 +9,7 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
   
   * Host: **scanmeister0x** (change "x" by integer)
   * User account: **scanmeister**
-  * Password: use what you want (write it on device)
+  * Password: use a 6-character random password (write it on device)
 
 * Boot Pi from the SDHC card and connect to network
 
