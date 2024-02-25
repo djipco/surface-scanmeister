@@ -47,22 +47,23 @@ cd surface-scanmeister
 npm install
 ```
 
-To start `scanmeister` at boot, in Terminal:
+~~To start `scanmeister` at boot, in Terminal:~~
 
-```bash
+```
+bash
 crontab -e
 ```
 
-Insert:
+~~Insert:~~
 
 ```
-@reboot (sleep 20; /home/surface/surface-scanmeister/index.js) >> /home/surface/surface-scanmeister/logs/scanmeister.log 2>&1
+@reboot (sleep 20; /home/scanmeister/surface-scanmeister/index.js) >> /home/scanmeister/surface-scanmeister/logs/scanmeister.log 2>&1
 ```
 
 
 ### SANE
 
-SANE is the framework that provides support for a variety of scanners (and cameras):
+SANE is the framework that provides support for a variety of scanners (and cameras). **It should already be installed**. If not:
 
 ```
 sudo apt install sane
@@ -73,6 +74,13 @@ Once it's installed, you can check available devices with:
 ```
 sudo sane-find-scanner -q
 ```
+
+or
+
+```
+scanimage -L
+```
+
 
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
