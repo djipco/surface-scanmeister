@@ -15,7 +15,7 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
 
 * Go to Pi config:
   
-  * Enable VNC (in "Interfaces" section)
+  * Enable **VNC** and **SSH** (in "Interfaces" section)
   * Set timezone (in "Localisation" section)
     
 * Update everything:
