@@ -80,41 +80,7 @@ That's it! To start `scanmeister` simply issue the following command in a Termin
 node index.js
 ```
 
-### ~~crontab~~
 
-~~To start `scanmeister` at boot, in Terminal:~~
-
-```sh
-bash
-crontab -e
-```
-
-~~Insert:~~
-
-```
-@reboot (sleep 20; /home/scanmeister/surface-scanmeister/index.js) >> /home/scanmeister/surface-scanmeister/logs/scanmeister.log 2>&1
-```
-
-
-### ~~SANE~~
-
-~~SANE is the framework that provides support for a variety of scanners (and cameras). **It should already be installed**. If not:~~
-
-```sh
-sudo apt install sane
-```
-
-~~Once it's installed, you can check available devices with:~~
-
-```sh
-sudo sane-find-scanner -q
-```
-
-or
-
-```sh
-scanimage -L
-```
 
 # OSC Schema
 
@@ -135,17 +101,31 @@ On startup and shutdown, the system broadcasts this message:
 The `scanimage` command is installed by default in Raspbian. This is what is used to trigger 
 scanning. You can calso list available devices:
 
-```scanimage --list-devices```
+```sh
+scanimage --list-devices
+```
 
-Result:
+Results:
 
 ```
 device `genesys:libusb:001:009' is a Canon LiDE 210 flatbed scanner
 device `genesys:libusb:001:008' is a Canon LiDE 210 flatbed scanner
 ```
 
+or
+
+```sh
+scanimage -L
+```
+
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
+
+If, for whatever reason, `scanimage` is not installed, you need to install SANE:
+
+```sh
+sudo apt install sane
+```
 
 ### Retrieve options for device (the options varies from device to device)
 
@@ -280,4 +260,25 @@ which port:
 usb-devices
 ```
 
+
+
+
+
+
+
+
+### ~~crontab~~
+
+~~To start `scanmeister` at boot, in Terminal:~~
+
+```sh
+bash
+crontab -e
+```
+
+~~Insert:~~
+
+```
+@reboot (sleep 20; /home/scanmeister/surface-scanmeister/index.js) >> /home/scanmeister/surface-scanmeister/logs/scanmeister.log 2>&1
+```
 
