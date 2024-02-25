@@ -4,15 +4,20 @@
 
 These instructions apply to the Raspberry Pi OS refered to as "bookworm".
 
-* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. At the beginning
-  of the process click on "Modify Settings" and:
-  * Name host to: **scanmeister0x** (change "x" by integer)
-  * Create user account named **scanmeister** (you must specify a password but we will remove it later)
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. During the
+  process click on "Modify Settings":
+  
+  * Host: **scanmeister0x** (change "x" by integer)
+  * User account: **scanmeister**
+  * Password: **12345** (password is mandatory, but we will remove it later)
+
 * Boot Pi from the SDHC card and connect to network
 
 * Go to Pi config:
+  
   * Enable VNC (in "Interfaces" section)
-  * Set timezone (in "Localisation" section)  
+  * Set timezone (in "Localisation" section)
+    
 * Update everything:
 
   ```sh
@@ -27,13 +32,13 @@ These instructions apply to the Raspberry Pi OS refered to as "bookworm".
 
 ### Node.js
 
-`scanmeister` needs Node.js to be installed. First, we need to add the source for Node's latest LTS version:
+Install Node.js. Step 1, add the source for Node's latest LTS version:
 
 ```sh
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-Then, we can install Node.js and `npm`:
+Step 2, install Node.js:
 
 ```sh
 sudo apt install -y nodejs
@@ -59,21 +64,20 @@ npm install
 
 #### Configuration
 
-A few parameters will probably need to be changed. Open `surface-scanmeister/config/config.js` 
-in the Geany text editor to change some options:
+Open `surface-scanmeister/config/config.js` in the Geany editor (Main Menu -> Programming) to 
+set some options:
 
-* in 'tcp" mode (default), set the correct IP address and port of the computer that will
-  receive the files over TCP (typically: TouchDesigner).
+* Set the IP address and port of the computer that will receive the files over TCP (**only
+  needed in 'tcp' mode**).
 
-* The remote address of the computer receiving OSC updates must be set (typically:
-  TouchDesigner).
+* Set the directory where scans will be saved by modifying the `scansDir` option (**only needed
+  in 'file' mode**)
 
-* `scansDir` needs to be set to the proper directory if 'file' mode is used (the directory
-  needs to be created).
+* Set the address and port of the computer receiving OSC updates must be set.
 
 #### Launch
 
-That's it! To start `scanmeister` simply issue the following command in a Terminal inside the 
+To start `scanmeister`, issue the following command in a Terminal from inside the 
 `surface-scanmeister` directory:
 
 ```sh
@@ -81,10 +85,9 @@ node index.js
 ```
 
 
-
 # OSC Schema
 
-Trigger a scan on scanner connected to physical port 12:
+Trigger a scan on scanner connected to channel 12:
 
 * `/scan/12`
 
@@ -98,8 +101,8 @@ On startup and shutdown, the system broadcasts this message:
 
 ## scanimage
 
-The `scanimage` command is installed by default in Raspbian. This is what is used to trigger 
-scanning. You can calso list available devices:
+The `scanimage` command is what is used under the hood to control the scanners. 
+You can user is to list available devices:
 
 ```sh
 scanimage --list-devices
@@ -121,17 +124,19 @@ scanimage -L
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
 
-If, for whatever reason, `scanimage` is not installed, you need to install SANE:
+If, for whatever reason, `scanimage` is not installed (it should already be installed, you need to
+install SANE:
 
 ```sh
 sudo apt install sane
 ```
 
-### Retrieve options for device (the options varies from device to device)
+### Retrieve options for device (the options vary from device to device)
 
 ```sh
 scanimage --device-name='genesys:libusb:001:008' --help 
 ```
+
 or
 
 ```sh
@@ -197,9 +202,19 @@ Options specific to device 'genesys:libusb:001:008':
 
 #### Debugging
 
-You can debug by adding environment variables like so:
+You can debug scanimage by prepending the command with environment variables:
 
-```SANE_DEBUG_DLL=255 SANE_DEBUG_HPAIO=255 SANE_DEBUG_SANEI_TCP=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color > test2.png```
+```
+SANE_DEBUG_DLL=255
+SANE_DEBUG_HPAIO=255
+SANE_DEBUG_SANEI_TCP=255
+```
+
+For example:
+
+```
+SANE_DEBUG_DLL=255 scanimage --device-name=genesys:libusb:001:072 --format=png --mode=Color --output-file=test.png
+```
 
 More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
@@ -233,8 +248,7 @@ the mode **must be** `Color`. This yiels a PNM in the P6 format.
 
 The **scanmeister** daemon running on the Pi does the same thing behind the scene. To identify which
 device the image is coming from, **scanmeister** adds a comment on the first line of the output. This
-is why images sent by **scanmeister** are properly indexed from 1 to 16 (matching the hardware device
-number).
+is why images sent by **scanmeister** are properly indexed from 1 to 16 (matching the channel).
 
 ## USB Devices
 
