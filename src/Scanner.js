@@ -146,10 +146,10 @@ export class Scanner extends EventEmitter {
 
       });
 
-    }
+      // Send the device's hardware port so TD knows which scanners it's receiving from
+      this.tcpSocket.write("# Channel = " + this.channel + "\n");
 
-    // Send the device's hardware port so TD knows which scanners it's receiving from
-    this.tcpSocket.write("# Channel = " + this.channel + "\n");
+    }
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
