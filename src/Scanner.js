@@ -167,7 +167,9 @@ export class Scanner extends EventEmitter {
       }
     );
 
-    this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
+    if (config.get("operation.mode") === "tcp") {
+      this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
+    }
 
   }
 
