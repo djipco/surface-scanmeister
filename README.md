@@ -2,20 +2,20 @@
 
 ### Raspbian
 
-These instructions apply to the Raspberry Pi OS refered to as "bookworm".
+These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bookworm").
 
 * Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. During the
   process click on "Modify Settings":
   
   * Host: **scanmeister0x** (change "x" by integer)
   * User account: **scanmeister**
-  * Password: **12345** (password is mandatory, but we will remove it later)
+  * Password: use a 6-character random password (write it on device)
 
 * Boot Pi from the SDHC card and connect to network
 
 * Go to Pi config:
   
-  * Enable VNC (in "Interfaces" section)
+  * Enable **VNC** and **SSH** (in "Interfaces" section)
   * Set timezone (in "Localisation" section)
     
 * Update everything:
@@ -23,11 +23,6 @@ These instructions apply to the Raspberry Pi OS refered to as "bookworm".
   ```sh
   sudo apt update
   sudo apt upgrade -y
-  ```
-* Remove password for user `scanmeister` by issuing the following command in a terminal
-
-  ```sh
-  sudo passwd -d scanmeister
   ```
 
 ### Node.js
@@ -84,6 +79,11 @@ To start `scanmeister`, issue the following command in a Terminal from inside th
 node index.js
 ```
 
+# Remote Access
+
+* **VNC**: use `scanmeister` (username) and the password defined above.
+
+* **ssh**: `ssh@IP_ADDRESS` (with same user and pass)
 
 # OSC Schema
 
