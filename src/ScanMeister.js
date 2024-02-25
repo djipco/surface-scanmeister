@@ -1,5 +1,5 @@
 // Import modules
-import fs from "fs";
+import fs from "fs-extra";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
@@ -39,10 +39,10 @@ export default class ScanMeister {
 
     // Check if the directory to save images in can be found (in "file" mode)
     try {
-      await fs.promises.access(config.get("paths.scansDir"));
-    } catch (error) {
+      await fs.ensureDir(config.get("paths.scansDir"))
+    } catch (err) {
       logError(
-        `The directory to save images in cannot be found (${config.get("paths.scansDir")})`
+        `The directory to save images in cannot be created (${config.get("paths.scansDir")})`
       );
       await this.quit(1);
       return;

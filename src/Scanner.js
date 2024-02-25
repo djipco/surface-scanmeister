@@ -12,9 +12,7 @@ export class Scanner extends EventEmitter {
   #callbacks = {};      // Object to store callbacks defined internally
   #channel;             // Channel number (identifies the device in OSC and over TCP)
   #hardwarePort;        // Physical USB port as printed on the USB hub
-  #hub;
-  // #hubName;             // Name and model of the USB hub the device is connected to
-  // #hubPort;             // Port number of the hub this device is connected to
+  #hub;                 // A descriptor object for the hub
   #manufacturer;        // Manufacturer name of the device
   #model;               // Model name of the device
   #osc;                 // OSC port object for communication
