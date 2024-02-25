@@ -243,47 +243,26 @@ export default class ScanMeister {
 
       //
       scanner.hub = this.getDescriptor(scanner.parent);
-      console.log(scanner.hub);
+
+      // If the manufacturer is not specified, fetch it from our own database
       if (!scanner.hub.manufacturer) {
-        scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
+        const h = configHubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
+        if (h) {
+          scanner.hub.manufacturer = h.manufacturer;
+        } else {
+          scanner.hub.manufacturer = `Unknown ${scanner.hub.manufacturerId}`;
+        }
       }
+
+      // If the model is not specified, fetch it from our own database
       if (!scanner.hub.model) {
-        scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
+        const h = configHubs.find(hub => hub.productId === scanner.hub.modelId);
+        if (h) {
+          scanner.hub.model = h.model;
+        } else {
+          scanner.hub.model = `Unknown ${scanner.hub.modelId}`;
+        }
       }
-
-      // // "parent" is the hub or subgroup
-      // let parent = this.getDescriptor(scanner.parent);
-      // const hub = this.getHubModel(parent.manufacturerId, parent.modelId);
-
-      // // If the hub is not configured in /config/hubs.js, report the vendor and model so we can add
-      // // it to the config.
-      // if (hub === undefined) {
-      //   logWarn(
-      //     `USB hub not configured. Vendor: ${parent.manufacturer} (${parent.manufacturerId}), ` +
-      //     `model: ${parent.model} (${parent.modelId}).`
-      //   );
-      // }
-      //
-      // Prepare port id. When the device has subgroups, we use the parent subgroup as a prefix
-      // let portId = scanner.port.toString();
-      // if (hub && hub.hasSubGroups) portId = `${parent.port}-${portId}`;
-      //
-      // // Get physical port number (the number physically written on the device)
-      // if (hub) {
-      //   const port = hub.ports.find(p => p.portId === portId);
-      //   if (port) scanner.hardwarePort = port.physical;
-      // }
-      //
-      // // Hub model and port. If device has subgroups, we use the parent device port instead of the
-      // // subgroup port.
-      // if (hub) {
-      //   if (hub.hasSubGroups) parent = this.getDescriptor(parent.parent);
-      //   scanner.hubName = `${parent.manufacturer} ${parent.model}`;
-      //   scanner.hubPort = parent.port;
-      // }
-
-      // hardwarePort
-      // hub
 
     });
 

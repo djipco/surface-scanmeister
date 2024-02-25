@@ -45,8 +45,8 @@ export class Scanner extends EventEmitter {
   }
 
   get description() {
-    return `"${this.name}" on USB port #${this.hardwarePort} (${this.systemName}). ` +
-      `Connected via hub "${this.hubName}" on ${this.#hub.bus}-${this.hubPort}.`;
+    return `"${this.name}" on USB #${this.hardwarePort} (${this.systemName}). ` +
+      `Connected via hub "${this.hubName}" on bus ${this.#hub.bus}, port ${this.hubPort}.`;
   }
 
   get name() {
