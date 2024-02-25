@@ -5,7 +5,7 @@ import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
-import {hubs as configHubs} from "../config/hubs.js";
+import {hubs} from "../config/hubs.js";
 import {models} from "../config/models.js";
 import process from "node:process";
 import { readFile } from 'fs/promises';
@@ -246,7 +246,7 @@ export default class ScanMeister {
 
       // If the manufacturer is not specified, fetch it from our own database
       if (!scanner.hub.manufacturer) {
-        const h = configHubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
+        const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
         if (h) {
           scanner.hub.manufacturer = h.manufacturer;
         } else {
@@ -256,7 +256,7 @@ export default class ScanMeister {
 
       // If the model is not specified, fetch it from our own database
       if (!scanner.hub.model) {
-        const h = configHubs.find(hub => hub.productId === scanner.hub.modelId);
+        const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
         if (h) {
           scanner.hub.model = h.model;
         } else {
@@ -312,7 +312,7 @@ export default class ScanMeister {
   }
 
   getHubModel(vendor, productId) {
-    return configHubs.find(model => model.vendor === vendor && model.productId === productId);
+    return hubs.find(model => model.vendor === vendor && model.productId === productId);
   }
 
   getDescriptor(number) {
