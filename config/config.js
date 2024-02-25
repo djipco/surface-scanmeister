@@ -10,7 +10,7 @@ const config = convict({
     scansDir: {
       doc: 'Path to directory where scans should be saved in "file" mode',
       format: String,
-      default: '/home/jpcote/scans'
+      default: '/home/scanmeister/scans'
     }
   },
 
