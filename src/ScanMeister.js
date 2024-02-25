@@ -1,4 +1,5 @@
 // Import modules
+import fs from "fs";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
@@ -34,6 +35,15 @@ export default class ScanMeister {
       logError(`This platform (${process.platform}) is not supported.`);
       logInfo("Exiting...");
       setTimeout(() => process.exit(1), 500); // wait for log files to be written
+    }
+
+    //
+    try {
+      await fs.promises.access(config.get("paths.scansDir"));
+    } catch (error) {
+      logError(
+        `The directory to save images in cannot be found (${config.get("paths.scansDir")})`
+      );
     }
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
