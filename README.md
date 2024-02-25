@@ -62,7 +62,7 @@ Insert:
 
 ### SANE
 
-SANE is the framework that provides support for a variety of scanners (and cameras):
+SANE is the framework that provides support for a variety of scanners (and cameras). It should already be installed. If not:
 
 ```
 sudo apt install sane
@@ -73,6 +73,11 @@ Once it's installed, you can check available devices with:
 ```
 sudo sane-find-scanner -q
 ```
+
+or
+
+```scanimage -L```
+
 
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
