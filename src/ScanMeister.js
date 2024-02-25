@@ -37,7 +37,7 @@ export default class ScanMeister {
       setTimeout(() => process.exit(1), 500); // wait for log files to be written
     }
 
-    //
+    // Check if the directory to save images in can be found (in "file" mode)
     try {
       await fs.promises.access(config.get("paths.scansDir"));
     } catch (error) {
