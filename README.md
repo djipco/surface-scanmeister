@@ -37,7 +37,6 @@ Then, we can install Node.js and `npm`:
 
 ```sh
 sudo apt install -y nodejs
-sudo apt install -y npm
 ```
 
 ### Scanmeister
