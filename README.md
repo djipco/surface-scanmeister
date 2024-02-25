@@ -79,9 +79,11 @@ To start `scanmeister`, issue the following command in a Terminal from inside th
 node index.js
 ```
 
-# VNC Remote Access
+# Remote Access
 
-/etc/vnc/config.d/common.custom
+* **VNC**: use `scanmeister` (username) and the password defined above.
+
+* **ssh**: `ssh@IP_ADDRESS` (with same user and pass)
 
 # OSC Schema
 
