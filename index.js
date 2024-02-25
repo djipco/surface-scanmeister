@@ -1,5 +1,5 @@
 // Import modules
-import ScanMeister from "./src/ScanMeister.js";
+
 import {logError, logInfo} from "./src/Logger.js";
 import {access, constants} from "fs/promises";
 import process from "node:process";
@@ -12,6 +12,8 @@ try {
   logInfo("Exiting...");
   setTimeout(() => process.exit(1), 500); // wait for log files to be written
 }
+
+import ScanMeister from "./src/ScanMeister.js";
 
 const scanmeister = new ScanMeister();
 scanmeister.start()
