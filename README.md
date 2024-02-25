@@ -99,7 +99,7 @@ On startup and shutdown, the system broadcasts this message:
 
 # Testing the scanning environment
 
-### scanimage
+#### scanimage
 
 The `scanimage` command is what is used under the hood to control the scanners. 
 You can user is to list available devices:
@@ -131,7 +131,7 @@ install SANE:
 sudo apt install sane
 ```
 
-### Retrieve options for device (the options vary from device to device)
+#### Retrieve options for device (the options vary from device to device)
 
 ```sh
 scanimage --device-name='genesys:libusb:001:008' --help 
@@ -200,7 +200,7 @@ Options specific to device 'genesys:libusb:001:008':
         means cache is not used. A negative value means cache never expires.
 ```
 
-### Debugging
+#### Debugging
 
 You can debug scanimage by prepending the command with environment variables:
 
@@ -219,7 +219,7 @@ SANE_DEBUG_DLL=255 scanimage --device-name=genesys:libusb:001:072 --format=png -
 More details on debugging here: https://docs.fedoraproject.org/en-US/quick-docs/cups-debug-scanning-issues/
 
 
-### Perform a manual scan
+#### Perform a manual scan
 
 This will save the file on the disk as `image.png`
 
@@ -236,7 +236,7 @@ scanimage \
   --output-file='image.png'
 ```
 
-### Send data to TD over TCP
+#### Send data to TD over TCP
 
 To quickly test the system, it is possible to pipe the output of `scanimage` into `nc` in order to 
 send it to TouchDesigner over a TCP connection:
