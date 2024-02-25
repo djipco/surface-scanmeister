@@ -55,8 +55,8 @@ cd surface-scanmeister
 npm install
 ```
 
-A few parameters will probably need to be changed. Open `config/config.js` Geany to change
-some options:
+A few parameters will probably need to be changed. Open `config/config.js` in the Geany 
+editor to change some options:
 
 * in 'tcp" mode (default), you must set the IP address and port of the computer that will
   receive the files (typically: TouchDesigner).
