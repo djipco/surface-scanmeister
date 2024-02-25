@@ -76,7 +76,9 @@ sudo sane-find-scanner -q
 
 or
 
-```scanimage -L```
+```
+scanimage -L
+```
 
 
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
