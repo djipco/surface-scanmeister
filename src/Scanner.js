@@ -83,7 +83,7 @@ export class Scanner extends EventEmitter {
 
     // Start scan
     this.#scanning = true;
-    logInfo(`Initiating scan with ${this.nameAndPort}...`);
+    logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
     // Prepare 'scanimage' args array
