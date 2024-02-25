@@ -8,7 +8,7 @@
   * Create user account named **scanmeister** (you must specify it but we will remove it later)
 * Boot Pi from the SDHC card and connect to network
 * Go to Pi config:
-  * Enable SSH and VNC (in "Interfaces" section)
+  * Enable VNC (in "Interfaces" section)
   * Set timezone (in "Localisation" section)  
 * Update everything:
 
