@@ -99,7 +99,7 @@ On startup and shutdown, the system broadcasts this message:
 
 # Testing the scanning environment
 
-## scanimage
+### scanimage
 
 The `scanimage` command is what is used under the hood to control the scanners. 
 You can user is to list available devices:
@@ -200,7 +200,7 @@ Options specific to device 'genesys:libusb:001:008':
         means cache is not used. A negative value means cache never expires.
 ```
 
-#### Debugging
+### Debugging
 
 You can debug scanimage by prepending the command with environment variables:
 
