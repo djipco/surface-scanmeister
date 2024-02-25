@@ -5,7 +5,7 @@
 * Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. In the software,
 * click on "Modify Settings" and:
   * Name host to: **scanmeister0x** (change "x" by integer)
-  * Create user account named **scanmeister** (you must specify it but we will remove it later)
+  * Create user account named **scanmeister** (you must specify a password but we will remove it later)
 * Boot Pi from the SDHC card and connect to network
 * Go to Pi config:
   * Enable VNC (in "Interfaces" section)
