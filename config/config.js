@@ -66,7 +66,7 @@ const config = convict({
     resolution: {
       doc: 'The scanning resolution (in PDI) to use',
       format: [75, 100, 150, 300, 600, 1200, 2400, 4800],
-      default: 75
+      default: 150
     },
     brightness: {
       doc: 'The scanning brightness (-100...100)',
