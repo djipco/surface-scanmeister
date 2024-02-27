@@ -8,3 +8,16 @@ scanmeister.start()
     logError(error);
     await scanmeister.quit(1);
   });
+
+
+// import { existsSync } from 'fs';
+//
+// if (!existsSync('./node_modules')) {
+//   console.error(`Error: node_modules directory missing`);
+// } else {
+//
+// }
+//
+// const value = (
+//   await import(`${condtion ? `./file1.js` : `./file2.js`}`)
+// ).default
