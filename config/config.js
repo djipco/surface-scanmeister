@@ -101,12 +101,12 @@ const config = convict({
     width: {
       doc: 'Width of scan area (0...216.7mm)',
       format: 'Number',
-      default: 216.7
+      default: 216
     },
     height: {
       doc: 'Height of scan area (0...297.5mm)',
       format: 'Number',
-      default: 297.5
+      default: 297
     },
   }
 
