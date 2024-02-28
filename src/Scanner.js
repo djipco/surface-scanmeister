@@ -166,8 +166,7 @@ export class Scanner extends EventEmitter {
       "scanimage",
       this.#scanArgs,
       {
-        // detached: true,
-        detached: false,
+        detached: true,
         shell: true,
         sucessCallback: this.#onScanImageEnd.bind(this),
         errorCallback: this.#onScanImageError.bind(this),
