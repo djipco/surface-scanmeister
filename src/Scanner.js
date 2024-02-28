@@ -142,20 +142,20 @@ export class Scanner extends EventEmitter {
     // If we are using the "tcp" mode, we create a TCP client and connect to server
     if (config.get("operation.mode") === "tcp") {
 
-      await new Promise(resolve => {
-
-        this.tcpSocket = net.createConnection(
-          { port: config.get("tcp.port"), host: config.get("tcp.address") },
-          resolve
-        );
-
-        this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
-        this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
-
-      });
-
-      // Send the device's hardware port so TD knows which scanners it's receiving from
-      this.tcpSocket.write("# Channel = " + this.channel + "\n");
+      // await new Promise(resolve => {
+      //
+      //   this.tcpSocket = net.createConnection(
+      //     { port: config.get("tcp.port"), host: config.get("tcp.address") },
+      //     resolve
+      //   );
+      //
+      //   this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
+      //   this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
+      //
+      // });
+      //
+      // // Send the device's hardware port so TD knows which scanners it's receiving from
+      // this.tcpSocket.write("# Channel = " + this.channel + "\n");
 
     }
 
