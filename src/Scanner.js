@@ -180,17 +180,19 @@ export class Scanner extends EventEmitter {
 
 
 
-    this.scanImageSpawner.execute(
-      `scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
-      [],
-      {
-        detached: false,
-        shell: false,
-        sucessCallback: this.#onScanImageEnd.bind(this),
-        errorCallback: this.#onScanImageError.bind(this),
-        stderrCallback: this.#onScanImageStderr.bind(this)
-      }
-    );
+    console.log(`scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`);
+
+    // this.scanImageSpawner.execute(
+    //   `scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
+    //   [],
+    //   {
+    //     detached: false,
+    //     shell: false,
+    //     sucessCallback: this.#onScanImageEnd.bind(this),
+    //     errorCallback: this.#onScanImageError.bind(this),
+    //     stderrCallback: this.#onScanImageStderr.bind(this)
+    //   }
+    // );
 
 
 
