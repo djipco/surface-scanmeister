@@ -35,6 +35,7 @@ export default class ScanMeister {
       logError(`This platform (${process.platform}) is not supported.`);
       logInfo("Exiting...");
       setTimeout(() => process.exit(1), 500); // wait for log files to be written
+      return;
     }
 
     // Check if the directory to save images in can be found (in "file" mode)
