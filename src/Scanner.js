@@ -184,12 +184,18 @@ export class Scanner extends EventEmitter {
     // your_command_here | awk 'BEGIN {print "First line to prepend\nSecond line to prepend"} {print}' | nc [destination] [port]
     // your_command_here | awk '{print "Data to prepend" ORS $0}' | nc [destination] [port]
 
+    /*
+     {
+     echo "Data to prepend"
+     your_command_here
+     } | nc [destination] [port]
+     */
 
     const ch = `# Channel = ${this.channel}`;
-    console.log(`scanimage ${this.#scanArgs.join(" ")}) | awk '{print "${ch}\\n" ORS $0}' | nc -q 0 10.0.0.200 1234`);
+    console.log(`{ echo "${ch}\\n"; scanimage ${this.#scanArgs.join(" ")}) } | nc -q 0 10.0.0.200 1234`);
 
     this.scanImageSpawner.execute(
-      `scanimage ${this.#scanArgs.join(" ")}) | awk '{print "${ch}\\n" ORS $0}' | nc -q 0 10.0.0.200 1234`,
+      `{ echo "${ch}\\n"; scanimage ${this.#scanArgs.join(" ")}) } | nc -q 0 10.0.0.200 1234`,
       [],
       {
         detached: true,
