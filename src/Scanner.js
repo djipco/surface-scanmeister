@@ -142,69 +142,60 @@ export class Scanner extends EventEmitter {
     // If we are using the "tcp" mode, we create a TCP client and connect to server
     if (config.get("operation.mode") === "tcp") {
 
-      // await new Promise(resolve => {
-      //
-      //   this.tcpSocket = net.createConnection(
-      //     { port: config.get("tcp.port"), host: config.get("tcp.address") },
-      //     resolve
-      //   );
-      //
-      //   this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
-      //   this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
-      //
-      // });
-      //
-      // // Send the device's hardware port so TD knows which scanners it's receiving from
-      // this.tcpSocket.write("# Channel = " + this.channel + "\n");
+      await new Promise(resolve => {
+
+        this.tcpSocket = net.createConnection(
+          { port: config.get("tcp.port"), host: config.get("tcp.address") },
+          resolve
+        );
+
+        this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
+        this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
+
+      });
+
+      // Send the device's hardware port so TD knows which scanners it's receiving from
+      this.tcpSocket.write("# Channel = " + this.channel + "\n");
 
     }
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
 
+    this.scanImageSpawner.execute(
+      "scanimage",
+      this.#scanArgs,
+      {
+        detached: false,
+        shell: false,
+        sucessCallback: this.#onScanImageEnd.bind(this),
+        errorCallback: this.#onScanImageError.bind(this),
+        stderrCallback: this.#onScanImageStderr.bind(this)
+      }
+    );
+
+    if (config.get("operation.mode") === "tcp") {
+      this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
+    }
+
+
+
+
+    // const ch = `# Channel = ${this.channel}`;
+    // const cmd = `scanimage ${this.#scanArgs.join(" ")} | awk 'BEGIN {print "${ch}\\n"} {print}' | nc -q 0 10.0.0.200 1234`;
+    //
     // this.scanImageSpawner.execute(
-    //   "scanimage",
-    //   this.#scanArgs,
+    //   cmd,
+    //   [],
     //   {
-    //     detached: false,
-    //     shell: false,
+    //     detached: true,
+    //     shell: true,
     //     sucessCallback: this.#onScanImageEnd.bind(this),
     //     errorCallback: this.#onScanImageError.bind(this),
     //     stderrCallback: this.#onScanImageStderr.bind(this)
     //   }
     // );
 
-    // if (config.get("operation.mode") === "tcp") {
-    //   this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
-    // }
-
-    // (echo "Data to prepend"; your_command_here) | nc [destination] [port]
-
-
-    // your_command_here | awk 'BEGIN {print "First line to prepend\nSecond line to prepend"} {print}' | nc [destination] [port]
-    // your_command_here | awk '{print "Data to prepend" ORS $0}' | nc [destination] [port]
-
-    /*
-     {
-     echo "Data to prepend"
-     your_command_here
-     } | nc [destination] [port]
-     */
-
-    const ch = `# Channel = ${this.channel}`;
-    console.log(`scanimage ${this.#scanArgs.join(" ")} | awk 'BEGIN {print "${ch}\\n"} {print}' | nc -q 0 10.0.0.200 1234`);
-
-    this.scanImageSpawner.execute(
-      `scanimage ${this.#scanArgs.join(" ")} | awk 'BEGIN {print "${ch}\\n"} {print}' | nc -q 0 10.0.0.200 1234`,
-      [],
-      {
-        detached: true,
-        shell: true,
-        sucessCallback: this.#onScanImageEnd.bind(this),
-        errorCallback: this.#onScanImageError.bind(this),
-        stderrCallback: this.#onScanImageStderr.bind(this)
-      }
-    );
 
 
 
