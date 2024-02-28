@@ -191,11 +191,11 @@ export class Scanner extends EventEmitter {
      } | nc [destination] [port]
      */
 
-    const ch = `# Channel = ${this.channel}\n`;
-    console.log(`echo ${ch} | nc -q 1 10.0.0.200 1234; scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`);
+    const ch = `# Channel = ${this.channel}`;
+    console.log(`echo "${ch}\\n" | nc -q 1 10.0.0.200 1234; scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`);
 
     this.scanImageSpawner.execute(
-      `echo ${ch} | nc -q 1 10.0.0.200 1234; scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
+      `echo "${ch}\\n" | nc -q 1 10.0.0.200 1234; scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
       [],
       {
         detached: true,
