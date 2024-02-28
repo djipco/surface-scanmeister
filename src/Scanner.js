@@ -178,11 +178,14 @@ export class Scanner extends EventEmitter {
     //   this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
     // }
 
+    // (echo "Data to prepend"; your_command_here) | nc [destination] [port]
 
+
+    // "# Channel = " + this.channel + "\n"
 
 
     this.scanImageSpawner.execute(
-      `scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
+      `(echo "# Channel = ${this.channel}\n"; scanimage ${this.#scanArgs.join(" ")}) | cat nc -q 0 10.0.0.200 1234`,
       [],
       {
         detached: true,
