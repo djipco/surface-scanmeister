@@ -181,12 +181,12 @@ export class Scanner extends EventEmitter {
     // (echo "Data to prepend"; your_command_here) | nc [destination] [port]
 
 
-    // "# Channel = " + this.channel + "\n"
+    console.log(`scanimage ${this.#scanArgs.join(" ")}) | awk '{print "${ch}" ORS $0}' | nc -q 0 10.0.0.200 1234`);
 
-    console.log(`(echo "# Channel = ${this.channel}\n"; scanimage ${this.#scanArgs.join(" ")}) | nc -q 0 10.0.0.200 1234`);
+    const ch = `# Channel = ${this.channel}\n`;
 
     this.scanImageSpawner.execute(
-      `(echo "# Channel = ${this.channel}\n"; scanimage ${this.#scanArgs.join(" ")}) | nc -q 0 10.0.0.200 1234`,
+      `scanimage ${this.#scanArgs.join(" ")}) | awk '{print "${ch}" ORS $0}' | nc -q 0 10.0.0.200 1234`,
       [],
       {
         detached: true,
