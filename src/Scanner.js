@@ -168,12 +168,31 @@ export class Scanner extends EventEmitter {
       {
         // detached: true,
         detached: false,
-        shell: false,
+        shell: true,
         sucessCallback: this.#onScanImageEnd.bind(this),
         errorCallback: this.#onScanImageError.bind(this),
         stderrCallback: this.#onScanImageStderr.bind(this)
       }
     );
+
+
+
+
+
+    // this.scanImageSpawner.execute(
+    //   "bash",
+    //   `-c 'scanimage ${this.#scanArgs.join(" ")}'`,
+    //   {
+    //     // detached: true,
+    //     detached: false,
+    //     shell: false,
+    //     sucessCallback: this.#onScanImageEnd.bind(this),
+    //     errorCallback: this.#onScanImageError.bind(this),
+    //     stderrCallback: this.#onScanImageStderr.bind(this)
+    //   }
+    // );
+
+
 
     if (config.get("operation.mode") === "tcp") {
       this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
