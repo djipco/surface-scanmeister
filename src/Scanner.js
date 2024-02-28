@@ -142,29 +142,47 @@ export class Scanner extends EventEmitter {
     // If we are using the "tcp" mode, we create a TCP client and connect to server
     if (config.get("operation.mode") === "tcp") {
 
-      await new Promise(resolve => {
-
-        this.tcpSocket = net.createConnection(
-          { port: config.get("tcp.port"), host: config.get("tcp.address") },
-          resolve
-        );
-
-        this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
-        this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
-
-      });
-
-      // Send the device's hardware port so TD knows which scanners it's receiving from
-      this.tcpSocket.write("# Channel = " + this.channel + "\n");
+      // await new Promise(resolve => {
+      //
+      //   this.tcpSocket = net.createConnection(
+      //     { port: config.get("tcp.port"), host: config.get("tcp.address") },
+      //     resolve
+      //   );
+      //
+      //   this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
+      //   this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
+      //
+      // });
+      //
+      // // Send the device's hardware port so TD knows which scanners it's receiving from
+      // this.tcpSocket.write("# Channel = " + this.channel + "\n");
 
     }
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
 
+    // this.scanImageSpawner.execute(
+    //   "scanimage",
+    //   this.#scanArgs,
+    //   {
+    //     detached: false,
+    //     shell: false,
+    //     sucessCallback: this.#onScanImageEnd.bind(this),
+    //     errorCallback: this.#onScanImageError.bind(this),
+    //     stderrCallback: this.#onScanImageStderr.bind(this)
+    //   }
+    // );
+
+    // if (config.get("operation.mode") === "tcp") {
+    //   this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
+    // }
+
+
+
     this.scanImageSpawner.execute(
-      "scanimage",
-      this.#scanArgs,
+      `scanimage ${this.#scanArgs.join(" ")} | nc -q 0 10.0.0.200 1234`,
+      [],
       {
         detached: false,
         shell: false,
@@ -174,9 +192,9 @@ export class Scanner extends EventEmitter {
       }
     );
 
-    if (config.get("operation.mode") === "tcp") {
-      this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
-    }
+
+
+
 
   }
 
