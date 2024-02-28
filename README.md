@@ -243,14 +243,10 @@ send it to TouchDesigner over a TCP connection:
 
 ```scanimage --format=pnm --mode=Color | nc -q 0 10.0.0.200 1234```
 
-YOu may have to isntall netcat. On Debian bookworm, I had to use:
-
-```sh
-sudo apt install netcat-traditional
-```
-
 In this scenario, the image will appear in TD in the `image0` component. The format **must be** `pnm` and 
 the mode **must be** `Color`. This yiels a PNM in the P6 format.
+
+    Warning: you may have to isntall netcat. On Debian "Bookworm" (12), I had to use: `sudo apt install netcat-traditional`
 
 The **scanmeister** daemon running on the Pi does the same thing behind the scene. To identify which
 device the image is coming from, **scanmeister** adds a comment on the first line of the output. This
