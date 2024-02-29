@@ -11,6 +11,9 @@ import process from "node:process";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
+import usb from 'usb';
+
+
 export default class ScanMeister {
 
   #callbacks = {}
@@ -88,6 +91,9 @@ export default class ScanMeister {
 
     // Send ready status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+
+    const devices = usb.getDeviceList();
+    console.log(devices);
 
   }
 
@@ -234,11 +240,8 @@ export default class ScanMeister {
     });
 
 
-    console.log(scannerDescriptors);
-
     // Add additional information in the scanners array
     scannerDescriptors.forEach(scanner => {
-
 
       // System name (e.g. genesys:libusb:001:034)
       const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
