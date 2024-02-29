@@ -114,16 +114,19 @@ export default class ScanMeister {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
     });
 
-    // Sort by hub port then by device port
+    // Sort by bus and then by port hierarchy
     this.#scanners.sort((a, b) => {
 
+      const arrayA = [a.bus].concat(a.ports);
+      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      const totalA = a.ports.reduce((t, v) => t + v);
 
+      const arrayB = [b.bus].concat(b.ports);
+      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      const totalB = b.ports.reduce((t, v) => t + v);
 
+      return totalA - totalB;
 
-
-      if (a.hubPort < b.hubPort) return -1;
-      if (a.hubPort > b.hubPort) return 1;
-      return a.hardwarePort - b.hardwarePort;
     });
 
     // Assign desired channels to scanners
