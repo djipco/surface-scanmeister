@@ -54,7 +54,7 @@ export class Scanner extends EventEmitter {
   }
 
   get nameAndPort() {
-    return `${this.name} on port #${this.ports}`;
+    return `${this.name} on bus ${this.bus} port ${this.ports}`;
   }
 
   get name() {
