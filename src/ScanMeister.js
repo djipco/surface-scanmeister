@@ -60,28 +60,31 @@ export default class ScanMeister {
       return;
     }
 
-    // Retrieve list of objects describing scanner ports and device numbers
-    const shd = await this.#getScannerHardwareDescriptors();
+    // // Retrieve list of objects describing scanner ports and device numbers
+    // const shd = await this.#getScannerHardwareDescriptors();
+    //
+    // // Report number of scanners found
+    // if (shd.length === 0) {
+    //   this.#scanners = [];
+    //   logWarn("No scanners found.");
+    // } else if (shd.length === 1) {
+    //   logInfo(`${shd.length} scanner has been detected. Retrieving details:`);
+    // } else {
+    //   logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
+    // }
+    //
+    // // Use the scanner hardware descriptors to build list of Scanner objects
+    // await this.#updateScannerList(shd);
+    //
+    //
+    // // Log scanner details to console
+    // this.scanners.forEach(device => {
+    //   logInfo(`    Channel ${device.channel}. ${device.description}`, true);
+    //   console.log("        " + device.bus, device.ports);
+    // });
 
-    // Report number of scanners found
-    if (shd.length === 0) {
-      this.#scanners = [];
-      logWarn("No scanners found.");
-    } else if (shd.length === 1) {
-      logInfo(`${shd.length} scanner has been detected. Retrieving details:`);
-    } else {
-      logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
-    }
-
-    // Use the scanner hardware descriptors to build list of Scanner objects
-    await this.#updateScannerList(shd);
-
-
-    // Log scanner details to console
-    this.scanners.forEach(device => {
-      logInfo(`    Channel ${device.channel}. ${device.description}`, true);
-      console.log("        " + device.bus, device.ports);
-    });
+    this.#scanners = this.getScanners();
+    return;
 
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
     usb.on("attach", this.#callbacks.onUsbAttach);
@@ -130,6 +133,16 @@ export default class ScanMeister {
 
   #onUsbDetach(e) {
     logInfo(`Device detached from bus ${e.busNumber}, port ${e.portNumbers.join("-")}.`);
+  }
+
+
+  getScanners() {
+
+    const devices = usb.getDeviceList();
+    console.log(devices);
+
+    // devices.find()
+
   }
 
   async #updateScannerList(deviceDescriptors) {
