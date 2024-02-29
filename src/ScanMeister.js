@@ -98,6 +98,30 @@ export default class ScanMeister {
 
   }
 
+  /*
+   {
+     busNumber: 1,
+     deviceAddress: 44,
+     deviceDescriptor: {
+       bLength: 18,
+       bDescriptorType: 1,
+       bcdUSB: 512,
+       bDeviceClass: 255,
+       bDeviceSubClass: 255,
+       bDeviceProtocol: 255,
+       bMaxPacketSize0: 64,
+       idVendor: 1193,
+       idProduct: 6410,
+       bcdDevice: 1793,
+       iManufacturer: 1,
+       iProduct: 2,
+       iSerialNumber: 0,
+       bNumConfigurations: 1
+    },
+    portNumbers: [ 1, 2, 4 ]
+   }
+   */
+
   #onUsbAttach(e) {
     logInfo(`Device attached to bus ${e.busNumber}, port ${e.portNumbers}`);
   }
