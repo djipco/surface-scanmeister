@@ -76,6 +76,8 @@ export default class ScanMeister {
     // Use the scanner hardware descriptors to build list of Scanner objects
     await this.#updateScannerList(shd);
 
+    console.log(this.scanners);
+
     // Log scanner details to console
     this.scanners.forEach(device => {
       logInfo(`    Channel ${device.channel}. ${device.description}`, true);
