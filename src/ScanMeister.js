@@ -103,7 +103,7 @@ export default class ScanMeister {
   }
 
   #onUsbDetach(e) {
-    console.log(e);
+    logInfo(`Device detached from bus ${e.busNumber}, port ${e.portNumbers}`);
   }
 
   async #updateScannerList(deviceDescriptors) {
