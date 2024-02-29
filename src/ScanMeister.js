@@ -83,6 +83,12 @@ export default class ScanMeister {
       logInfo(`    Channel ${device.channel}. ${device.description}`, true);
     });
 
+    this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
+    usb.on("attach", this.#callbacks.onUsbAttach);
+
+    this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
+    usb.on("detach", this.#callbacks.onUsbDetach);
+
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `OSC ready. Listening on ` +
@@ -92,9 +98,14 @@ export default class ScanMeister {
     // Send ready status via OSC
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
-    const devices = usb.getDeviceList();
-    console.log(devices);
+  }
 
+  #onUsbAttach(e) {
+    console.log(e);
+  }
+
+  #onUsbDetach(e) {
+    console.log(e);
   }
 
   async #updateScannerList(deviceDescriptors) {
@@ -120,6 +131,14 @@ export default class ScanMeister {
   async quit(status = 0) {
 
     logInfo("Exiting...");
+
+    // Remove USB listeners
+    usb.unrefHotplugEvents();
+    this.#callbacks.onUsbAttach = undefined;
+    this.#callbacks.onUsbDetach = undefined;
+
+    // usb.off("attach", this.#callbacks.onUsbAttach);
+    // usb.off("detach", this.#callbacks.onUsbDetach);
 
     // Remove quit listeners
     process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
