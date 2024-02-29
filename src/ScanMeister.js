@@ -6,7 +6,7 @@ import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
-import {models} from "../config/models.js";
+import {scanners} from "../config/scanners.js";
 import process from "node:process";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
@@ -226,15 +226,19 @@ export default class ScanMeister {
     this.descriptors = this.getDescriptorsFromDataString(data);
 
     // Build a flat list of valid device identifiers
-    const deviceIDs = models.map(model => `${model.vendor}:${model.productId}`);
+    const validScannerIDs = scanners.map(model => `${model.vendor}:${model.productId}`);
 
-    // Only keep scanners whose models are listed in the device list (/config/models.js)
-    const scanners = this.descriptors.filter(d => {
-      return deviceIDs.includes(`${d.manufacturerId}:${d.modelId}`);
+    // Only keep scanners listed in the device list (/config/scanners.js)
+    const scannerDescriptors = this.descriptors.filter(d => {
+      return validScannerIDs.includes(`${d.manufacturerId}:${d.modelId}`);
     });
 
+
+    console.log(scannerDescriptors);
+
     // Add additional information in the scanners array
-    scanners.forEach(scanner => {
+    scannerDescriptors.forEach(scanner => {
+
 
       // System name (e.g. genesys:libusb:001:034)
       const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
@@ -267,7 +271,7 @@ export default class ScanMeister {
 
     });
 
-    return scanners;
+    return scannerDescriptors;
 
   }
 
@@ -309,7 +313,7 @@ export default class ScanMeister {
   }
 
   getScannerModel(vendor, productId) {
-    return models.find(model => model.vendor === vendor && model.productId === productId);
+    return scanners.find(model => model.vendor === vendor && model.productId === productId);
   }
 
   getHubModel(vendor, productId) {

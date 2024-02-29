@@ -178,29 +178,6 @@ export class Scanner extends EventEmitter {
       this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
     }
 
-
-
-
-    // const ch = `# Channel = ${this.channel}`;
-    // const cmd = `scanimage ${this.#scanArgs.join(" ")} | awk 'BEGIN {print "${ch}\\n"} {print}' | nc -q 0 10.0.0.200 1234`;
-    //
-    // this.scanImageSpawner.execute(
-    //   cmd,
-    //   [],
-    //   {
-    //     detached: true,
-    //     shell: true,
-    //     sucessCallback: this.#onScanImageEnd.bind(this),
-    //     errorCallback: this.#onScanImageError.bind(this),
-    //     stderrCallback: this.#onScanImageStderr.bind(this)
-    //   }
-    // );
-
-
-
-
-
-
   }
 
   async destroy() {

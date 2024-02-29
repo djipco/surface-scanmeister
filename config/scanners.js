@@ -1,4 +1,9 @@
-const models = [
+/**
+ * These are the scanner models that the application is configured for. The scanner must be in this
+ * list to be recognized by the app.
+ */
+
+export const scanners = [
   {
     name: "CanoScan LiDE 35/40/50",
     manufacturer: "Canon",
@@ -41,6 +46,4 @@ const models = [
     productId: "190f",
     driverPrefix: "genesys:libusb:"
   }
-]
-
-export {models};
+];
