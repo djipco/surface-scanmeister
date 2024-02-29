@@ -78,7 +78,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach(device => {
-      logInfo(`    Channel ${device.channel}. ${device.description} /// ${device.bus} ${device.ports} `, true);
+      logInfo(`    Channel ${device.channel}. ${device.description} / ${device.bus} ${device.ports} `, true);
     });
 
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
@@ -304,15 +304,18 @@ export default class ScanMeister {
   getUsbPortHierarchy(descriptor) {
 
     const hierarchy = [];
-    let parent = this.getDescriptor(descriptor.parent);
 
-    // Device port and parent port
+    // Device port
     hierarchy.unshift(descriptor.port);
+
+    // Parent
+    let parent = this.getDescriptor(descriptor.parent);
     hierarchy.unshift(parent.port);
+
 
     // Grand-parent (if present)
     if (parent.parent !== 0) {
-      const grandParent = this.getDescriptor(parent.number);
+      const grandParent = this.getDescriptor(parent.parent);
       hierarchy.unshift(grandParent.port)
     }
 
