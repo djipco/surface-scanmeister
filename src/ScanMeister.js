@@ -11,7 +11,7 @@ import process from "node:process";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
-import usb from 'usb';
+import { usb } from 'usb';
 
 
 export default class ScanMeister {
