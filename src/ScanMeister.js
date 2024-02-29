@@ -99,7 +99,7 @@ export default class ScanMeister {
   }
 
   #onUsbAttach(e) {
-    console.log(e);
+    logInfo(`Device attached to bus ${e.busNumber}, port ${e.portNumbers}`);
   }
 
   #onUsbDetach(e) {
