@@ -123,11 +123,11 @@ export default class ScanMeister {
    */
 
   #onUsbAttach(e) {
-    logInfo(`Device attached to bus ${e.busNumber}, port ${e.portNumbers}`);
+    logInfo(`Device attached to bus ${e.busNumber}, port ${e.portNumbers.join("-")}.`);
   }
 
   #onUsbDetach(e) {
-    logInfo(`Device detached from bus ${e.busNumber}, port ${e.portNumbers}`);
+    logInfo(`Device detached from bus ${e.busNumber}, port ${e.portNumbers.join("-")}.`);
   }
 
   async #updateScannerList(deviceDescriptors) {
