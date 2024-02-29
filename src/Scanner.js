@@ -131,7 +131,7 @@ export class Scanner extends EventEmitter {
     this.#scanArgs.push('--expiration-time=-1');
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    this.#scanArgs.push('--buffer-size=64');
+    this.#scanArgs.push('--buffer-size=32');
 
     // Geometry
     this.#scanArgs.push('-l ' + config.get("devices.x"));
