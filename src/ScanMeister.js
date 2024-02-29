@@ -271,7 +271,7 @@ export default class ScanMeister {
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
       //
-      scanner.bus = bus;
+      scanner.bus = parseInt(bus);
       scanner.hub = this.getDescriptor(scanner.parent);
       scanner.ports = this.getUsbPortHierarchy(scanner);
 
@@ -315,6 +315,8 @@ export default class ScanMeister {
       const grandParent = this.getDescriptor(parent.number);
       hierarchy.unshift(grandParent.port)
     }
+
+    return hierarchy;
 
   }
 
