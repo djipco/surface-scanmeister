@@ -2,7 +2,8 @@
 Type=Application
 Name=ScanMeister
 ;Exec=bash -c 'cd $0; node index.js; read' $PWD
-Exec=bash -c "cd \"$0\"; node index.js; read" $PWD
+;Exec=bash -c "cd \"$0\"; node index.js; read" $PWD
+Exec=bash -c 'cd "$1"; node index.js; read' _ "$PWD"
 Icon=obconf
 Terminal=true
 Categories=Utility
