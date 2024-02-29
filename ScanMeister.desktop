@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=ScanMeister
-;Exec=bash -c "node /home/scanmeister/Desktop/surface-scanmeister/index.js ; bash"
-Exec=bash -c 'cd $0; node index.js; read' (echo $PWD)
+;Exec=bash -c 'cd $0; node index.js; read' $PWD
+Exec=bash -c "cd \"$0\"; node index.js; read" $PWD
 Icon=obconf
 Terminal=true
 Categories=Utility
