@@ -80,7 +80,7 @@ export default class ScanMeister {
     // Log scanner details to console
     this.scanners.forEach(device => {
       logInfo(`    Channel ${device.channel}. ${device.description}`, true);
-      console.log(device);
+      console.log("        " + device.bus, device.ports);
     });
 
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
