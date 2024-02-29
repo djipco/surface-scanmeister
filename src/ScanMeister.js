@@ -8,11 +8,9 @@ import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {scanners} from "../config/scanners.js";
 import process from "node:process";
+import { usb } from 'usb';
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
-
-import { usb } from 'usb';
-
 
 export default class ScanMeister {
 
@@ -80,7 +78,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach(device => {
-      logInfo(`    Channel ${device.channel}. ${device.description}`, true);
+      logInfo(`    Channel ${device.channel}. ${device.description} /// ${device.bus} ${device.ports} `, true);
     });
 
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
@@ -118,6 +116,11 @@ export default class ScanMeister {
 
     // Sort by hub port then by device port
     this.#scanners.sort((a, b) => {
+
+
+
+
+
       if (a.hubPort < b.hubPort) return -1;
       if (a.hubPort > b.hubPort) return 1;
       return a.hardwarePort - b.hardwarePort;
@@ -258,7 +261,6 @@ export default class ScanMeister {
       return validScannerIDs.includes(`${d.manufacturerId}:${d.modelId}`);
     });
 
-
     // Add additional information in the scanners array
     scannerDescriptors.forEach(scanner => {
 
@@ -269,7 +271,9 @@ export default class ScanMeister {
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
 
       //
+      scanner.bus = bus;
       scanner.hub = this.getDescriptor(scanner.parent);
+      scanner.ports = this.getUsbPortHierarchy(scanner);
 
       // If the manufacturer is not specified, fetch it from our own database
       if (!scanner.hub.manufacturer) {
@@ -294,6 +298,23 @@ export default class ScanMeister {
     });
 
     return scannerDescriptors;
+
+  }
+
+  getUsbPortHierarchy(descriptor) {
+
+    const hierarchy = [];
+    let parent = this.getDescriptor(descriptor.parent);
+
+    // Device port and parent port
+    hierarchy.unshift(descriptor.port);
+    hierarchy.unshift(parent.port);
+
+    // Grand-parent (if present)
+    if (parent.parent !== 0) {
+      const grandParent = this.getDescriptor(parent.number);
+      hierarchy.unshift(grandParent.port)
+    }
 
   }
 
