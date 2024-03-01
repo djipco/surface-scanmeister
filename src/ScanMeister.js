@@ -4,8 +4,9 @@ import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {config} from "../config/config.js";
-import {scanners} from "../config/scanners.js";
 import process from "node:process";
+import {ScannerMappings} from "../config/ScannerMappings.js";
+import {SupportedScanners} from "../config/SupportedScanners.js";
 import { usb } from 'usb';
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
@@ -126,8 +127,30 @@ export default class ScanMeister {
     });
 
     // Filter the devices to retain only supported scanners
-    const identifiers = scanners.map(model => `${model.idVendor}:${model.idProduct}`);
+    const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+
+    // Assign additional information to scanner descriptors
+    scannerDescriptors.forEach((scanner, index) => {
+
+      // Channel the scanner will be tied to
+      scanner.channel = index + 1
+
+      // Get scanner details from our own database
+      const details = this.getScannerDetails(scanner.idVendor, scanner.idProduct);
+
+      // System name (e.g. genesys:libusb:001:034)
+      scanner.systemName = details.driverPrefix + scanner.busNumber.toString().padStart(3, '0') +
+        ":" + scanner.deviceAddress.toString().padStart(3, '0');
+
+      // Add vendor and product names
+      scanner.vendor = details.vendor;
+      scanner.product = details.product;
+
+      // Hierarchy (prepended with bus number)
+      scanner.hierarchy = [scanner.busNumber].concat(scanner.portNumbers).join("-");
+
+    });
 
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
@@ -148,24 +171,22 @@ export default class ScanMeister {
 
     });
 
-    // Assign additional information to scanner descriptors
-    scannerDescriptors.forEach((scanner, index) => {
+    // If a mapping has been defined, override the default channel assignments and use the mapping
+    // instead.
+    if (config.get("devices.scannerMapping")) {
 
-      // Channel the scanner will be tied to
-      scanner.channel = index + 1
+      const newList = [];
+      const mapping = ScannerMappings[config.get("devices.scannerMapping")];
 
-      // Get scanner details from our own database
-      const details = this.getScannerDetails(scanner.idVendor, scanner.idProduct);
+      Object.entries(mapping).forEach(([key, value]) => {
+        const found = scannerDescriptors.find(s => s.hierarchy === key);
+        if (found) {
+          found.channel = value;
+          newList.push(found);
+        }
+      });
 
-      // System name (e.g. genesys:libusb:001:034)
-      scanner.systemName = details.driverPrefix + scanner.busNumber.toString().padStart(3, '0') +
-        ":" + scanner.deviceAddress.toString().padStart(3, '0');
-
-      // Add vendor and product names
-      scanner.vendor = details.vendor;
-      scanner.product = details.product;
-
-    });
+    }
 
     return scannerDescriptors;
 
@@ -294,7 +315,7 @@ export default class ScanMeister {
   }
 
   getScannerDetails(idVendor, idProduct) {
-    return scanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
+    return SupportedScanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
   }
 
   async #onOscError(error) {

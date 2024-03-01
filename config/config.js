@@ -63,8 +63,17 @@ const config = convict({
   },
 
   devices: {
+
+    // Whether to use a custom mapping for the channels assigned to each scanner. The value can be
+    // null or one of the mappings from the /config/ScannerMappings.js file
+    scannerMapping: {
+      doc: 'Name of the mapping to use',
+      format: String,
+      default: "Atolla16PortBus1Port1"
+    },
+
     resolution: {
-      doc: 'The scanning resolution (in PDI) to use',
+      doc: 'Name of the mapping to use',
       format: [75, 100, 150, 300, 600, 1200, 2400, 4800],
       default: 150
     },

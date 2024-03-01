@@ -1,9 +1,9 @@
 /**
- * These are the scanner models that the application is configured for. The scanner must be in this
- * list to be recognized by the app.
+ * A list of recognized and supported scanners with metadata. Only scanners in this list will be
+ * used by ScanMeister.
  */
 
-export const scanners = [
+export const SupportedScanners = [
   {
     vendor: "Canon",
     product: "CanoScan LiDE 35/40/50",
