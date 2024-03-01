@@ -158,9 +158,13 @@ export default class ScanMeister {
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
+      // Prepend array with bus and (optionnally) 0 if length is not 3
+      // const busArray =
+
       // Prepend hub number to the port hierarchy
       let arrayA = [a.busNumber].concat(a.portNumbers);
       let arrayB = [b.busNumber].concat(b.portNumbers);
+
 
       // Multiply the values of each level so they can be flattened and compared. By using 32, we
       // guarantee support for at least 32 end-level ports.
