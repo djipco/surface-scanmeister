@@ -135,9 +135,9 @@ export default class ScanMeister {
       const arrayB = [b.busNumber].concat(b.portNumbers);
 
       // Multiply the values of each level of the hierarchy so they can be flattened and compared.
-      // By using 32, we guarantee support for at least 32 end-level ports.
-      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      // By using 100, we guarantee support for at least 100 end-level ports.
+      arrayA.map((val, i, arr) => val * (100 ** (arr.length - i)));
+      arrayB.map((val, i, arr) => val * (100 ** (arr.length - i)));
 
       // We add the multiplied levels and compare the two values
       const totalA = arrayA.reduce((t, v) => t + v);
