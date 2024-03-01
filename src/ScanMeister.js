@@ -158,6 +158,8 @@ export default class ScanMeister {
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
+
+
       // Prepend array with bus and (optionnally) 0 if length is not 3
       // const busArray =
 
