@@ -160,7 +160,7 @@ export default class ScanMeister {
       const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
       const paddedB = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
 
-      console.log(paddedA);
+      console.log(paddedB);
 
       // Prepend bus number to port hierarchy
       let hierarchyA = [a.busNumber].concat(paddedA);
