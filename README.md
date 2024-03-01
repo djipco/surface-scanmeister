@@ -72,8 +72,14 @@ set some options:
 
 #### Launch
 
-To start `scanmeister`, issue the following command in a Terminal from inside the 
-`surface-scanmeister` directory:
+To start `scanmeister`, you can simply double-click on the `ScanMeister` icon found in the project
+folder.
+
+    You can deactivate the annoying "Execute File" prompt by opening the File Manager and going to 
+    Edit -> Preferences -> General and checking the option that says "Don't ask options on launch 
+    executable file".
+
+You can also issue the following command in a Terminal from inside the `surface-scanmeister` directory:
 
 ```sh
 node index.js
