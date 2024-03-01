@@ -1,15 +1,15 @@
 {
   "name": "scanmeister",
   "title": "ScanMeister",
-  "version": "0.4.0",
-  "description": "",
+  "version": "1.0.0a",
+  "description": "ScanMeister lets you scan an image and stream it over TCP",
+  "author": "Jean-Philippe Côté <null@djip.co> (https://djip.co)",
+  "license": "UNLICENSED",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "run": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
