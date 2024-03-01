@@ -167,10 +167,10 @@ export default class ScanMeister {
       device.identifier = `${device.idVendor}:${device.idProduct}`;
     });
 
-    console.log(scannerDescriptors);
     // Filter the devices to retain only supported scanners
     const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+    console.log(scannerDescriptors);
 
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
