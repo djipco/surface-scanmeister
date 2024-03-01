@@ -112,17 +112,17 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessErrorUser = null;
     this.#callbacks.onProcessStderrUser = null;
 
-    this.#process.off('error', this.#callbacks.onProcessError);
-    this.#process.stdout.off('error', this.#callbacks.onProcessError);
+    if (this.#process) {
+      this.#process.off('error', this.#callbacks.onProcessError);
+      this.#process.stdout.off('error', this.#callbacks.onProcessError);
+      this.#process.stdout.off('data', this.#callbacks.onProcessData);
+      this.#process.stderr.off('data', this.#callbacks.onProcessStderr);
+      this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
+    }
+
     this.#callbacks.onProcessError = null;
-
-    this.#process.stdout.off('data', this.#callbacks.onProcessData);
     this.#callbacks.onProcessData = null;
-
-    this.#process.stderr.off('data', this.#callbacks.onProcessStderr);
     this.#callbacks.onProcessStderr = null
-
-    this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
     this.#callbacks.onProcessEnd = null;
 
   }
@@ -130,6 +130,7 @@ export class Spawner extends EventEmitter {
   async destroy() {
 
     this.removeListener();
+    this.removeAllListeners();
 
     // Kill 'scanimage' process if present
     if (this.#process) {
