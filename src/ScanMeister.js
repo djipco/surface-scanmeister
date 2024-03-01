@@ -144,10 +144,13 @@ export default class ScanMeister {
     // To prepare for filtering, get a list of supported vendor/scanner pairs
     const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
 
+    console.log(identifiers);
+
     // Filter the devices to retain only scanners
     const filtered = devices.filter(device => {
       const descriptor = device.deviceDescriptor;
-      const id = descriptor.idVendor.toString(16) + ":" + descriptor.idProduct.toString(16)
+      const id = descriptor.idVendor.toString(16) + ":" + descriptor.idProduct.toString(16);
+      console.log(id);
       return identifiers.includes(id)
     });
 
