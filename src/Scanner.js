@@ -12,7 +12,7 @@ export class Scanner extends EventEmitter {
   #callbacks = {};      // Object to store callbacks defined internally
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
-  #hub;                 // A descriptor object for the hub
+  // #hub;                 // A descriptor object for the hub
   #manufacturer;        // Manufacturer name of the device
   #model;               // Model name of the device
   #osc;                 // OSC port object for communication
@@ -21,17 +21,17 @@ export class Scanner extends EventEmitter {
   #scanning = false;    // Whether the device is currently scanning
   #systemName;          // System name (e.g. genesys:libusb:001:071)
 
-  constructor(osc, options = {}) {
+  constructor(osc, descriptor = {}) {
 
     super();
 
-    this.#bus = options.bus;
-    this.#hub = options.hub;
-    this.#manufacturer = options.manufacturer;
-    this.#model = options.model;
+    this.#bus = descriptor.busNumber;
+    // this.#hub = options.hub;
+    this.#manufacturer = descriptor.vendor;
+    this.#model = descriptor.product;
     this.#osc = osc;
-    this.#ports = options.ports
-    this.#systemName = options.systemName;
+    this.#ports = descriptor.portNumbers;
+    this.#systemName = descriptor.systemName;
 
   }
 
@@ -60,11 +60,11 @@ export class Scanner extends EventEmitter {
     return `${this.manufacturer} ${this.model}`
   }
 
-  get hubName() {
-    return `${this.#hub.manufacturer} ${this.#hub.model}`
-  }
+  // get hubName() {
+  //   return `${this.#hub.manufacturer} ${this.#hub.model}`
+  // }
 
-  get hubPort() { return this.#hub.port; }
+  // get hubPort() { return this.#hub.port; }
 
   get manufacturer() { return this.#manufacturer; }
 
