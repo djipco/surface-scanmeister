@@ -158,7 +158,7 @@ export default class ScanMeister {
       // If number of elements in portNumbers is smaller than 5, we left-pad the array with zeroes.
       // This allows comparing devices on hubs with both subgroups and without (up to 5 levels).
       const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
-      const paddedB = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
+      const paddedB = Array(5 - b.portNumbers.length).fill(0).concat(b.portNumbers);
 
 
       // Prepend bus number to port hierarchy
