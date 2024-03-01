@@ -72,6 +72,8 @@ export default class ScanMeister {
       logInfo(`${this.#scanners.length} scanners have been detected:`);
     }
 
+    console.log(scannerDescriptors);
+
     // Create all scanner objects
     scannerDescriptors.forEach(descriptor => {
       this.#scanners.push(new Scanner(this.#oscPort, descriptor));
