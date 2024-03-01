@@ -175,7 +175,7 @@ export default class ScanMeister {
       scanner.product = details.product;
 
     });
-
+console.log(scannerDescriptors);
     return scannerDescriptors;
 
   }
