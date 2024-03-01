@@ -29,7 +29,13 @@ export default class ScanMeister {
     process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
 
+    // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
+    if (config.get("operation.mode") === "tcp"){
+      logInfo(`Sendind images to ${config.get("tcp.address")}:${config.get("tcp.port")}.`);
+    } else if (config.get("operation.mode") === "file") {
+      logInfo(`Saving images to '${config.get("paths.scanDir")}'.`);
+    }
 
     // Check platform
     if (process.platform !== "linux") {
@@ -125,19 +131,17 @@ export default class ScanMeister {
     const identifiers = scanners.map(model => `${model.idVendor}:${model.idProduct}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
-    console.log(scannerDescriptors);
-
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
-      // Prepend hub to the port hierarchy
+      // Prepend hub number to the port hierarchy
       let arrayA = [a.busNumber].concat(a.portNumbers);
       let arrayB = [b.busNumber].concat(b.portNumbers);
 
-      // Multiply the values of each level of the hierarchy so they can be flattened and compared.
-      // By using 100, we guarantee support for at least 100 end-level ports.
-      arrayA = arrayA.map((val, i, arr) => val * (100 ** (arr.length - i)));
-      arrayB = arrayB.map((val, i, arr) => val * (100 ** (arr.length - i)));
+      // Multiply the values of each level so they can be flattened and compared. By using 32, we
+      // guarantee support for at least 32 end-level ports.
+      arrayA = arrayA.map((val, i, arr) => val * (32 ** (arr.length - i)));
+      arrayB = arrayB.map((val, i, arr) => val * (32 ** (arr.length - i)));
 
       // We add the multiplied levels and compare the two values
       const totalA = arrayA.reduce((t, v) => t + v);
@@ -290,141 +294,6 @@ export default class ScanMeister {
   async #onExitRequest() {
     await this.quit();
   }
-
-  // async #getScannerHardwareDescriptors() {
-  //
-  //   // Call the "usb-devices" command to retrieve informationa about all USB-connected devices. To
-  //   // see the tree of devices, do: lsusb -t
-  //   const usbDevicesSpawner = new Spawner();
-  //   let data;
-  //
-  //   try {
-  //
-  //     data = await new Promise((resolve, reject) => {
-  //       usbDevicesSpawner.execute(
-  //         "usb-devices", [], {sucessCallback: resolve, errorCallback: reject}
-  //       );
-  //     });
-  //
-  //   } catch (e) {
-  //     throw new Error("The usb-devices command did not return any data.");
-  //   }
-  //
-  //   return this.#parseUsbDevicesData(data);
-  //
-  // }
-
-  // #parseUsbDevicesData(data) {
-  //
-  //   // Get device descriptors
-  //   this.descriptors = this.getDescriptorsFromDataString(data);
-  //
-  //   // Build a flat list of valid device identifiers
-  //   const validScannerIDs = scanners.map(model => `${model.vendor}:${model.productId}`);
-  //
-  //   // Only keep scanners listed in the device list (/config/scanners.js)
-  //   const scannerDescriptors = this.descriptors.filter(d => {
-  //     return validScannerIDs.includes(`${d.manufacturerId}:${d.modelId}`);
-  //   });
-  //
-  //   // Add additional information in the scanners array
-  //   scannerDescriptors.forEach(scanner => {
-  //
-  //     // System name (e.g. genesys:libusb:001:034)
-  //     const model = this.getScannerDetails(scanner.manufacturerId, scanner.modelId);
-  //     const bus = scanner.bus.toString().padStart(3, '0');
-  //     const number = scanner.number.toString().padStart(3, '0');
-  //     scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
-  //
-  //     //
-  //     scanner.bus = parseInt(bus);
-  //     scanner.hub = this.getDescriptor(scanner.parent);
-  //     scanner.ports = this.getUsbPortHierarchy(scanner);
-  //
-  //     // If the manufacturer is not specified, fetch it from our own database
-  //     if (!scanner.hub.manufacturer) {
-  //       const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
-  //       if (h) {
-  //         scanner.hub.manufacturer = h.manufacturer;
-  //       } else {
-  //         scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
-  //       }
-  //     }
-  //
-  //     // If the model is not specified, fetch it from our own database
-  //     if (!scanner.hub.model) {
-  //       const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
-  //       if (h) {
-  //         scanner.hub.model = h.model;
-  //       } else {
-  //         scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
-  //       }
-  //     }
-  //
-  //   });
-  //
-  //   return scannerDescriptors;
-  //
-  // }
-
-  getUsbPortHierarchy(descriptor) {
-
-    const hierarchy = [];
-
-    // Device port
-    hierarchy.unshift(descriptor.port);
-
-    // Parent
-    let parent = this.getDescriptor(descriptor.parent);
-    hierarchy.unshift(parent.port);
-
-
-    // Grand-parent (if present)
-    if (parent.parent !== 0) {
-      const grandParent = this.getDescriptor(parent.parent);
-      hierarchy.unshift(grandParent.port)
-    }
-
-    return hierarchy;
-
-  }
-
-  // getDescriptorsFromDataString(data) {
-  //
-  //   // Split the long string received from usb-devices into discrete blocks for each device.
-  //   // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
-  //   // regex.
-  //   const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"));
-  //
-  //   // Extract relevant data from each block and create description objects
-  //   let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-  //   let descriptors = blocks.map(b => {
-  //     const match = b.match(re);
-  //     const all = match[0];
-  //     const bus = parseInt(match[1]);
-  //     const level = parseInt(match[2]);
-  //     const parent = parseInt(match[3]);
-  //     const port = parseInt(match[4]);
-  //     const container = parseInt(match[5]);
-  //     const number = parseInt(match[6]);
-  //     const manufacturerId = match[7];
-  //     const modelId = match[8];
-  //     return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
-  //   });
-  //
-  //   // Check if manufacturer and product ID can be found for each device (not always the case)
-  //   re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
-  //   return descriptors.map(d => {
-  //     const match = d.all.match(re);
-  //     delete d.all;
-  //     if (match) {
-  //       d.manufacturer = match[1];
-  //       d.model = match[2];
-  //     }
-  //     return d;
-  //   });
-  //
-  // }
 
   getScannerDetails(idVendor, idProduct) {
     return scanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);

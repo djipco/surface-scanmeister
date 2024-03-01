@@ -12,7 +12,6 @@ export class Scanner extends EventEmitter {
   #callbacks = {};      // Object to store callbacks defined internally
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
-  // #hub;                 // A descriptor object for the hub
   #manufacturer;        // Manufacturer name of the device
   #model;               // Model name of the device
   #osc;                 // OSC port object for communication
@@ -23,15 +22,10 @@ export class Scanner extends EventEmitter {
 
   constructor(osc, descriptor = {}) {
 
-    /*
-
-    */
-
     super();
 
     this.#bus = descriptor.busNumber;
     this.#channel = descriptor.channel;
-    // this.#hub = options.hub;
     this.#manufacturer = descriptor.vendor;
     this.#model = descriptor.product;
     this.#osc = osc;
@@ -64,12 +58,6 @@ export class Scanner extends EventEmitter {
   get name() {
     return `${this.manufacturer} ${this.model}`
   }
-
-  // get hubName() {
-  //   return `${this.#hub.manufacturer} ${this.#hub.model}`
-  // }
-
-  // get hubPort() { return this.#hub.port; }
 
   get manufacturer() { return this.#manufacturer; }
 
