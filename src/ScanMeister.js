@@ -186,7 +186,7 @@ export default class ScanMeister {
         }
       });
 
-      newList.sort((a, b) => b.channel - a.channel);
+      newList.sort((a, b) => a.channel - b.channel);
       scannerDescriptors = newList;
 
     }
