@@ -157,6 +157,8 @@ export default class ScanMeister {
 
   getScannerDescriptors() {
 
+    console.log("allo");
+
     // Get all USB devices
     const descriptors = usb.getDeviceList();
 
