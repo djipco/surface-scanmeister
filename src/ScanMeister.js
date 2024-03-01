@@ -199,6 +199,10 @@ export default class ScanMeister {
       scanner.systemName = details.driverPrefix + scanner.busNumber.toString().padStart(3, '0') +
         ":" + scanner.deviceAddress.toString().padStart(3, '0');
 
+      // Add vendor and product names
+      scanner.vendor = details.vendor;
+      scanner.product = details.product;
+
     });
 
     return scannerDescriptors;
@@ -462,8 +466,8 @@ export default class ScanMeister {
 
   }
 
-  getScannerDetails(vendor, productId) {
-    return scanners.find(model => model.vendor === vendor && model.productId === productId);
+  getScannerDetails(idVendor, idProduct) {
+    return scanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
   }
 
   getHubModel(vendor, productId) {

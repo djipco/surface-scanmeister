@@ -5,45 +5,45 @@
 
 export const scanners = [
   {
-    name: "CanoScan LiDE 35/40/50",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "2213",
+    vendor: "Canon",
+    product: "CanoScan LiDE 35/40/50",
+    idVendor: "04a9",
+    idProduct: "2213",
     driverPrefix: "genesys:libusb:"
   },
   {
-    name: "CanoScan LiDE 100",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "1904",
+    vendor: "Canon",
+    product: "CanoScan LiDE 100",
+    idVendor: "04a9",
+    idProduct: "1904",
     driverPrefix: "genesys:libusb:"
   },
   {
-    name: "CanoScan LiDE 110",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "1909",
+    vendor: "Canon",
+    product: "CanoScan LiDE 110",
+    idVendor: "04a9",
+    idProduct: "1909",
     driverPrefix: "genesys:libusb:"
   },
   {
-    name: "CanoScan LiDE 120",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "190e",
+    vendor: "Canon",
+    product: "CanoScan LiDE 120",
+    idVendor: "04a9",
+    idProduct: "190e",
     driverPrefix: "genesys:libusb:"
   },
   {
-    name: "CanoScan LiDE 210",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "190a",
+    vendor: "Canon",
+    product: "CanoScan LiDE 210",
+    idVendor: "04a9",
+    idProduct: "190a",
     driverPrefix: "genesys:libusb:"
   },
   {
-    name: "CanoScan LiDE 220",
-    manufacturer: "Canon",
-    vendor: "04a9",
-    productId: "190f",
+    vendor: "Canon",
+    product: "CanoScan LiDE 220",
+    idVendor: "04a9",
+    idProduct: "190f",
     driverPrefix: "genesys:libusb:"
   }
 ];
