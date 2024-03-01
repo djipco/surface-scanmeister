@@ -84,7 +84,7 @@ export default class ScanMeister {
 
     // Log scanner details to console
     this.scanners.forEach(scanner => {
-      logInfo(`    Channel ${scanner.channel}. ${scanner.description}`, true);
+      logInfo(`    Channel ${scanner.channel.padStart(2, " ")}. ${scanner.description}`, true);
     });
 
     // Add callbacks for USB hotplug events
