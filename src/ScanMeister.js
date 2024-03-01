@@ -178,6 +178,8 @@ export default class ScanMeister {
     // instead.
     if (config.get("devices.scannerMapping")) {
 
+      logInfo(`Sorting channels according to map ${config.get("devices.scannerMapping")}`);
+
       const newList = [];
       const mapping = ScannerMappings[config.get("devices.scannerMapping")];
 
