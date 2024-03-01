@@ -122,22 +122,19 @@ export default class ScanMeister {
     // Get all USB devices
     const descriptors = usb.getDeviceList();
 
-    // Add top-level identifier for vendor and product id
+    // Add top-level identifier using idVendor and idProduct (e.g. '04a9:2213')
     descriptors.forEach(device => {
       device.idVendor = device.deviceDescriptor.idVendor.toString(16).padStart(4, '0');
       device.idProduct = device.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
       device.identifier = `${device.idVendor}:${device.idProduct}`;
     });
 
-    // Filter the devices to retain only supported scanners
+    // Filter the descriptors to retain only tje ones for supported scanners
     const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
     let scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
-    // Assign additional information to scanner descriptors
-    scannerDescriptors.forEach((scanner, index) => {
-
-      // Channel the scanner will be tied to
-      scanner.channel = index + 1
+    // Assign additional useful information to scanner descriptors
+    scannerDescriptors.forEach(scanner => {
 
       // Get scanner details from our own database
       const details = this.getScannerDetails(scanner.idVendor, scanner.idProduct);
@@ -158,33 +155,28 @@ export default class ScanMeister {
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
+      // Prepend bus number to port hierarchy
+      let hierarchyA = [a.busNumber].concat(a.portNumbers);
+      let hierarchyB = [b.busNumber].concat(b.portNumbers);
 
-
-      // Prepend array with bus and (optionnally) 0 if length is not 3
-      // const busArray =
-
-      // Prepend hub number to the port hierarchy
-      let arrayA = [a.busNumber].concat(a.portNumbers);
-      let arrayB = [b.busNumber].concat(b.portNumbers);
-
-
-      // Multiply the values of each level so they can be flattened and compared. By using 32, we
-      // guarantee support for at least 32 end-level ports.
-      arrayA = arrayA.map((val, i, arr) => val * (32 ** (arr.length - i)));
-      arrayB = arrayB.map((val, i, arr) => val * (32 ** (arr.length - i)));
+      // Multiply the values of each level so they can be flattened and directly compared. By using
+      // 32 as a base, we guarantee support for at least 32 end-level ports.
+      hierarchyA = hierarchyA.map((val, i, arr) => val * (32 ** (arr.length - i)));
+      hierarchyB = hierarchyB.map((val, i, arr) => val * (32 ** (arr.length - i)));
 
       // We add the multiplied levels and compare the two values
-      const totalA = arrayA.reduce((t, v) => t + v);
-      const totalB = arrayB.reduce((t, v) => t + v);
+      const totalA = hierarchyA.reduce((t, v) => t + v);
+      const totalB = hierarchyB.reduce((t, v) => t + v);
+
       return totalA - totalB;
 
     });
 
-    // If a mapping has been defined, override the default channel assignments and use the mapping
-    // instead.
+    // If a channel mapping has been defined, use it to assign channels. Otherwise, base the channel
+    // number on the previous sort.
     if (config.get("devices.scannerMapping")) {
 
-      logInfo(`Sorting channels according to map ${config.get("devices.scannerMapping")}`);
+      logInfo(`Assigning channels according to map '${config.get("devices.scannerMapping")}'.`);
 
       const newList = [];
       const mapping = ScannerMappings[config.get("devices.scannerMapping")];
@@ -199,6 +191,11 @@ export default class ScanMeister {
 
       newList.sort((a, b) => a.channel - b.channel);
       scannerDescriptors = newList;
+
+    } else {
+
+      logInfo(`Assigning channels according to port hierarchy.`);
+      scannerDescriptors.forEach((descriptor, index) => descriptor.channel = index + 1)
 
     }
 
