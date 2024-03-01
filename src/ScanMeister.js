@@ -160,11 +160,12 @@ export default class ScanMeister {
       const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
       const paddedB = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
 
-      console.log(paddedB);
 
       // Prepend bus number to port hierarchy
       let hierarchyA = [a.busNumber].concat(paddedA);
       let hierarchyB = [b.busNumber].concat(paddedB);
+
+      console.log(hierarchyA);
 
       // Multiply the values of each level so they can be flattened and directly compared. By using
       // 32 as a base, we guarantee support for at least 32 end-level ports.
