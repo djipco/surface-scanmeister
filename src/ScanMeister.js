@@ -142,8 +142,6 @@ export default class ScanMeister {
     const identifiers = scanners.map(model => `${model.idVendor}:${model.idProduct}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
-    console.log(scannerDescriptors);
-
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
@@ -160,7 +158,7 @@ export default class ScanMeister {
     });
 
     // Assign additional information to scanner descriptors
-    return scannerDescriptors.forEach((scanner, index) => {
+    scannerDescriptors.forEach((scanner, index) => {
 
       // Channel the scanner will be tied to
       scanner.channel = index + 1
@@ -177,6 +175,8 @@ export default class ScanMeister {
       scanner.product = details.product;
 
     });
+
+    return scannerDescriptors;
 
   }
 
