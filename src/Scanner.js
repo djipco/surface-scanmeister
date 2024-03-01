@@ -26,6 +26,7 @@ export class Scanner extends EventEmitter {
     super();
 
     this.#bus = descriptor.busNumber;
+    this.#channel = descriptor.channel;
     // this.#hub = options.hub;
     this.#manufacturer = descriptor.vendor;
     this.#model = descriptor.product;

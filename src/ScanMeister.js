@@ -80,7 +80,6 @@ export default class ScanMeister {
     // Log scanner details to console
     this.scanners.forEach(scanner => {
       logInfo(`    Channel ${scanner.channel}. ${scanner.description}`, true);
-      console.log("        " + scanner.bus, scanner.ports);
     });
 
     // Add callbacks for USB hotplug events
