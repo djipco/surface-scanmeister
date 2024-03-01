@@ -125,6 +125,8 @@ export default class ScanMeister {
     const identifiers = scanners.map(model => `${model.idVendor}:${model.idProduct}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
+    console.log(scannerDescriptors);
+
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
@@ -285,81 +287,81 @@ export default class ScanMeister {
     await this.quit();
   }
 
-  async #getScannerHardwareDescriptors() {
+  // async #getScannerHardwareDescriptors() {
+  //
+  //   // Call the "usb-devices" command to retrieve informationa about all USB-connected devices. To
+  //   // see the tree of devices, do: lsusb -t
+  //   const usbDevicesSpawner = new Spawner();
+  //   let data;
+  //
+  //   try {
+  //
+  //     data = await new Promise((resolve, reject) => {
+  //       usbDevicesSpawner.execute(
+  //         "usb-devices", [], {sucessCallback: resolve, errorCallback: reject}
+  //       );
+  //     });
+  //
+  //   } catch (e) {
+  //     throw new Error("The usb-devices command did not return any data.");
+  //   }
+  //
+  //   return this.#parseUsbDevicesData(data);
+  //
+  // }
 
-    // Call the "usb-devices" command to retrieve informationa about all USB-connected devices. To
-    // see the tree of devices, do: lsusb -t
-    const usbDevicesSpawner = new Spawner();
-    let data;
-
-    try {
-
-      data = await new Promise((resolve, reject) => {
-        usbDevicesSpawner.execute(
-          "usb-devices", [], {sucessCallback: resolve, errorCallback: reject}
-        );
-      });
-
-    } catch (e) {
-      throw new Error("The usb-devices command did not return any data.");
-    }
-
-    return this.#parseUsbDevicesData(data);
-
-  }
-
-  #parseUsbDevicesData(data) {
-
-    // Get device descriptors
-    this.descriptors = this.getDescriptorsFromDataString(data);
-
-    // Build a flat list of valid device identifiers
-    const validScannerIDs = scanners.map(model => `${model.vendor}:${model.productId}`);
-
-    // Only keep scanners listed in the device list (/config/scanners.js)
-    const scannerDescriptors = this.descriptors.filter(d => {
-      return validScannerIDs.includes(`${d.manufacturerId}:${d.modelId}`);
-    });
-
-    // Add additional information in the scanners array
-    scannerDescriptors.forEach(scanner => {
-
-      // System name (e.g. genesys:libusb:001:034)
-      const model = this.getScannerDetails(scanner.manufacturerId, scanner.modelId);
-      const bus = scanner.bus.toString().padStart(3, '0');
-      const number = scanner.number.toString().padStart(3, '0');
-      scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
-
-      //
-      scanner.bus = parseInt(bus);
-      scanner.hub = this.getDescriptor(scanner.parent);
-      scanner.ports = this.getUsbPortHierarchy(scanner);
-
-      // If the manufacturer is not specified, fetch it from our own database
-      if (!scanner.hub.manufacturer) {
-        const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
-        if (h) {
-          scanner.hub.manufacturer = h.manufacturer;
-        } else {
-          scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
-        }
-      }
-
-      // If the model is not specified, fetch it from our own database
-      if (!scanner.hub.model) {
-        const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
-        if (h) {
-          scanner.hub.model = h.model;
-        } else {
-          scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
-        }
-      }
-
-    });
-
-    return scannerDescriptors;
-
-  }
+  // #parseUsbDevicesData(data) {
+  //
+  //   // Get device descriptors
+  //   this.descriptors = this.getDescriptorsFromDataString(data);
+  //
+  //   // Build a flat list of valid device identifiers
+  //   const validScannerIDs = scanners.map(model => `${model.vendor}:${model.productId}`);
+  //
+  //   // Only keep scanners listed in the device list (/config/scanners.js)
+  //   const scannerDescriptors = this.descriptors.filter(d => {
+  //     return validScannerIDs.includes(`${d.manufacturerId}:${d.modelId}`);
+  //   });
+  //
+  //   // Add additional information in the scanners array
+  //   scannerDescriptors.forEach(scanner => {
+  //
+  //     // System name (e.g. genesys:libusb:001:034)
+  //     const model = this.getScannerDetails(scanner.manufacturerId, scanner.modelId);
+  //     const bus = scanner.bus.toString().padStart(3, '0');
+  //     const number = scanner.number.toString().padStart(3, '0');
+  //     scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
+  //
+  //     //
+  //     scanner.bus = parseInt(bus);
+  //     scanner.hub = this.getDescriptor(scanner.parent);
+  //     scanner.ports = this.getUsbPortHierarchy(scanner);
+  //
+  //     // If the manufacturer is not specified, fetch it from our own database
+  //     if (!scanner.hub.manufacturer) {
+  //       const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
+  //       if (h) {
+  //         scanner.hub.manufacturer = h.manufacturer;
+  //       } else {
+  //         scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
+  //       }
+  //     }
+  //
+  //     // If the model is not specified, fetch it from our own database
+  //     if (!scanner.hub.model) {
+  //       const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
+  //       if (h) {
+  //         scanner.hub.model = h.model;
+  //       } else {
+  //         scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
+  //       }
+  //     }
+  //
+  //   });
+  //
+  //   return scannerDescriptors;
+  //
+  // }
 
   getUsbPortHierarchy(descriptor) {
 
@@ -383,42 +385,42 @@ export default class ScanMeister {
 
   }
 
-  getDescriptorsFromDataString(data) {
-
-    // Split the long string received from usb-devices into discrete blocks for each device.
-    // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
-    // regex.
-    const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"));
-
-    // Extract relevant data from each block and create description objects
-    let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
-    let descriptors = blocks.map(b => {
-      const match = b.match(re);
-      const all = match[0];
-      const bus = parseInt(match[1]);
-      const level = parseInt(match[2]);
-      const parent = parseInt(match[3]);
-      const port = parseInt(match[4]);
-      const container = parseInt(match[5]);
-      const number = parseInt(match[6]);
-      const manufacturerId = match[7];
-      const modelId = match[8];
-      return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
-    });
-
-    // Check if manufacturer and product ID can be found for each device (not always the case)
-    re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
-    return descriptors.map(d => {
-      const match = d.all.match(re);
-      delete d.all;
-      if (match) {
-        d.manufacturer = match[1];
-        d.model = match[2];
-      }
-      return d;
-    });
-
-  }
+  // getDescriptorsFromDataString(data) {
+  //
+  //   // Split the long string received from usb-devices into discrete blocks for each device.
+  //   // Doing so, we also replace the newlines by a token (NNNNN) for easier processing with
+  //   // regex.
+  //   const blocks = data.split('\n\n').map(item => item.replaceAll("\n", "NNNNN"));
+  //
+  //   // Extract relevant data from each block and create description objects
+  //   let re = /.*Bus=\s*(\d*).*Lev=\s*(\d*).*Prnt=\s*(\d*).*Port=\s*(\d*).*Cnt=\s*(\d*).*Dev#=\s*(\d*).*Vendor=(\S*).*ProdID=(\S*).*/
+  //   let descriptors = blocks.map(b => {
+  //     const match = b.match(re);
+  //     const all = match[0];
+  //     const bus = parseInt(match[1]);
+  //     const level = parseInt(match[2]);
+  //     const parent = parseInt(match[3]);
+  //     const port = parseInt(match[4]);
+  //     const container = parseInt(match[5]);
+  //     const number = parseInt(match[6]);
+  //     const manufacturerId = match[7];
+  //     const modelId = match[8];
+  //     return {all, bus, level, parent, port, container, number, manufacturerId, modelId};
+  //   });
+  //
+  //   // Check if manufacturer and product ID can be found for each device (not always the case)
+  //   re = /.*Manufacturer=(.*?)NNN.*Product=(.*?)NNNNN/
+  //   return descriptors.map(d => {
+  //     const match = d.all.match(re);
+  //     delete d.all;
+  //     if (match) {
+  //       d.manufacturer = match[1];
+  //       d.model = match[2];
+  //     }
+  //     return d;
+  //   });
+  //
+  // }
 
   getScannerDetails(idVendor, idProduct) {
     return scanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
