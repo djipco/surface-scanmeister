@@ -128,7 +128,7 @@ export default class ScanMeister {
 
     // Filter the devices to retain only supported scanners
     const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
-    const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+    let scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
     // Assign additional information to scanner descriptors
     scannerDescriptors.forEach((scanner, index) => {
@@ -185,6 +185,9 @@ export default class ScanMeister {
           newList.push(found);
         }
       });
+
+      newList.sort((a, b) => a.channel - b.channel);
+      scannerDescriptors = newList;
 
     }
 
