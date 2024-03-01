@@ -106,11 +106,8 @@ export class Spawner extends EventEmitter {
     this.removeListener();
 
     if (this.#process) {
-      this.#process.off('error', this.#callbacks.onProcessError);
-      this.#process.stdout.off('error', this.#callbacks.onProcessError);
-      this.#process.stdout.off('data', this.#callbacks.onProcessData);
-      this.#process.stderr.off('data', this.#callbacks.onProcessStderr);
-      this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
+      this.#process.removeAllListeners();
+      if (this.#process.stdout) this.#process.stdout.removeAllListeners();
     }
 
     // Remove reference to user callbacks
@@ -130,7 +127,6 @@ export class Spawner extends EventEmitter {
 
     // Kill 'scanimage' process if present
     if (this.#process) {
-      this.#process.removeAllListeners();
       setTimeout(() => this.#process.kill('SIGKILL'), 500); // Forceful kill
       this.#process.kill('SIGTERM'); // Graceful kill
       await new Promise(resolve => this.#process.on('exit', () => resolve));
