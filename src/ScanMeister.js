@@ -131,13 +131,13 @@ export default class ScanMeister {
     scannerDescriptors.sort((a, b) => {
 
       // Prepend hub to the port hierarchy
-      const arrayA = [a.busNumber].concat(a.portNumbers);
-      const arrayB = [b.busNumber].concat(b.portNumbers);
+      let arrayA = [a.busNumber].concat(a.portNumbers);
+      let arrayB = [b.busNumber].concat(b.portNumbers);
 
       // Multiply the values of each level of the hierarchy so they can be flattened and compared.
       // By using 100, we guarantee support for at least 100 end-level ports.
-      arrayA.map((val, i, arr) => val * (100 ** (arr.length - i)));
-      arrayB.map((val, i, arr) => val * (100 ** (arr.length - i)));
+      arrayA = arrayA.map((val, i, arr) => val * (100 ** (arr.length - i)));
+      arrayB = arrayB.map((val, i, arr) => val * (100 ** (arr.length - i)));
 
       // We add the multiplied levels and compare the two values
       const totalA = arrayA.reduce((t, v) => t + v);
