@@ -149,7 +149,8 @@ export default class ScanMeister {
     // Filter the devices to retain only scanners
     const filtered = devices.filter(device => {
       const descriptor = device.deviceDescriptor;
-      const id = descriptor.idVendor.toString(16) + ":" + descriptor.idProduct.toString(16);
+      const id = descriptor.idVendor.toString(16).padStart(4, '0') + ":"
+        + descriptor.idProduct.toString(16).padStart(4, '0');
       console.log(id);
       return identifiers.includes(id)
     });
