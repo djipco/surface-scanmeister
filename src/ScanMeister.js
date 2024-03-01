@@ -168,9 +168,8 @@ export default class ScanMeister {
     });
 
     // Filter the devices to retain only supported scanners
-    const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
+    const identifiers = scanners.map(model => `${model.idVendor}:${model.idProduct}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
-    console.log(scannerDescriptors);
 
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
