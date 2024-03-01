@@ -107,10 +107,7 @@ export class Spawner extends EventEmitter {
 
   removeAllListeners() {
 
-    // Remove reference to user callbacks
-    this.#callbacks.onProcessSuccessUser = null;
-    this.#callbacks.onProcessErrorUser = null;
-    this.#callbacks.onProcessStderrUser = null;
+    this.removeListener();
 
     if (this.#process) {
       this.#process.off('error', this.#callbacks.onProcessError);
@@ -120,6 +117,10 @@ export class Spawner extends EventEmitter {
       this.#process.stdout.off('end', this.#callbacks.onProcessEnd);
     }
 
+    // Remove reference to user callbacks
+    this.#callbacks.onProcessSuccessUser = null;
+    this.#callbacks.onProcessErrorUser = null;
+    this.#callbacks.onProcessStderrUser = null;
     this.#callbacks.onProcessError = null;
     this.#callbacks.onProcessData = null;
     this.#callbacks.onProcessStderr = null
@@ -129,7 +130,6 @@ export class Spawner extends EventEmitter {
 
   async destroy() {
 
-    this.removeListener();
     this.removeAllListeners();
 
     // Kill 'scanimage' process if present
