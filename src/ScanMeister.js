@@ -173,11 +173,11 @@ export default class ScanMeister {
 
       const arrayA = [a.busNumber].concat(a.portNumbers);
       arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalA = a.ports.reduce((t, v) => t + v);
+      const totalA = a.portNumbers.reduce((t, v) => t + v);
 
       const arrayB = [b.busNumber].concat(b.portNumbers);
       arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalB = b.ports.reduce((t, v) => t + v);
+      const totalB = b.portNumbers.reduce((t, v) => t + v);
 
       return totalA - totalB;
 
