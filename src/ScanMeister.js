@@ -266,9 +266,6 @@ export default class ScanMeister {
     this.#callbacks.onUsbAttach = undefined;
     this.#callbacks.onUsbDetach = undefined;
 
-    // usb.off("attach", this.#callbacks.onUsbAttach);
-    // usb.off("detach", this.#callbacks.onUsbDetach);
-
     // Remove quit listeners
     process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
     process.off("SIGQUIT", this.#callbacks.onExitRequest);      // Keyboard quit
@@ -311,12 +308,15 @@ export default class ScanMeister {
     this.#callbacks.onInitialOscError = err => {
 
       if (err.code === "EADDRINUSE") {
-        throw new Error(
+        logError(
           `Unable to start OSC server. Network address already in use (${err.address}:${err.port})`
-        )
+        );
       } else {
-        throw new Error(`Unable to start OSC server (${err})`)
+        logError(`Unable to start OSC server (${err})`);
       }
+
+      this.quit(1);
+      return;
 
     };
 
