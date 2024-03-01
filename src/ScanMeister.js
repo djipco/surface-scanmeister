@@ -167,6 +167,7 @@ export default class ScanMeister {
       device.identifier = `${device.idVendor}:${device.idProduct}`;
     });
 
+    console.log(scannerDescriptors);
     // Filter the devices to retain only supported scanners
     const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
@@ -185,6 +186,7 @@ export default class ScanMeister {
       return totalA - totalB;
 
     });
+
 
     // Assign additional information to scanner descriptors
     scannerDescriptors.forEach((scanner, index) => {
@@ -205,7 +207,6 @@ export default class ScanMeister {
 
     });
 
-    console.log(scannerDescriptors);
 
     return scannerDescriptors;
 
