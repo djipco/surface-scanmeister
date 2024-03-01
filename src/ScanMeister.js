@@ -311,12 +311,15 @@ export default class ScanMeister {
     this.#callbacks.onInitialOscError = err => {
 
       if (err.code === "EADDRINUSE") {
-        throw new Error(
+        logError(
           `Unable to start OSC server. Network address already in use (${err.address}:${err.port})`
-        )
+        );
       } else {
-        throw new Error(`Unable to start OSC server (${err})`)
+        logError(`Unable to start OSC server (${err})`);
       }
+
+      setTimeout(() => process.exit(1), 250);
+      return;
 
     };
 
