@@ -72,9 +72,9 @@ export default class ScanMeister {
     if (this.scanners.length === 0) {
       logWarn("No scanners found.");
     } else if (this.scanners.length === 1) {
-      logInfo(`One scanner has been detected:`);
+      logInfo(`One scanner detected:`);
     } else {
-      logInfo(`${this.scanners.length} scanners have been detected:`);
+      logInfo(`${this.scanners.length} scanners detected:`);
     }
 
     // Log scanner details to console
@@ -92,7 +92,8 @@ export default class ScanMeister {
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `OSC ready. Listening on ` +
-      config.get("osc.local.address") + ":" + config.get("osc.local.port")
+      config.get("osc.local.address") + ":" + config.get("osc.local.port") + ", sending to " +
+      config.get("osc.remote.address") + ":" + config.get("osc.remote.port") + "."
     );
 
     // Send ready status via OSC
