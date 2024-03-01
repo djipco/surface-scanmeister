@@ -3,9 +3,7 @@ import fs from "fs-extra";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
-// import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
-import {hubs} from "../config/hubs.js";
 import {scanners} from "../config/scanners.js";
 import process from "node:process";
 import { usb } from 'usb';
@@ -297,14 +295,6 @@ export default class ScanMeister {
 
   getScannerDetails(idVendor, idProduct) {
     return scanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
-  }
-
-  getHubModel(vendor, productId) {
-    return hubs.find(model => model.vendor === vendor && model.productId === productId);
-  }
-
-  getDescriptor(number) {
-    return this.descriptors.find(d => d.number === number);
   }
 
   async #onOscError(error) {
