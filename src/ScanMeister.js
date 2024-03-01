@@ -60,7 +60,25 @@ export default class ScanMeister {
       return;
     }
 
-    // // Retrieve list of objects describing scanner ports and device numbers
+
+    // Retrieve list of objects describing scanner ports and device numbers
+    const scannerDescriptors = this.getScannerDescriptors();
+
+    if (this.#scanners.length === 0) {
+      logWarn("No scanners found.");
+    } else if (this.#scanners.length === 1) {
+      logInfo(`One scanner has been detected:`);
+    } else {
+      logInfo(`${this.#scanners.length} scanners have been detected:`);
+    }
+
+    // Create all scanner objects
+    scannerDescriptors.forEach(descriptor => {
+      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    });
+    return;
+
+
     // const shd = await this.#getScannerHardwareDescriptors();
     //
     // // Report number of scanners found
@@ -83,8 +101,7 @@ export default class ScanMeister {
     //   console.log("        " + device.bus, device.ports);
     // });
 
-    this.#scanners = this.getScanners();
-    return;
+
 
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
     usb.on("attach", this.#callbacks.onUsbAttach);
@@ -136,26 +153,94 @@ export default class ScanMeister {
   }
 
 
-  getScanners() {
+  getScannerDescriptors() {
 
     // Get all USB devices
-    const devices = usb.getDeviceList();
+    const descriptors = usb.getDeviceList();
 
-    // To prepare for filtering, get a list of supported vendor/scanner pairs
-    const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
-
-    console.log(identifiers);
-
-    // Filter the devices to retain only scanners
-    const filtered = devices.filter(device => {
-      const descriptor = device.deviceDescriptor;
-      const id = descriptor.idVendor.toString(16).padStart(4, '0') + ":"
-        + descriptor.idProduct.toString(16).padStart(4, '0');
-      console.log(id);
-      return identifiers.includes(id)
+    // Add top-level identifier for vendor and product id
+    descriptors.forEach(device => {
+      device.identifier = device.deviceDescriptor.idVendor.toString(16).padStart(4, '0') + ":"
+        + device.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
     });
 
-    console.log(filtered);
+    // Filter the devices to retain only supported scanners
+    const identifiers = scanners.map(model => `${model.vendor}:${model.productId}`);
+    const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+
+    // Sort scanner descriptors by bus and then by port hierarchy
+    return scannerDescriptors.sort((a, b) => {
+
+      const arrayA = [a.busNumber].concat(a.portNumbers);
+      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      const totalA = a.ports.reduce((t, v) => t + v);
+
+      const arrayB = [b.busNumber].concat(b.portNumbers);
+      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      const totalB = b.ports.reduce((t, v) => t + v);
+
+      return totalA - totalB;
+
+    });
+
+    // Assign additional information to scanner descriptors
+    scannerDescriptors.forEach((scanner, index) => {
+
+      // Channel the scanner will be tied to
+      scanner.channel = index + 1
+
+      // System name (e.g. genesys:libusb:001:034)
+
+
+
+    });
+
+
+
+
+
+
+
+    // device.deviceDescriptor.idVendor.toString(16).padStart(4, '0') + ":"
+
+    // scannerDescriptors.forEach(scanner => {
+    //
+    //   // System name (e.g. genesys:libusb:001:034)
+    //   const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
+    //   const bus = scanner.bus.toString().padStart(3, '0');
+    //   const number = scanner.number.toString().padStart(3, '0');
+    //   scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
+    //
+    //   //
+    //   scanner.bus = parseInt(bus);
+    //   scanner.hub = this.getDescriptor(scanner.parent);
+    //   scanner.ports = this.getUsbPortHierarchy(scanner);
+    //
+    //   // If the manufacturer is not specified, fetch it from our own database
+    //   if (!scanner.hub.manufacturer) {
+    //     const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
+    //     if (h) {
+    //       scanner.hub.manufacturer = h.manufacturer;
+    //     } else {
+    //       scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
+    //     }
+    //   }
+    //
+    //   // If the model is not specified, fetch it from our own database
+    //   if (!scanner.hub.model) {
+    //     const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
+    //     if (h) {
+    //       scanner.hub.model = h.model;
+    //     } else {
+    //       scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
+    //     }
+    //   }
+    //
+    // });
+
+
+
+
 
   }
 
