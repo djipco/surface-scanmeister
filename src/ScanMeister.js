@@ -162,8 +162,9 @@ export default class ScanMeister {
 
     // Add top-level identifier for vendor and product id
     descriptors.forEach(device => {
-      device.identifier = device.deviceDescriptor.idVendor.toString(16).padStart(4, '0') + ":"
-        + device.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
+      device.idVendor = device.deviceDescriptor.idVendor.toString(16).padStart(4, '0');
+      device.idProduct = device.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
+      device.identifier = `${device.idVendor}:${device.idProduct}`;
     });
 
     // Filter the devices to retain only supported scanners
@@ -171,7 +172,7 @@ export default class ScanMeister {
     const scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
 
     // Sort scanner descriptors by bus and then by port hierarchy
-    return scannerDescriptors.sort((a, b) => {
+    scannerDescriptors.sort((a, b) => {
 
       const arrayA = [a.busNumber].concat(a.portNumbers);
       arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
@@ -191,58 +192,16 @@ export default class ScanMeister {
       // Channel the scanner will be tied to
       scanner.channel = index + 1
 
+      // Get scanner details from our own database
+      const details = this.getScannerDetails(scanner.idVendor, scanner.idProduct);
+
       // System name (e.g. genesys:libusb:001:034)
-
-
+      scanner.systemName = details.driverPrefix + scanner.busNumber.toString().padStart(3, '0') +
+        ":" + scanner.deviceAddress.toString().padStart(3, '0');
 
     });
 
-
-
-
-
-
-
-    // device.deviceDescriptor.idVendor.toString(16).padStart(4, '0') + ":"
-
-    // scannerDescriptors.forEach(scanner => {
-    //
-    //   // System name (e.g. genesys:libusb:001:034)
-    //   const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
-    //   const bus = scanner.bus.toString().padStart(3, '0');
-    //   const number = scanner.number.toString().padStart(3, '0');
-    //   scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
-    //
-    //   //
-    //   scanner.bus = parseInt(bus);
-    //   scanner.hub = this.getDescriptor(scanner.parent);
-    //   scanner.ports = this.getUsbPortHierarchy(scanner);
-    //
-    //   // If the manufacturer is not specified, fetch it from our own database
-    //   if (!scanner.hub.manufacturer) {
-    //     const h = hubs.find(hub => hub.vendorId === scanner.hub.manufacturerId);
-    //     if (h) {
-    //       scanner.hub.manufacturer = h.manufacturer;
-    //     } else {
-    //       scanner.hub.manufacturer = `Unknown manufacturer (${scanner.hub.manufacturerId})`;
-    //     }
-    //   }
-    //
-    //   // If the model is not specified, fetch it from our own database
-    //   if (!scanner.hub.model) {
-    //     const h = hubs.find(hub => hub.productId === scanner.hub.modelId);
-    //     if (h) {
-    //       scanner.hub.model = h.model;
-    //     } else {
-    //       scanner.hub.model = `Unknown model (${scanner.hub.modelId})`;
-    //     }
-    //   }
-    //
-    // });
-
-
-
-
+    return scannerDescriptors;
 
   }
 
@@ -408,7 +367,7 @@ export default class ScanMeister {
     scannerDescriptors.forEach(scanner => {
 
       // System name (e.g. genesys:libusb:001:034)
-      const model = this.getScannerModel(scanner.manufacturerId, scanner.modelId);
+      const model = this.getScannerDetails(scanner.manufacturerId, scanner.modelId);
       const bus = scanner.bus.toString().padStart(3, '0');
       const number = scanner.number.toString().padStart(3, '0');
       scanner.systemName = `${model.driverPrefix}${bus}:${number}`;
@@ -503,7 +462,7 @@ export default class ScanMeister {
 
   }
 
-  getScannerModel(vendor, productId) {
+  getScannerDetails(vendor, productId) {
     return scanners.find(model => model.vendor === vendor && model.productId === productId);
   }
 
