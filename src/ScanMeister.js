@@ -63,6 +63,12 @@ export default class ScanMeister {
     // Retrieve list of objects describing scanner ports and device numbers
     const scannerDescriptors = this.getScannerDescriptors();
 
+    // Create all scanner objects
+    scannerDescriptors.forEach(descriptor => {
+      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    });
+
+    // Report number of scanners found
     if (this.#scanners.length === 0) {
       logWarn("No scanners found.");
     } else if (this.#scanners.length === 1) {
@@ -71,39 +77,9 @@ export default class ScanMeister {
       logInfo(`${this.#scanners.length} scanners have been detected:`);
     }
 
-    // Create all scanner objects
-    scannerDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
-    });
-
-
-    // const shd = await this.#getScannerHardwareDescriptors();
-    //
-    // // Report number of scanners found
-    // if (shd.length === 0) {
-    //   this.#scanners = [];
-    //   logWarn("No scanners found.");
-    // } else if (shd.length === 1) {
-    //   logInfo(`${shd.length} scanner has been detected. Retrieving details:`);
-    // } else {
-    //   logInfo(`${shd.length} scanners have been detected. Retrieving details:`);
-    // }
-    //
-    // // Use the scanner hardware descriptors to build list of Scanner objects
-    // await this.#updateScannerList(shd);
-    //
-    //
-    // // Log scanner details to console
-    // this.scanners.forEach(device => {
-    //   logInfo(`    Channel ${device.channel}. ${device.description}`, true);
-    //   console.log("        " + device.bus, device.ports);
-    // });
-
-
-
+    // Add callbacks for USB hotplug events
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
     usb.on("attach", this.#callbacks.onUsbAttach);
-
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
@@ -175,7 +151,7 @@ export default class ScanMeister {
       scanner.product = details.product;
 
     });
-console.log(scannerDescriptors);
+
     return scannerDescriptors;
 
   }
