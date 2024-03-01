@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
-import {Spawner} from "./Spawner.js";
+// import {Spawner} from "./Spawner.js";
 import {config} from "../config/config.js";
 import {hubs} from "../config/hubs.js";
 import {scanners} from "../config/scanners.js";
