@@ -70,7 +70,9 @@ const config = convict({
       doc: 'Name of the mapping to use',
       format: String,
       nullable: true,
-      default: null
+      // default: "Atolla16PortBus1Port1",
+      default: "Atolla16PortBus1Port1Dynex7PortBus3Port1",
+      // default: null
     },
 
     resolution: {
