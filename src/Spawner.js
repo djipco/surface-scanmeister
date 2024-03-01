@@ -123,9 +123,18 @@ export class Spawner extends EventEmitter {
 
   }
 
-  destroy() {
-    this.removeAllListeners();
+  async destroy() {
+
     this.removeListener();
+    this.#process.removeAllListeners();
+
+    // Kill 'scanimage' process if present
+    if (this.#process) {
+      setTimeout(() => this.#process.kill('SIGKILL'), 500); // Forceful kill
+      this.#process.kill('SIGTERM'); // Graceful kill
+      await new Promise(resolve => this.#process.on('exit', () => resolve));
+    }
+
   }
 
 }

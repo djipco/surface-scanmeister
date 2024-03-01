@@ -13,8 +13,9 @@ const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url
 
 export default class ScanMeister {
 
+  static OSC_COMMANDS = ["scan"];
+
   #callbacks = {}
-  #oscCommands = ["scan"];
   #oscPort;
   #scanners = [];
 
@@ -30,11 +31,6 @@ export default class ScanMeister {
 
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
-    if (config.get("operation.mode") === "tcp"){
-      logInfo(`Sendind images to ${config.get("tcp.address")}:${config.get("tcp.port")}.`);
-    } else if (config.get("operation.mode") === "file") {
-      logInfo(`Saving images to '${config.get("paths.scanDir")}'.`);
-    }
 
     // Check platform
     if (process.platform !== "linux") {
@@ -44,15 +40,26 @@ export default class ScanMeister {
       return;
     }
 
-    // Check if the directory to save images in can be found (in "file" mode)
-    try {
-      await fs.ensureDir(config.get("paths.scansDir"))
-    } catch (err) {
-      logError(
-        `The directory to save images in cannot be created (${config.get("paths.scansDir")})`
-      );
-      await this.quit(1);
-      return;
+    // Log details for specific mode
+    if (config.get("operation.mode") === "tcp"){
+
+      logInfo(`Sendind images to ${config.get("tcp.address")}:${config.get("tcp.port")}.`);
+
+    } else if (config.get("operation.mode") === "file") {
+
+      // Check if the directory to save images in can be found (in "file" mode)
+      try {
+        await fs.ensureDir(config.get("paths.scansDir"))
+      } catch (err) {
+        logError(
+          `The directory to save images in cannot be created (${config.get("paths.scansDir")})`
+        );
+        await this.quit(1);
+        return;
+      }
+
+      logInfo(`Saving images to '${config.get("paths.scanDir")}'.`);
+
     }
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
@@ -65,38 +72,6 @@ export default class ScanMeister {
       return;
     }
 
-    // Retrieve list of objects describing scanner ports and device numbers
-    const scannerDescriptors = this.getScannerDescriptors();
-
-    // Create all scanner objects
-    scannerDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
-    });
-
-    // Report number of scanners found
-    if (this.scanners.length === 0) {
-      logWarn("No scanners found.");
-    } else if (this.scanners.length === 1) {
-      logInfo(`One scanner detected:`);
-    } else {
-      logInfo(`${this.scanners.length} scanners detected:`);
-    }
-
-    // Log scanner details to console
-    this.scanners.forEach(scanner => {
-      logInfo(
-        `    Channel ${scanner.channel.toString().padStart(2, " ")}. ${scanner.description}`,
-        true
-      );
-    });
-
-    // Add callbacks for USB hotplug events
-    this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
-    usb.on("attach", this.#callbacks.onUsbAttach);
-
-    this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
-    usb.on("detach", this.#callbacks.onUsbDetach);
-
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `OSC ready. Listening on ` +
@@ -104,17 +79,90 @@ export default class ScanMeister {
       config.get("osc.remote.address") + ":" + config.get("osc.remote.port") + "."
     );
 
-    // Send ready status via OSC
+    // Update scanners list and send ready status via OSC when done
+    this.#updateScanners();
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
 
+    // Add callbacks for USB hotplug events
+    this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
+    usb.on("attach", this.#callbacks.onUsbAttach);
+    this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
+    usb.on("detach", this.#callbacks.onUsbDetach);
+
   }
 
-  #onUsbAttach(e) {
-    logInfo(`Device attached to bus ${e.busNumber}, port ${e.portNumbers.join("-")}.`);
+  async #updateScanners() {
+
+    // Stop in progress scans and destroy any previous scanner objects
+    this.#scanners.forEach(async scanner => await scanner.destroy());
+    this.#scanners = [];
+
+    // Retrieve list of objects describing scanner ports and device numbers
+    const scannerDescriptors = this.getScannerDescriptors();
+
+    // Create new scanner objects
+    scannerDescriptors.forEach(descriptor => {
+      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+    });
+
+    // Report number of scanners found
+    if (this.scanners.length === 0) {
+      logWarn("Updating scanners list... No scanners found.");
+    } else if (this.scanners.length === 1) {
+      logInfo(`Updating scanners list... One scanner detected:`);
+    } else {
+      logInfo(`Updating scanners list... ${this.scanners.length} scanners detected:`);
+    }
+
+    // Log scanner details to console
+    this.scanners.forEach(scanner => {
+      logInfo(
+        `\tChannel ${scanner.channel.toString().padStart(2, " ")}. ${scanner.description}`,
+        true
+      );
+    });
+
   }
 
-  #onUsbDetach(e) {
-    logInfo(`Device detached from bus ${e.busNumber}, port ${e.portNumbers.join("-")}.`);
+  async #onUsbAttach(descriptor) {
+
+    // Check if it is a supported scanner. If it is, rebuild scanner list of objects and report
+    if (this.isSupportedScannerDescriptor(descriptor)) {
+      logInfo(
+        `Scanner attached to bus ${descriptor.busNumber}, ` +
+        `port ${descriptor.portNumbers.join("-")}.`
+      );
+      await this.#updateScanners();
+    }
+
+  }
+
+  async #onUsbDetach(descriptor) {
+
+    // Check if it is a supported scanner. If it is, rebuild scanner list of objects and report
+    if (this.isSupportedScannerDescriptor(descriptor)) {
+      logInfo(
+        `Scanner detached from bus ${descriptor.busNumber}, ` +
+        `port ${descriptor.portNumbers.join("-")}.`
+      );
+      await this.#updateScanners();
+    }
+
+  }
+
+  isSupportedScannerDescriptor(descriptor) {
+
+    // Get flat list of supported scanners
+    const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
+
+    // Build id for current descriptor
+    const idVendor = descriptor.deviceDescriptor.idVendor.toString(16).padStart(4, '0');
+    const idProduct = descriptor.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
+    const id = `${idVendor}:${idProduct}`;
+
+    // Check result
+    return identifiers.includes(id);
+
   }
 
   getScannerDescriptors() {
@@ -129,9 +177,10 @@ export default class ScanMeister {
       device.identifier = `${device.idVendor}:${device.idProduct}`;
     });
 
-    // Filter the descriptors to retain only tje ones for supported scanners
-    const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
-    let scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+    // Filter the descriptors to retain only the ones for supported scanners
+    // const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
+    // let scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
+    let scannerDescriptors = descriptors.filter(dev => this.isSupportedScannerDescriptor(dev));
 
     // Assign additional useful information to scanner descriptors
     scannerDescriptors.forEach(scanner => {
@@ -160,12 +209,9 @@ export default class ScanMeister {
       const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
       const paddedB = Array(5 - b.portNumbers.length).fill(0).concat(b.portNumbers);
 
-
       // Prepend bus number to port hierarchy
       let hierarchyA = [a.busNumber].concat(paddedA);
       let hierarchyB = [b.busNumber].concat(paddedB);
-
-      console.log(hierarchyB);
 
       // Multiply the values of each level so they can be flattened and directly compared. By using
       // 32 as a base, we guarantee support for at least 32 end-level ports.
@@ -211,34 +257,6 @@ export default class ScanMeister {
 
   }
 
-  async #updateScannerList(deviceDescriptors) {
-
-    this.#scanners = [];
-
-    deviceDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
-    });
-
-    // Sort by bus and then by port hierarchy
-    this.#scanners.sort((a, b) => {
-
-      const arrayA = [a.bus].concat(a.ports);
-      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalA = a.ports.reduce((t, v) => t + v);
-
-      const arrayB = [b.bus].concat(b.ports);
-      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalB = b.ports.reduce((t, v) => t + v);
-
-      return totalA - totalB;
-
-    });
-
-    // Assign desired channels to scanners
-    this.scanners.forEach((scanner, index) => scanner.channel = index + 1);
-
-  }
-
   async quit(status = 0) {
 
     logInfo("Exiting...");
@@ -275,10 +293,6 @@ export default class ScanMeister {
 
   get scanners() {
     return this.#scanners;
-  }
-
-  get oscCommands() {
-    return this.#oscCommands;
   }
 
   async setupOsc() {
@@ -374,7 +388,7 @@ export default class ScanMeister {
 
     // Filter out invalid commands
     const command = segments[0].toLowerCase()
-    if (!this.oscCommands.includes(command)) return;
+    if (!ScanMeister.OSC_COMMANDS.includes(command)) return;
 
     // Fetch device index
     const channel = parseInt(segments[1]);
