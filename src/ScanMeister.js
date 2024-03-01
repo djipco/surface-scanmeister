@@ -69,17 +69,24 @@ export default class ScanMeister {
     });
 
     // Report number of scanners found
-    if (this.#scanners.length === 0) {
+    if (this.scanners.length === 0) {
       logWarn("No scanners found.");
-    } else if (this.#scanners.length === 1) {
+    } else if (this.scanners.length === 1) {
       logInfo(`One scanner has been detected:`);
     } else {
-      logInfo(`${this.#scanners.length} scanners have been detected:`);
+      logInfo(`${this.scanners.length} scanners have been detected:`);
     }
+
+    // Log scanner details to console
+    this.scanners.forEach(scanner => {
+      logInfo(`    Channel ${scanner.channel}. ${scanner.description}`, true);
+      console.log("        " + scanner.bus, scanner.ports);
+    });
 
     // Add callbacks for USB hotplug events
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
     usb.on("attach", this.#callbacks.onUsbAttach);
+
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
