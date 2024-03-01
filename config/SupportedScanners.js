@@ -4,13 +4,13 @@
  */
 
 export const SupportedScanners = [
-  {
-    vendor: "Canon",
-    product: "CanoScan LiDE 35/40/50",
-    idVendor: "04a9",
-    idProduct: "2213",
-    driverPrefix: "genesys:libusb:"
-  },
+  // { NOT SAME INTERNAL FORM FACTOR!!!!
+  //   vendor: "Canon",
+  //   product: "CanoScan LiDE 35/40/50",
+  //   idVendor: "04a9",
+  //   idProduct: "2213",
+  //   driverPrefix: "genesys:libusb:"
+  // },
   {
     vendor: "Canon",
     product: "CanoScan LiDE 100",

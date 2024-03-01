@@ -69,8 +69,9 @@ const config = convict({
     scannerMapping: {
       doc: 'Name of the mapping to use',
       format: "*",
-      // default: "Atolla16PortBus1Port1"
-      default: null
+      // default: "Atolla16PortBus1Port1",
+      default: "Atolla16PortBus1Port1Dynex7PortBus3Port1",
+      // default: null
     },
 
     resolution: {
