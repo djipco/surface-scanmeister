@@ -23,6 +23,10 @@ export class Scanner extends EventEmitter {
 
   constructor(osc, descriptor = {}) {
 
+    /*
+
+    */
+
     super();
 
     this.#bus = descriptor.busNumber;

@@ -130,14 +130,18 @@ export default class ScanMeister {
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
+      // Prepend hub to the port hierarchy
       const arrayA = [a.busNumber].concat(a.portNumbers);
-      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalA = a.portNumbers.reduce((t, v) => t + v);
-
       const arrayB = [b.busNumber].concat(b.portNumbers);
-      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
-      const totalB = b.portNumbers.reduce((t, v) => t + v);
 
+      // Multiply the values of each level of the hierarchy so they can be flattened and compared.
+      // By using 32, we guarantee support for at least 32 end-level ports.
+      arrayA.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+      arrayB.map((p, i, arr) => p = 32 ** (arr.length - i) * p);
+
+      // We add the multiplied levels and compare the two values
+      const totalA = arrayA.reduce((t, v) => t + v);
+      const totalB = arrayB.reduce((t, v) => t + v);
       return totalA - totalB;
 
     });
