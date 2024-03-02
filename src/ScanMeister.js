@@ -344,8 +344,8 @@ export default class ScanMeister {
   }
 
   async #onExitRequest(e) {
-    console.log(e);
-    // await this.quit();
+    logInfo(`Quitting signal received: ${e}`);
+    await this.quit();
   }
 
   getScannerDetails(idVendor, idProduct) {
