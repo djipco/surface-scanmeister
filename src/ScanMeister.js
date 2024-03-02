@@ -343,8 +343,8 @@ export default class ScanMeister {
     this.#oscPort.send({address: address, args: args});
   }
 
-  async #onExitRequest(e) {
-    logInfo(`Quitting signal received: ${e}`);
+  async #onExitRequest(signal) {
+    logInfo(`Termination signal received: ${signal}`);
     await this.quit();
   }
 
