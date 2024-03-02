@@ -28,6 +28,7 @@ export default class ScanMeister {
     process.on("SIGINT", this.#callbacks.onExitRequest);               // CTRL+C
     process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
+    process.on("SIGHUP", this.#callbacks.onExitRequest);              //
 
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
