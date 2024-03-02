@@ -88,6 +88,8 @@ export default class ScanMeister {
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
+    logInfo("Press CTRL-C to exit.")
+
   }
 
   async #updateScanners() {
