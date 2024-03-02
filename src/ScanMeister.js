@@ -28,7 +28,7 @@ export default class ScanMeister {
     process.on("SIGINT", this.#callbacks.onExitRequest);               // CTRL+C
     process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
     process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
-    process.on("SIGHUP", this.#callbacks.onExitRequest);              //
+    process.on("SIGHUP", this.#callbacks.onExitRequest);               // Terminal window closed
 
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
@@ -286,8 +286,7 @@ export default class ScanMeister {
     }
 
     // Exit
-    setTimeout(() => process.exit(status), 100); // wait for log files to be written
-    // process.exit(status);
+    setTimeout(() => process.exit(status), 250); // wait for log files to be written
 
   }
 
