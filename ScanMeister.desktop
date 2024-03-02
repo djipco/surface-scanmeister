@@ -6,4 +6,4 @@ Exec=bash -c 'cd %k && node index.js; read'
 Icon=obconf
 Terminal=true
 Categories=Utility
-SingleMainWindow=true
+SingleMainWindow=1
