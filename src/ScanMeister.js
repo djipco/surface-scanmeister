@@ -35,8 +35,7 @@ export default class ScanMeister {
     // Check platform
     if (process.platform !== "linux") {
       logError(`This platform (${process.platform}) is not supported.`);
-      logInfo("Exiting...");
-      setTimeout(() => process.exit(1), 500); // wait for log files to be written
+      await this.quit(1);
       return;
     }
 
@@ -284,7 +283,8 @@ export default class ScanMeister {
     }
 
     // Exit
-    process.exit(status);
+    setTimeout(() => process.exit(status), 100); // wait for log files to be written
+    // process.exit(status);
 
   }
 
@@ -343,8 +343,9 @@ export default class ScanMeister {
     this.#oscPort.send({address: address, args: args});
   }
 
-  async #onExitRequest() {
-    await this.quit();
+  async #onExitRequest(e) {
+    console.log(e);
+    // await this.quit();
   }
 
   getScannerDetails(idVendor, idProduct) {
