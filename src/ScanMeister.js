@@ -89,7 +89,9 @@ export default class ScanMeister {
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
-    logInfo("Press CTRL-C to exit.")
+    // Quitting by closing the window is not a problem but it doesn't leave much time for logging
+    // information to be written. In that sense, CTRL-C is better.
+    logInfo("Press CTRL-C to properly exit.")
 
   }
 
