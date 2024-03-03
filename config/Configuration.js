@@ -6,7 +6,7 @@ export const Configuration = {
   },
 
   operation: {
-    mode: 'file'                    // Save scan locally (file) or stream them via network (tcp)
+    mode: 'tcp'                     // Save scan locally (file) or stream them via network (tcp)
   },
 
   tcp: {
