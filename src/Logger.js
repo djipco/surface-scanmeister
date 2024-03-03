@@ -3,6 +3,17 @@ import "winston-daily-rotate-file";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 import {Configuration as config} from "../config/Configuration.js";
+import fs from "fs-extra";
+
+// Check if the directory to save logs in can be found
+try {
+  await fs.ensureDir(config.paths.logs);
+} catch (err) {
+  logWarn(
+    `The directory to save logs in ('${config.paths.logs}') cannot be created. ` +
+    `Using './' instead.`
+  );
+}
 
 // Prepare daily rotate file transport
 const drfTransport = new transports.DailyRotateFile({
