@@ -52,7 +52,7 @@ export class Scanner extends EventEmitter {
   }
 
   get nameAndPort() {
-    return `${this.name} connected to bus ${this.bus}, port ${this.ports.join("-")}`;
+    return `${this.name} connected to bus ${this.bus}, port ${this.ports.join("-").padEnd(5, "")}`;
   }
 
   get name() {
