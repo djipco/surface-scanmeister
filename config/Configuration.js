@@ -1,8 +1,8 @@
 export const Configuration = {
 
   paths: {
-    images: 'scans',                // Directory where scans should be saved (in "file" mode)
-    logs: "logs"                    // Directory where logfiles should be saved
+    images: './scans',                // Directory where scans should be saved (in "file" mode)
+    logs: "./logs"                    // Directory where logfiles should be saved
   },
 
   operation: {
