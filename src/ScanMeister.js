@@ -1,20 +1,31 @@
-// Import modules
+// Import Node.js modules
 import fs from "fs-extra";
 import osc from "osc";
-import {Scanner} from './Scanner.js';
-import {logInfo, logError, logWarn} from "./Logger.js"
-import {Configuration as config} from "../config/Configuration.js";
 import process from "node:process";
+import { readFile } from 'fs/promises';
+import { usb } from 'usb';
+
+// Import project classes
+import {Configuration as config} from "../config/Configuration.js";
+import {logInfo, logError, logWarn} from "./Logger.js"
+import {Scanner} from './Scanner.js';
 import {ScannerMappings} from "../config/ScannerMappings.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
-import { usb } from 'usb';
-import { readFile } from 'fs/promises';
-const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
 export default class ScanMeister {
 
+  // Valid OSC commands to respond to
   static OSC_COMMANDS = ["scan"];
 
+  // Termination signals to respond to
+  static EXIT_SIGNALS = [
+    "SIGINT",     // CTRL+C
+    "SIGQUIT",    // Keyboard quit
+    "SIGTERM",    // `kill` command
+    "SIGHUP"      // Terminal window closed
+  ];
+
+  // Private variables
   #callbacks = {}
   #oscPort;
   #scanners = [];
@@ -25,10 +36,10 @@ export default class ScanMeister {
 
     // Watch for quit signals
     this.#callbacks.onExitRequest = this.#onExitRequest.bind(this);
-    process.on("SIGINT", this.#callbacks.onExitRequest);               // CTRL+C
-    process.on("SIGQUIT", this.#callbacks.onExitRequest);              // Keyboard quit
-    process.on("SIGTERM", this.#callbacks.onExitRequest);              // `kill` command
-    process.on("SIGHUP", this.#callbacks.onExitRequest);               // Terminal window closed
+    ScanMeister.EXIT_SIGNALS.forEach(s => process.on(s, this.#callbacks.onExitRequest));
+
+    // Grab info from package.json
+    const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.operation.mode}' mode...`);
@@ -270,10 +281,8 @@ export default class ScanMeister {
     this.#callbacks.onUsbAttach = undefined;
     this.#callbacks.onUsbDetach = undefined;
 
-    // Remove quit listeners
-    process.off("SIGINT", this.#callbacks.onExitRequest);       // CTRL+C
-    process.off("SIGQUIT", this.#callbacks.onExitRequest);      // Keyboard quit
-    process.off("SIGTERM", this.#callbacks.onExitRequest);      // `kill` command
+    // Remove termination listeners
+    ScanMeister.EXIT_SIGNALS.forEach(s => process.off(s, this.#callbacks.onExitRequest));
 
     // Destroy scanners and remove callbacks
     this.scanners.forEach(async device => await device.destroy());
