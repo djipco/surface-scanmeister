@@ -92,7 +92,7 @@ const config = convict({
     },
     lampOffScan: {
       doc: 'Whether to open the lamp while scanning',
-      format: 'Boolean',
+      format: Boolean,
       default: false
     },
     lampOffTime: {
@@ -102,22 +102,22 @@ const config = convict({
     },
     x: {
       doc: 'The x position to start the scan at (0...216.7mm)',
-      format: 'Number',
+      format: Number,
       default: 0
     },
     y: {
       doc: 'The y position to start the scan at (0...297.5mm)',
-      format: 'Number',
+      format: Number,
       default: 0
     },
     width: {
       doc: 'Width of scan area (0...216.7mm)',
-      format: 'Number',
+      format: Number,
       default: 216.07
     },
     height: {
       doc: 'Height of scan area (0...297.5mm)',
-      format: 'Number',
+      format: Number,
       default: 297.5
     },
   }
