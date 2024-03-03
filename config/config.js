@@ -10,7 +10,7 @@ const config = convict({
     scansDir: {
       doc: 'Path to directory where scans should be saved in "file" mode',
       format: String,
-      default: '/home/scanmeister/scans'
+      default: './scans'
     }
   },
 
@@ -18,7 +18,7 @@ const config = convict({
     mode: {
       doc: 'Whether to save the scan locally (file) of send it via network (tcp)',
       format: ["tcp", "file"],
-      default: 'tcp'
+      default: 'file'
     }
   },
 
