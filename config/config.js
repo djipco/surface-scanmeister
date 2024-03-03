@@ -18,7 +18,7 @@ const config = convict({
     mode: {
       doc: 'Whether to save the scan locally (file) of send it via network (tcp)',
       format: ["tcp", "file"],
-      default: 'file'
+      default: 'tcp'
     }
   },
 
