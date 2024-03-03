@@ -41,6 +41,16 @@ export default class ScanMeister {
     // Grab info from package.json
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
+    // Check if the directory to save logs in can be found
+    try {
+      await fs.ensureDir(config.paths.logs);
+    } catch (err) {
+      logWarn(
+        `The directory to save logs in ('${config.paths.logs}') cannot be created. ` +
+        `Using './' instead.`
+      );
+    }
+
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.operation.mode}' mode...`);
 
