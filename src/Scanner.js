@@ -3,9 +3,9 @@ import net from "net";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
 // Project classes
+import {Configuration as config} from "../config/Configuration.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Spawner} from "./Spawner.js";
-import {config} from "../config/config.js";
 
 export class Scanner extends EventEmitter {
 
@@ -89,13 +89,13 @@ export class Scanner extends EventEmitter {
     }
 
     // File format and output
-    if (config.get("operation.mode") === "file") {
+    if (config.operation.mode === "file") {
       this.#scanArgs.push('--format=png');
       if (options.outputFile) this.#scanArgs.push('--output-file=' + options.outputFile);
-    } else if (config.get("operation.mode") === "tcp") {
+    } else if (config.operation.mode === "tcp") {
       this.#scanArgs.push('--format=pnm');
     } else {
-      throw new Error(`Invalid operation mode: ${config.get("operation.mode")}`)
+      throw new Error(`Invalid operation mode: ${config.operation.mode}`)
     }
 
     // Color mode
@@ -105,23 +105,23 @@ export class Scanner extends EventEmitter {
     this.#scanArgs.push('--depth=8');
 
     // Scanning resolution
-    this.#scanArgs.push('--resolution=' + config.get("devices.resolution"));
+    this.#scanArgs.push('--resolution=' + config.devices.resolution);
 
     // Brightness (-100...100)
-    this.#scanArgs.push('--brightness=' + config.get("devices.brightness"));
+    this.#scanArgs.push('--brightness=' + config.devices.brightness);
 
     // Contrast (-100...100)
-    this.#scanArgs.push('--contrast=' + config.get("devices.contrast"));
+    this.#scanArgs.push('--contrast=' + config.devices.contrast);
 
     // Lamp off scan
-    if (config.get("devices.lampOffScan")) {
+    if (config.devices.lampOffScan) {
       this.#scanArgs.push('--lamp-off-scan=yes');
     } else {
       this.#scanArgs.push('--lamp-off-scan=no');
     }
 
     // Lamp off time
-    this.#scanArgs.push('--lamp-off-time=' + config.get("devices.lampOffTime"));
+    this.#scanArgs.push('--lamp-off-time=' + config.devices.lampOffTime);
 
     // Prevent cached calibration from expiring (not sure what it does!)
     this.#scanArgs.push('--expiration-time=-1');
@@ -130,18 +130,18 @@ export class Scanner extends EventEmitter {
     this.#scanArgs.push('--buffer-size=32');
 
     // Geometry
-    this.#scanArgs.push('-l ' + config.get("devices.x"));
-    this.#scanArgs.push('-t ' + config.get("devices.y"));
-    this.#scanArgs.push('-x ' + config.get("devices.width"));
-    this.#scanArgs.push('-y ' + config.get("devices.height"));
+    this.#scanArgs.push('-l ' + config.devices.x);
+    this.#scanArgs.push('-t ' + config.devices.y);
+    this.#scanArgs.push('-x ' + config.devices.width);
+    this.#scanArgs.push('-y ' + config.devices.height);
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
-    if (config.get("operation.mode") === "tcp") {
+    if (config.operation.mode === "tcp") {
 
       await new Promise(resolve => {
 
         this.tcpSocket = net.createConnection(
-          { port: config.get("tcp.port"), host: config.get("tcp.address") },
+          { port: config.tcp.port, host: config.tcp.address },
           resolve
         );
 
@@ -170,7 +170,7 @@ export class Scanner extends EventEmitter {
       }
     );
 
-    if (config.get("operation.mode") === "tcp") {
+    if (config.operation.mode === "tcp") {
       this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
     }
 

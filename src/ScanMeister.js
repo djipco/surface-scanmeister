@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import osc from "osc";
 import {Scanner} from './Scanner.js';
 import {logInfo, logError, logWarn} from "./Logger.js"
-import {config} from "../config/config.js";
+import {Configuration as config} from "../config/Configuration.js";
 import process from "node:process";
 import {ScannerMappings} from "../config/ScannerMappings.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
@@ -31,7 +31,7 @@ export default class ScanMeister {
     process.on("SIGHUP", this.#callbacks.onExitRequest);               // Terminal window closed
 
     // Log start details
-    logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.get("operation.mode")}' mode...`);
+    logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.operation.mode}' mode...`);
 
     // Check platform
     if (process.platform !== "linux") {
@@ -41,24 +41,24 @@ export default class ScanMeister {
     }
 
     // Log details for specific mode
-    if (config.get("operation.mode") === "tcp"){
+    if (config.operation.mode === "tcp"){
 
-      logInfo(`Sendind images to ${config.get("tcp.address")}:${config.get("tcp.port")}.`);
+      logInfo(`Sendind images to ${config.tcp.address}:${config.tcp.port}.`);
 
-    } else if (config.get("operation.mode") === "file") {
+    } else if (config.operation.mode === "file") {
 
       // Check if the directory to save images in can be found (in "file" mode)
       try {
-        await fs.ensureDir(config.get("paths.scansDir"))
+        await fs.ensureDir(config.paths.images);
       } catch (err) {
         logError(
-          `The directory to save images in cannot be created (${config.get("paths.scansDir")})`
+          `The directory to save images in cannot be created (${config.paths.images})`
         );
         await this.quit(1);
         return;
       }
 
-      logInfo(`Saving images to '${config.get("paths.scanDir")}'.`);
+      logInfo(`Saving images to '${config.paths.images}'.`);
 
     }
 
@@ -75,8 +75,8 @@ export default class ScanMeister {
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `OSC ready. Listening on ` +
-      config.get("osc.local.address") + ":" + config.get("osc.local.port") + ", sending to " +
-      config.get("osc.remote.address") + ":" + config.get("osc.remote.port") + "."
+      config.osc.localAddress + ":" + config.osc.localPort + ", sending to " +
+      config.osc.remoteAddress + ":" + config.osc.remotePort + "."
     );
 
     // Update scanners list and send ready status via OSC when done
@@ -232,12 +232,12 @@ export default class ScanMeister {
 
     // If a channel mapping has been defined, use it to assign channels. Otherwise, base the channel
     // number on the previous sort.
-    if (config.get("devices.scannerMapping")) {
+    if (config.devices.mapping) {
 
-      logInfo(`Assigning channels according to map '${config.get("devices.scannerMapping")}'.`);
+      logInfo(`Assigning channels according to map '${config.devices.mapping}'.`);
 
       const newList = [];
-      const mapping = ScannerMappings[config.get("devices.scannerMapping")];
+      const mapping = ScannerMappings[config.devices.mapping];
 
       Object.entries(mapping).forEach(([key, value]) => {
         const found = scannerDescriptors.find(s => s.hierarchy === key);
@@ -300,10 +300,10 @@ export default class ScanMeister {
 
     // Instantiate OSC UDP port
     this.#oscPort = new osc.UDPPort({
-      localAddress: config.get("osc.local.address"),
-      localPort: config.get("osc.local.port"),
-      remoteAddress: config.get("osc.remote.address"),
-      remotePort: config.get("osc.remote.port"),
+      localAddress: config.osc.localAddress,
+      localPort: config.osc.localPort,
+      remoteAddress: config.osc.remoteAddress,
+      remotePort: config.osc.remotePort,
       metadata: true
     });
 
@@ -412,7 +412,7 @@ export default class ScanMeister {
       }
 
       const options = {
-        outputFile: config.get("paths.scansDir") + `/scanner${channel}.png`
+        outputFile: config.paths.images + `/scanner${channel}.png`
       }
       scanner.scan(options);
 
