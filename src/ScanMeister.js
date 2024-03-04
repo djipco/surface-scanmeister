@@ -26,7 +26,8 @@ export default class ScanMeister {
   ];
 
   // Private variables
-  #callbacks = {}
+  #callbacks = {};
+  #intervals = {};
   #oscPort;
   #scanners = [];
 
@@ -90,9 +91,12 @@ export default class ScanMeister {
       config.osc.remoteAddress + ":" + config.osc.remotePort + "."
     );
 
-    // Update scanners list and send ready status via OSC when done
+    // Update scanners list
     this.#updateScanners();
-    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+
+    // Start sending OSC status messages
+    this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
+    this.#intervals.status = setInterval(this.#callbacks.onStatusInterval, 1000);
 
     // Add callbacks for USB hotplug events
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
@@ -104,6 +108,10 @@ export default class ScanMeister {
     // information to be written. In that sense, CTRL-C is better.
     logInfo("Press CTRL-C to properly exit.")
 
+  }
+
+  #onStatusInterval() {
+    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
   }
 
   async #updateScanners() {
@@ -288,12 +296,18 @@ export default class ScanMeister {
     this.scanners.forEach(async device => await device.destroy());
     this.#removeOscCallbacks();
 
-    // Send notification and close OSC
+    // Send final notification and close OSC
     if (this.#oscPort && this.#oscPort.socket) {
+
+      clearInterval(this.#intervals.status);
+      this.#intervals.status = undefined;
+      this.#callbacks.onStatusInterval = undefined;
+
       this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
       this.#oscPort.close();
-      this.#oscPort = null;
+      this.#oscPort = undefined;
+
     }
 
     // Exit
