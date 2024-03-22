@@ -1,6 +1,6 @@
 # INITIAL CONFIGURATION
 
-### Raspbian
+### Operating System
 
 These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bookworm").
 
