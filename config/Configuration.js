@@ -27,7 +27,7 @@ export const Configuration = {
     // null or one of the mappings from the /config/ScannerMappings.js file
     // mapping: "Atolla16PortBus1Port1Dynex7PortBus3Port1", // Name of the mapping to use
     // mapping: "Atolla16PortBus1Port1",
-    mapping: "Pi5",
+    mapping: "Pi4",
 
     resolution: 150,              // Scanning resolution (75, 100, 150, 300, 600, 1200, 2400, 4800)
     brightness: 25,               // Scanning brightness (-100...100)
