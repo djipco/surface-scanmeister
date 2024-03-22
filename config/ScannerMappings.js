@@ -11,6 +11,13 @@
 
 export const ScannerMappings = {
 
+  Pi5: {
+    "1-1": 1,
+    "1-2": 2,
+    "3-1": 3,
+    "3-2": 4
+  },
+
   Atolla16PortBus1Port1: {
     "1-1-4-4": 1,
     "1-1-4-3": 2,
