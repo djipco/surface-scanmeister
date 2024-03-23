@@ -25,9 +25,10 @@ export const Configuration = {
 
     // Whether to use a custom mapping for the channels assigned to each scanner. The value can be
     // null or one of the mappings from the /config/ScannerMappings.js file
-    // mapping: "Atolla16PortBus1Port1Dynex7PortBus3Port1", // Name of the mapping to use
-    mapping: "Atolla16PortBus1Port1",
+    // mapping: "Atolla16PortBus1Port1Dynex7PortBus3Port1",
+    // mapping: "Atolla16PortBus1Port1",
     // mapping: "Pi4",
+    mapping: null,                // Name of the mapping to use or null
 
     resolution: 150,              // Scanning resolution (75, 100, 150, 300, 600, 1200, 2400, 4800)
     brightness: 25,               // Scanning brightness (-100...100)
