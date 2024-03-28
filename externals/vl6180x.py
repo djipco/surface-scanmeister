@@ -13,6 +13,7 @@ ap.add_argument("-i", "--ip", help="IP address of the OSC target")
 ap.add_argument("-p", "--port", type=int, help="Port of the OSC target")
 args = ap.parse_args()
 
+print(args)
 
 
 
@@ -48,6 +49,8 @@ while True:
     # Send data via OSC
 #     client.send_message("/sensor/1/distance", distance)
 #     client.send_message("/sensor/1/luminosity", distance)
+    client.send_message("/sensor/1/distance", 123)
+    client.send_message("/sensor/1/luminosity", 56)
 
     # Wait a little before looping
     time.sleep(0.1) # Delay for a 100 ms.
