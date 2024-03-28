@@ -19,9 +19,9 @@ print(args)
 
 
 # OSC address and port MAKE IT SO WE CAN PASS THEM ON THE COMMAND LINE!!!
-# ip = "10.0.0.200"
-# port = 10000
-# client = SimpleUDPClient(ip, port)  # Create client
+ip = "10.0.0.200"
+port = 10000
+client = SimpleUDPClient(ip, port)  # Create client
 
 # Create I2C bus and sensor instance
 # i2c = busio.I2C(board.SCL, board.SDA)
