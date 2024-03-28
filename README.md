@@ -73,15 +73,13 @@ versions of the OS, you must first create a virtual Python environment.
 
 Go to root of project, create virtual environment in `env` folder and activate it:
 
+Here's a bit of code that does all the necessary stuff (go to root of project, create virtual 
+environment in `env` directory, activate virtual environment and install library):
+
 ```sh
 cd /path/to/surface-scanmeister
 python -m venv env
 source env/bin/activate
-``` 
-
-Then, you can install the VL6180X Python module:
-
-```sh
 pip install adafruit-circuitpython-vl6180x
 ```
 
