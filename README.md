@@ -74,7 +74,7 @@ versions of the OS, you must first create a virtual Python environment.
 Go to root of project, create virtual environment in `env` folder and activate it:
 
 ```sh
-cd `/path/to/surface-scanmeister`
+cd /path/to/surface-scanmeister
 python -m venv env
 source env/bin/activate
 ``` 
