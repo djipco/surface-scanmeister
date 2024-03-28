@@ -1,14 +1,13 @@
 # Import standard modules
 import argparse
 
-
-import time
-
 # Import modules from Blinka
-import board
-import microcontroller
-import busio
 import adafruit_vl6180x
+import board
+import busio
+import microcontroller
+import time
+from microcontroller import Pin
 
 # Import OSC
 from pythonosc.udp_client import SimpleUDPClient
@@ -40,7 +39,8 @@ i2c = busio.I2C(board.SCL, board.SDA)
 # sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # print(board.SCL, board.SDA)
-print(board, microcontroller)
+print(board.board_id)
+print(get_unique_pins())
 
 
 # print(
@@ -68,3 +68,39 @@ while True:
 
     # Wait a little before looping
     time.sleep(0.1) # Delay for a 100 ms.
+
+
+
+
+
+
+
+def is_hardware_I2C(scl, sda):
+    try:
+        p = busio.I2C(scl, sda)
+        p.deinit()
+        return True
+    except ValueError:
+        return False
+    except RuntimeError:
+        return True
+
+
+def get_unique_pins():
+    exclude = ['NEOPIXEL', 'APA102_MOSI', 'APA102_SCK']
+    pins = [pin for pin in [
+        getattr(board, p) for p in dir(board) if p not in exclude]
+            if isinstance(pin, Pin)]
+    unique = []
+    for p in pins:
+        if p not in unique:
+            unique.append(p)
+    return unique
+
+
+for scl_pin in get_unique_pins():
+    for sda_pin in get_unique_pins():
+        if scl_pin is sda_pin:
+            continue
+        if is_hardware_I2C(scl_pin, sda_pin):
+            print("SCL pin:", scl_pin, "\t SDA pin:", sda_pin)
