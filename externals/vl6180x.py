@@ -40,7 +40,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 
 # print(board.SCL, board.SDA)
 print(board.board_id)
-print(get_unique_pins())
+
 
 
 # print(
@@ -104,3 +104,6 @@ for scl_pin in get_unique_pins():
             continue
         if is_hardware_I2C(scl_pin, sda_pin):
             print("SCL pin:", scl_pin, "\t SDA pin:", sda_pin)
+
+
+print(get_unique_pins())
