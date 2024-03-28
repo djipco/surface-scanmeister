@@ -44,8 +44,11 @@ sudo apt install -y nodejs
 #### Prerequisite
 
 The distance sensors used by `scanmeister` rely on the I2C protocol. Therefore, I2C must be 
-enabled on the Pi (in Preferences -> Raspberry Pi Configuration -> Interfaces). Reboot.
+enabled on the Pi:
 
+  * Preferences -> Raspberry Pi Configuration -> Interfaces
+  * Enable I2C
+  * Reboot
 
 #### Installation
 
