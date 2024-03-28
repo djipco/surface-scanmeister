@@ -75,7 +75,7 @@ for scl_pin in get_unique_pins():
             print("SCL pin:", scl_pin, "\t SDA pin:", sda_pin)
 
 
-print(get_unique_pins()
+print(get_unique_pins())
 
 
 # print(
