@@ -19,7 +19,7 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 
 # Create I2C bus and sensor instance
 i2c = busio.I2C(board.SCL, board.SDA)
-sensor = adafruit_vl6180x.VL6180X(i2c)
+# sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # Static properties for luminosity gain:
 #   - adafruit_vl6180x.ALS_GAIN_1       = 1x
