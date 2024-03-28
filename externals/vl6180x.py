@@ -44,7 +44,7 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 #       (4, 25), (4, 26), (4, 27), (4, 3), (4, 4), (4, 5), (4, 6), (4, 9)
 i2c = busio.I2C((4, args.scl), (4, args.sda))
 # i2c = busio.I2C(board.SCL, board.SDA)
-# print(i2c.scan())
+print(i2c.scan())
 # sensor = adafruit_vl6180x.VL6180X(i2c)    # Hardware id is 0x29 (41)
 
 # print(board.SCL, board.SDA)
