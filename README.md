@@ -41,6 +41,12 @@ sudo apt install -y nodejs
 
 ### Scanmeister
 
+#### Prerequisites
+
+The VL6180X distance sensors used by the installation rely on I2C. Therefore, I2C must be enabled on 
+the Pi (in Preferences -> Raspberry Pi Configuration -> Interfaces).
+
+
 #### Installation
 
 To install `scanmeister`, open a terminal, go to desktop and clone from repo:
@@ -56,6 +62,8 @@ Once the repo is cloned, go inside folder and install all modules:
 cd surface-scanmeister
 npm install
 ```
+
+
 
 #### Configuration
 
