@@ -66,15 +66,13 @@ cd surface-scanmeister
 npm install
 ```
 
-#### VL6180X Library
+#### Python
 
-A Python library is used to talk to the VL6180X distance sensors. To install the library in recent 
-versions of the OS, you must first create a virtual Python environment. 
+Python libraries are used to talk to the distance sensors and send the info to the remote. To 
+install Python libraries in recent versions of the Raspberry Pi OS, you must first create a virtual 
+Python environment. 
 
 Go to root of project, create virtual environment in `env` folder and activate it:
-
-Here's a bit of code that does all the necessary stuff (go to root of project, create virtual 
-environment in `env` directory and activate virtual environment):
 
 ```sh
 cd /path/to/surface-scanmeister
@@ -82,7 +80,9 @@ python3 -m venv env --system-site-packages
 source env/bin/activate
 ```
 
-Then, install the Blink package from Adafruit:
+Then we need to install [Blinka]([url](https://learn.adafruit.com/circuitpython-on-raspberrypi-linux/installing-circuitpython-on-raspberry-pi)).
+It is is a framework created by Adafruit and is used by the sensor library. This script does 
+eve=rything automatically:
 
 ```
 pip3 install --upgrade adafruit-python-shell
@@ -90,14 +90,14 @@ wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/m
 sudo -E env PATH=$PATH python3 raspi-blinka.py
 ```
 
-Finally, install VL6180X lib and OSC lib:
+Finally, we need to install the `adafruit-circuitpython-vl6180x` and `python-osc` libraries:
 
 ```
 pip install adafruit-circuitpython-vl6180x
 pip install python-osc
 ```
 
-To get out of the virtual Python environment, simply call `deactivate`.
+Note: if you need to get out of the virtual Python environment, simply call `deactivate`.
 
 
 #### Configuration
