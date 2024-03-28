@@ -37,7 +37,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 #   - adafruit_vl6180x.ALS_GAIN_20      = 20x       # 0
 #   - adafruit_vl6180x.ALS_GAIN_40      = 40x       # 7
 
-print(adafruit_vl6180x)
+print(getattr(adafruit_vl6180x, "ALS_GAIN_1"))
 
 # print(
 #     getattr(adafruit_vl6180x, "ALS_GAIN_1")
