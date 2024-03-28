@@ -46,6 +46,12 @@ sudo apt install -y nodejs
 The VL6180X distance sensors used by the installation rely on I2C. Therefore, I2C must be enabled on 
 the Pi (in Preferences -> Raspberry Pi Configuration -> Interfaces).
 
+Also, a Python library is used to talk to the sensor: 
+
+```sh
+sudo pip3 install adafruit-circuitpython-vl6180x
+```
+
 
 #### Installation
 
