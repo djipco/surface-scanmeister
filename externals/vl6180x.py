@@ -20,14 +20,7 @@ ap.add_argument("-p", "--port", default=10000, type=int, help="Port of the OSC t
 ap.add_argument("-g", "--gain", default="1", help="Gain to apply to luminosity [1, 1.25, 1.67, 2.5, 5, 10, 20, 40]")
 args = ap.parse_args()
 
-# Create OSC client
-client = SimpleUDPClient(args.ip, args.port)  # Create client
-
-# Create I2C bus and sensor instance
-i2c = busio.I2C(board.SCL, board.SDA)
-# sensor = adafruit_vl6180x.VL6180X(i2c)
-
-# Static properties for luminosity gain:
+# Parse luminosity gain according to following constants:
 #   - adafruit_vl6180x.ALS_GAIN_1       = 1x        # 6
 #   - adafruit_vl6180x.ALS_GAIN_1_25    = 1.25x     # 5
 #   - adafruit_vl6180x.ALS_GAIN_1_67    = 1.67x     # 4
@@ -36,8 +29,16 @@ i2c = busio.I2C(board.SCL, board.SDA)
 #   - adafruit_vl6180x.ALS_GAIN_10      = 10x       # 1
 #   - adafruit_vl6180x.ALS_GAIN_20      = 20x       # 0
 #   - adafruit_vl6180x.ALS_GAIN_40      = 40x       # 7
+gain = getattr(adafruit_vl6180x, "ALS_GAIN_" + args.gain.replace(".", "_", 1))
 
-print(args.gain, getattr(adafruit_vl6180x, "ALS_GAIN_" + args.gain.replace(".", "_", 1)))
+# Create OSC client
+client = SimpleUDPClient(args.ip, args.port)  # Create client
+
+# Create I2C bus and sensor instance
+i2c = busio.I2C(board.SCL, board.SDA)
+# sensor = adafruit_vl6180x.VL6180X(i2c)
+
+print(board.SCL, board.SDA)
 
 # print(
 #     getattr(adafruit_vl6180x, "ALS_GAIN_1")
@@ -54,10 +55,7 @@ while True:
 
     # Get distance and luminosity
 #     distance = sensor.range
-#     luminosity = sensor.read_lux(adafruit_vl6180x.ALS_GAIN_1)
-
-    # Print distance and luminosity to STDOUT
-    # print("{0}:{1}".format(distance, luminosity))
+#     luminosity = sensor.read_lux(gain)
 
     # Send data via OSC
 #     client.send_message("/sensor/1/distance", distance)
