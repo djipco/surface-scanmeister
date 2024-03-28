@@ -23,8 +23,8 @@ args = ap.parse_args()
 # client = SimpleUDPClient(ip, port)  # Create client
 
 # Create I2C bus and sensor instance
-i2c = busio.I2C(board.SCL, board.SDA)
-sensor = adafruit_vl6180x.VL6180X(i2c)
+# i2c = busio.I2C(board.SCL, board.SDA)
+# sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # Static properties for luminosity gain:
 #   - adafruit_vl6180x.ALS_GAIN_1       = 1x
@@ -39,8 +39,8 @@ sensor = adafruit_vl6180x.VL6180X(i2c)
 while True:
 
     # Get distance and luminosity
-    distance = sensor.range
-    luminosity = sensor.read_lux(adafruit_vl6180x.ALS_GAIN_1)
+#     distance = sensor.range
+#     luminosity = sensor.read_lux(adafruit_vl6180x.ALS_GAIN_1)
 
     # Print distance and luminosity to STDOUT
     # print("{0}:{1}".format(distance, luminosity))
