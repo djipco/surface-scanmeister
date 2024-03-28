@@ -43,37 +43,6 @@ print(board.board_id)
 
 
 
-# print(
-#     getattr(adafruit_vl6180x, "ALS_GAIN_1")
-#     adafruit_vl6180x.ALS_GAIN_1_25,
-#     adafruit_vl6180x.ALS_GAIN_1_67,
-#     adafruit_vl6180x.ALS_GAIN_2_5,
-#     adafruit_vl6180x.ALS_GAIN_5,
-#     adafruit_vl6180x.ALS_GAIN_10,
-#     adafruit_vl6180x.ALS_GAIN_20,
-#     adafruit_vl6180x.ALS_GAIN_40
-# )
-
-while True:
-
-    # Get distance and luminosity
-#     distance = sensor.range
-#     luminosity = sensor.read_lux(gain)
-
-    # Send data via OSC
-#     client.send_message("/sensor/1/distance", distance)
-#     client.send_message("/sensor/1/luminosity", distance)
-    client.send_message("/sensor/1/distance", 123)
-    client.send_message("/sensor/1/luminosity", 56)
-
-    # Wait a little before looping
-    time.sleep(0.1) # Delay for a 100 ms.
-
-
-
-
-
-
 
 def is_hardware_I2C(scl, sda):
     try:
@@ -106,4 +75,38 @@ for scl_pin in get_unique_pins():
             print("SCL pin:", scl_pin, "\t SDA pin:", sda_pin)
 
 
-print(get_unique_pins())
+print(get_unique_pins()
+
+
+# print(
+#     getattr(adafruit_vl6180x, "ALS_GAIN_1")
+#     adafruit_vl6180x.ALS_GAIN_1_25,
+#     adafruit_vl6180x.ALS_GAIN_1_67,
+#     adafruit_vl6180x.ALS_GAIN_2_5,
+#     adafruit_vl6180x.ALS_GAIN_5,
+#     adafruit_vl6180x.ALS_GAIN_10,
+#     adafruit_vl6180x.ALS_GAIN_20,
+#     adafruit_vl6180x.ALS_GAIN_40
+# )
+
+while True:
+
+    # Get distance and luminosity
+#     distance = sensor.range
+#     luminosity = sensor.read_lux(gain)
+
+    # Send data via OSC
+#     client.send_message("/sensor/1/distance", distance)
+#     client.send_message("/sensor/1/luminosity", distance)
+    client.send_message("/sensor/1/distance", 123)
+    client.send_message("/sensor/1/luminosity", 56)
+
+    # Wait a little before looping
+    time.sleep(0.1) # Delay for a 100 ms.
+
+
+
+
+
+
+
