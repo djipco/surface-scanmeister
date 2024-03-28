@@ -6,6 +6,7 @@ import time
 
 # Import modules from Blinka
 import board
+import microcontroller
 import busio
 import adafruit_vl6180x
 
@@ -38,7 +39,9 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 i2c = busio.I2C(board.SCL, board.SDA)
 # sensor = adafruit_vl6180x.VL6180X(i2c)
 
-print(board.SCL, board.SDA)
+# print(board.SCL, board.SDA)
+print(board, microcontroller)
+
 
 # print(
 #     getattr(adafruit_vl6180x, "ALS_GAIN_1")
