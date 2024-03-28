@@ -1,30 +1,24 @@
 import time
-import board
-import busio
 import argparse
 
-# import adafruit_vl6180x
+import board
+import busio
+
+import adafruit_vl6180x
 from pythonosc.udp_client import SimpleUDPClient
 
 
-# Construct the argument parser and add arguments
+# Construct the argument parser and configure available arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip", default="127.0.0.1", help="IP address of the OSC target")
 ap.add_argument("-p", "--port", default=1234, type=int, help="Port of the OSC target")
 args = ap.parse_args()
 
-print(args.ip, args.port)
-
-
-
-
-# OSC address and port MAKE IT SO WE CAN PASS THEM ON THE COMMAND LINE!!!
-ip = "10.0.0.200"
-port = 10000
-client = SimpleUDPClient(ip, port)  # Create client
+# Create OSC client
+client = SimpleUDPClient(args.ip, args.port)  # Create client
 
 # Create I2C bus and sensor instance
-# i2c = busio.I2C(board.SCL, board.SDA)
+i2c = busio.I2C(board.SCL, board.SDA)
 # sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # Static properties for luminosity gain:
