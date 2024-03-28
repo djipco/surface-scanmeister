@@ -68,8 +68,8 @@ npm install
 
 #### VL6180X Library
 
-A Python library is used to talk to the VL6180X distance sensors. To install the library, you 
-must first create a virtual Python environment. 
+A Python library is used to talk to the VL6180X distance sensors. To install the library in recent 
+versions of the OS, you must first create a virtual Python environment. 
 
 Go to root of project, create virtual environment in `env` folder and activate it:
 
