@@ -78,12 +78,19 @@ environment in `env` directory, activate virtual environment and install library
 
 ```sh
 cd /path/to/surface-scanmeister
-python -m venv env
+python3 -m venv env --system-site-packages
 source env/bin/activate
-pip install adafruit-circuitpython-vl6180x
+
+pip3 install --upgrade adafruit-python-shell
+wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/raspi-blinka.py
+sudo -E env PATH=$PATH python3 raspi-blinka.py
+```
+
+We also install python-osc to send the values to our target environment
+
+```
 pip install python-osc
 ```
-We also install python-osc to send the values to our target environment
 
 To get out of the virtual Python environment, simply call `deactivate`.
 
