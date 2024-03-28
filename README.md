@@ -81,7 +81,9 @@ cd /path/to/surface-scanmeister
 python -m venv env
 source env/bin/activate
 pip install adafruit-circuitpython-vl6180x
+pip install python-osc
 ```
+We also install python-osc to send the values to our target environment
 
 To get out of the virtual Python environment, simply call `deactivate`.
 
