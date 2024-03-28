@@ -9,11 +9,11 @@ from pythonosc.udp_client import SimpleUDPClient
 
 # Construct the argument parser and add arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--ip", help="IP address of the OSC target")
-ap.add_argument("-p", "--port", type=int, help="Port of the OSC target")
+ap.add_argument("-i", "--ip", default="127.0.0.1", help="IP address of the OSC target")
+ap.add_argument("-p", "--port", default=1234, type=int, help="Port of the OSC target")
 args = ap.parse_args()
 
-print(args)
+print(args.ip, args.port)
 
 
 
