@@ -17,6 +17,7 @@ from pythonosc.udp_client import SimpleUDPClient
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip", default="127.0.0.1", help="IP address of the OSC target")
 ap.add_argument("-p", "--port", default=10000, type=int, help="Port of the OSC target")
+ap.add_argument("-g", "--gain", default="1", help="Gain to apply to luminosity")
 args = ap.parse_args()
 
 # Create OSC client
@@ -27,17 +28,17 @@ i2c = busio.I2C(board.SCL, board.SDA)
 # sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # Static properties for luminosity gain:
-#   - adafruit_vl6180x.ALS_GAIN_1       = 1x
-#   - adafruit_vl6180x.ALS_GAIN_1_25    = 1.25x
-#   - adafruit_vl6180x.ALS_GAIN_1_67    = 1.67x
-#   - adafruit_vl6180x.ALS_GAIN_2_5     = 2.5x
-#   - adafruit_vl6180x.ALS_GAIN_5       = 5x
-#   - adafruit_vl6180x.ALS_GAIN_10      = 10x
-#   - adafruit_vl6180x.ALS_GAIN_20      = 20x
-#   - adafruit_vl6180x.ALS_GAIN_40      = 40x
+#   - adafruit_vl6180x.ALS_GAIN_1       = 1x        # 6
+#   - adafruit_vl6180x.ALS_GAIN_1_25    = 1.25x     # 5
+#   - adafruit_vl6180x.ALS_GAIN_1_67    = 1.67x     # 4
+#   - adafruit_vl6180x.ALS_GAIN_2_5     = 2.5x      # 3
+#   - adafruit_vl6180x.ALS_GAIN_5       = 5x        # 2
+#   - adafruit_vl6180x.ALS_GAIN_10      = 10x       # 1
+#   - adafruit_vl6180x.ALS_GAIN_20      = 20x       # 0
+#   - adafruit_vl6180x.ALS_GAIN_40      = 40x       # 7
 
 print(
-    adafruit_vl6180x.ALS_GAIN_1,
+    adafruit_vl6180x["ALS_GAIN_1"],
     adafruit_vl6180x.ALS_GAIN_1_25,
     adafruit_vl6180x.ALS_GAIN_1_67,
     adafruit_vl6180x.ALS_GAIN_2_5,
