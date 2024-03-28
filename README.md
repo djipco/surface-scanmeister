@@ -41,6 +41,15 @@ sudo apt install -y nodejs
 
 ### Scanmeister
 
+#### Prerequisite
+
+The distance sensors used by `scanmeister` rely on the I2C protocol. Therefore, I2C must be 
+enabled on the Pi:
+
+  * Preferences -> Raspberry Pi Configuration -> Interfaces
+  * Enable I2C
+  * Reboot
+
 #### Installation
 
 To install `scanmeister`, open a terminal, go to desktop and clone from repo:
@@ -56,6 +65,28 @@ Once the repo is cloned, go inside folder and install all modules:
 cd surface-scanmeister
 npm install
 ```
+
+#### VL6180X Library
+
+A Python library is used to talk to the VL6180X distance sensors. To install the library in recent 
+versions of the OS, you must first create a virtual Python environment. 
+
+Go to root of project, create virtual environment in `env` folder and activate it:
+
+Here's a bit of code that does all the necessary stuff (go to root of project, create virtual 
+environment in `env` directory, activate virtual environment and install library):
+
+```sh
+cd /path/to/surface-scanmeister
+python -m venv env
+source env/bin/activate
+pip install adafruit-circuitpython-vl6180x
+pip install python-osc
+```
+We also install python-osc to send the values to our target environment
+
+To get out of the virtual Python environment, simply call `deactivate`.
+
 
 #### Configuration
 
