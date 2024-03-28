@@ -11,7 +11,7 @@ from pythonosc.udp_client import SimpleUDPClient
 # Construct the argument parser and configure available arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--ip", default="127.0.0.1", help="IP address of the OSC target")
-ap.add_argument("-p", "--port", default=1234, type=int, help="Port of the OSC target")
+ap.add_argument("-p", "--port", default=10000, type=int, help="Port of the OSC target")
 args = ap.parse_args()
 
 # Create OSC client
@@ -19,7 +19,7 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 
 # Create I2C bus and sensor instance
 i2c = busio.I2C(board.SCL, board.SDA)
-# sensor = adafruit_vl6180x.VL6180X(i2c)
+sensor = adafruit_vl6180x.VL6180X(i2c)
 
 # Static properties for luminosity gain:
 #   - adafruit_vl6180x.ALS_GAIN_1       = 1x
