@@ -1,10 +1,15 @@
-import time
+# Import standard modules
 import argparse
 
+
+import time
+
+# Import modules from Blinka
 import board
 import busio
-
 import adafruit_vl6180x
+
+# Import OSC
 from pythonosc.udp_client import SimpleUDPClient
 
 
@@ -30,6 +35,17 @@ i2c = busio.I2C(board.SCL, board.SDA)
 #   - adafruit_vl6180x.ALS_GAIN_10      = 10x
 #   - adafruit_vl6180x.ALS_GAIN_20      = 20x
 #   - adafruit_vl6180x.ALS_GAIN_40      = 40x
+
+print(
+    adafruit_vl6180x.ALS_GAIN_1,
+    adafruit_vl6180x.adafruit_vl6180x.ALS_GAIN_1_25,
+    adafruit_vl6180x.ALS_GAIN_1_67,
+    adafruit_vl6180x.ALS_GAIN_2_5,
+    adafruit_vl6180x.ALS_GAIN_5,
+    adafruit_vl6180x.ALS_GAIN_10,
+    adafruit_vl6180x.ALS_GAIN_20,
+    adafruit_vl6180x.ALS_GAIN_40
+)
 
 while True:
 
