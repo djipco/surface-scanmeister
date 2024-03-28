@@ -3,7 +3,7 @@ import board
 import busio
 import argparse
 
-import adafruit_vl6180x
+# import adafruit_vl6180x
 from pythonosc.udp_client import SimpleUDPClient
 
 
