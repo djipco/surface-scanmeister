@@ -57,7 +57,7 @@ class VL6180xSensorCollection():
 
             # Assign channel list (unless no GPIO pins have been specified)
             if len(ce_gpios) < 1 :
-                raise Exception("You must specify at least one GPIO pin)
+                raise Exception("You must specify at least one valid GPIO pin.")
             self.channels = ce_gpios
 
             # Initialize empty sensor list
