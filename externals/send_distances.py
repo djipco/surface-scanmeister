@@ -45,8 +45,7 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 
 #
 # i2c = busio.I2C(board.SCL, board.SDA)
-# ms = MultiSensor([17, 16])   # Using GPIO 16 and 17
-# ms = MultiSensor([17, 16])
+ms = MultiSensor([17, 16])   # Using GPIO 16 and 17
 
 
 
