@@ -46,7 +46,7 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 #
 # i2c = busio.I2C(board.SCL, board.SDA)
 # ms = MultiSensor([17, 16])   # Using GPIO 16 and 17
-ms = MultiSensor([17, 16])
+# ms = MultiSensor([17, 16])
 
 
 
@@ -55,12 +55,12 @@ ms = MultiSensor([17, 16])
 
 while True:
 
-    for index, sensor in enumerate(ms.sensors):
-        distance = ms.sensors[index].range
-        luminosity = ms.sensors[index].read_lux(gain)
-        client.send_message(f"/sensor/{index}/distance", distance)
-        client.send_message(f"/sensor/{index}/luminosity", luminosity)
-        print(index, distance, luminosity)
+#     for index, sensor in enumerate(ms.sensors):
+#         distance = ms.sensors[index].range
+#         luminosity = ms.sensors[index].read_lux(gain)
+#         client.send_message(f"/sensor/{index}/distance", distance)
+#         client.send_message(f"/sensor/{index}/luminosity", luminosity)
+#         print(index, distance, luminosity)
 
 
     # Select channel on multiplexer
