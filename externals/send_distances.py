@@ -11,7 +11,7 @@ import adafruit_vl6180x
 from pythonosc.udp_client import SimpleUDPClient
 
 # Internal imports
-import MultiSensor
+from vl6180x_multi import MultiSensor
 
 
 
