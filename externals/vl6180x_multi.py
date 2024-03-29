@@ -55,11 +55,13 @@ class VL6180xSensorCollection():
 
         try:
 
+            # Assign channel list (unless no GPIO pins have been specified)
+            if len(ce_gpios) < 1 :
+                raise Exception("You must specify at least one GPIO pin)
+            self.channels = ce_gpios
+
             # Initialize empty sensor list
             self.sensors = []
-
-            # Assign channel list
-            self.channels = ce_gpios
 
             # Assign I2C address for the first device
             if start_addr is not None and start_addr != DEFAULT_SENSOR_ADDRESS:
@@ -77,7 +79,7 @@ class VL6180xSensorCollection():
             GPIO.output(self.channels, GPIO.LOW)
 
             # Reallocate I2C addresses
-            if len(self.channels) > 0 : self._realloc_addr()
+            self._realloc_addr()
 
         except Exception as e:
             print(e)
