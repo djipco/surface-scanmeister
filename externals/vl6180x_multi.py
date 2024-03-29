@@ -3,6 +3,9 @@
 This module implements a class for managing multiple identical I2C devices of the same type using
 the same I2C bus. The solution is to reallocate them to the different addresses while taking them
 out of reset one by one.
+
+https://gitlab.com/vitus133/vl6180x_multi
+
 """
 
 import time

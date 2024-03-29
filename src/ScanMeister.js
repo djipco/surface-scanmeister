@@ -11,6 +11,7 @@ import {logInfo, logError, logWarn} from "./Logger.js"
 import {Scanner} from './Scanner.js';
 import {ScannerMappings} from "../config/ScannerMappings.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
+import {Spawner} from "./Spawner.js";
 
 export default class ScanMeister {
 
@@ -30,6 +31,7 @@ export default class ScanMeister {
   #intervals = {};
   #oscPort;
   #scanners = [];
+  #distanceSensorSpawner;
 
   constructor() {}
 
@@ -104,10 +106,32 @@ export default class ScanMeister {
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
+    // Start background Python distance transmitter process
+    this.#activateDistanceSensors();
+
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
     // information to be written. In that sense, CTRL-C is better.
     logInfo("Press CTRL-C to properly exit.")
 
+  }
+
+  #activateDistanceSensors() {
+
+    this.#distanceSensorSpawner = new Spawner(
+      "source env/bin/activate; python externals/send_distances.py",
+      ["--ip 10.0.0.200", "--port 10000", "--gain 40"],
+      {
+        detached: false,
+          shell: false,
+        // sucessCallback: this.#onScanImageEnd.bind(this),
+        errorCallback: this.#onDistanceSensorError.bind(this),
+        stderrCallback: this.#onDistanceSensorError.bind(this)
+      }
+    );
+  }
+
+  #onDistanceSensorError(err) {
+    logError(err);
   }
 
   #onStatusInterval() {
@@ -283,6 +307,10 @@ export default class ScanMeister {
   async quit(status = 0) {
 
     logInfo("Exiting...");
+
+    // Kill distance sensor process
+    if (this.#distanceSensorSpawner) await this.distanceSensorSpawner.destroy();
+    this.distanceSensorSpawner = undefined;
 
     // Remove USB listeners
     usb.unrefHotplugEvents();
