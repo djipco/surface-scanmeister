@@ -77,7 +77,7 @@ class VL6180xSensorCollection():
             GPIO.output(self.channels, GPIO.LOW)
 
             # Reallocate I2C addresses
-            self._realloc_addr()
+            if len(self.channels) > 0 : self._realloc_addr()
 
         except Exception as e:
             print(e)
