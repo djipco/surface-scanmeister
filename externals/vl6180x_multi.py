@@ -55,6 +55,7 @@ class VL6180xSensorCollection():
 
         try:
 
+            print("coucou")
             # Assign channel list (unless no GPIO pins have been specified)
             if len(ce_gpios) < 1 :
                 raise Exception("You must specify at least one valid GPIO pin.")
@@ -62,6 +63,8 @@ class VL6180xSensorCollection():
 
             # Initialize empty sensor list
             self.sensors = []
+
+            print("coucou2")
 
             # Assign I2C address for the first device
             if start_addr is not None and start_addr != DEFAULT_SENSOR_ADDRESS:
