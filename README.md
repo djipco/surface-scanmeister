@@ -99,6 +99,14 @@ pip install python-osc
 
 Note: if you need to get out of the virtual Python environment, simply call `deactivate`.
 
+Additional note: it seems that the `RPi.GPIO` do not work on Pi 5 due to hardware changes. So we need 
+to do the following to install a drop-in replacement (in the virtual env):
+
+```
+sudo apt remove python3-rpi.gpio
+pip3 install rpi-lgpio
+```
+
 
 #### Configuration
 
