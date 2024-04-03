@@ -56,12 +56,12 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 #   00, 01, 04, 05, 06, 07, 08, 09, 10, 11,
 #   12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 #   22, 23, 24, 25, 26, 27
-# collection = VL6180xSensorCollection([17, 16])
-collection = VL6180xSensorCollection([
-     0,  1,  4,  5,  6,  7,  8,  9, 10, 11,
-    12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-    22, 23, 24, 25, 26, 27
-])
+collection = VL6180xSensorCollection([4])
+# collection = VL6180xSensorCollection([
+#      0,  1,  4,  5,  6,  7,  8,  9, 10, 11,
+#     12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+#     22, 23, 24, 25, 26, 27
+# ])
 
 
 # sensor = adafruit_vl6180x.VL6180X(i2c)    # Hardware id is 0x29 (41)
