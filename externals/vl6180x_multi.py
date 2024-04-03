@@ -55,7 +55,6 @@ class VL6180xSensorCollection():
 
         try:
 
-            print("coucou")
             # Assign channel list (unless no GPIO pins have been specified)
             if len(ce_gpios) < 1 :
                 raise Exception("You must specify at least one valid GPIO pin.")
@@ -66,13 +65,13 @@ class VL6180xSensorCollection():
 
             print("coucou2")
 
-            # Assign I2C address for the first device
+            # Define I2C address for the first device
             if start_addr is not None and start_addr != DEFAULT_SENSOR_ADDRESS:
                 self.start_addr = start_addr
             else:
                 self.start_addr = DEFAULT_SENSOR_ADDRESS + 1
 
-            # Use Broadcom SOC channel numbers toidentify pin numbers on the Pi. This is the suffix
+            # Use Broadcom SOC channel numbers to identify pin numbers on the Pi. This is the suffix
             # after "GPIO" such as GPIO17 and NOT the pin numbers printed on the board.
             GPIO.setmode(GPIO.BCM)
 
@@ -80,7 +79,7 @@ class VL6180xSensorCollection():
             # address before activating them.
             GPIO.setup(self.channels, GPIO.OUT)
             GPIO.output(self.channels, GPIO.LOW)
-
+            print("coucou3")
             # Reallocate I2C addresses
             self._realloc_addr()
 
@@ -94,6 +93,8 @@ class VL6180xSensorCollection():
         # already in use.
         i2c = busio.I2C(board.SCL, board.SDA)
         busy_addr = i2c.scan()
+
+        print("coucou4")
 
         # To be on the safe side, we check if the default address (0x29) is in the found devices
         # list. This could be because a device could not be deactivated by setting the output to
