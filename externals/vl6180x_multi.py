@@ -74,7 +74,7 @@ class VL6180xSensorCollection():
             # Use Broadcom SOC channel numbers to identify pin numbers on the Pi. This is the suffix
             # after "GPIO" such as GPIO17 and NOT the pin numbers printed on the board.
             GPIO.setmode(GPIO.BCM)
-
+            print("coucou2.5")
             # Make all pins outputs and initially set them to low so we can reallocate their I2C
             # address before activating them.
             GPIO.setup(self.channels, GPIO.OUT)
