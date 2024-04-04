@@ -133,12 +133,12 @@ export default class ScanMeister {
   }
 
   #onDistanceSensorError(err) {
-    logError(err);
+    logError(err.toString());
   }
 
   #onDistanceSensorData(data) {
 
-    let [index, distance, luminosity] = data.split(",", 3);
+    let [index, distance, luminosity] = data.toString().split(",", 3);
     index = parseInt(index);
     distance = parseInt(distance);
     luminosity = parseFloat(luminosity);
