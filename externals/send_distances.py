@@ -16,6 +16,8 @@ def main():
 
     global collection
 
+    print("Retrieving data from sensors", file=sys.stdout)
+
     # Watch for SIGINT signal
     signal.signal(signal.SIGINT, sigint_handler)
 
