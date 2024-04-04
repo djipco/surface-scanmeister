@@ -9,6 +9,7 @@ import adafruit_vl6180x
 from pythonosc.udp_client import SimpleUDPClient
 
 # Internal imports
+# Docs: https://docs.circuitpython.org/projects/vl6180x/en/latest/api.html
 from vl6180x_multi import VL6180xSensorCollection
 
 # Construct the argument parser and configure available arguments
@@ -50,7 +51,8 @@ while True:
 
     for index, sensor in enumerate(collection.sensors):
         distance = collection.sensors[index].range
-        luminosity = collection.sensors[index].read_lux(gain)
+#         luminosity = collection.sensors[index].read_lux(gain)
+        luminosity = collection.sensors[index].read_lux(adafruit_vl6180x.ALS_GAIN_40)
         client.send_message(f"/sensor/{index}/distance", distance) # in mm
         client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
 
