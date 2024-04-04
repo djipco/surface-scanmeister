@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 // Import necessary builtin modules
 import { existsSync } from 'fs';
 
