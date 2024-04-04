@@ -44,6 +44,8 @@ export default class ScanMeister {
     // Grab info from package.json
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
+    logInfo(`PPID: ${process.ppid}`);
+
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.operation.mode}' mode...`);
 
@@ -372,8 +374,8 @@ export default class ScanMeister {
 
     // Exit
     setTimeout(() => {
+
       process.exit(status);
-      process.kill(process.ppid);
     }, 100); // wait for log files to be written
 
   }
