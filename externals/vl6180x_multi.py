@@ -105,6 +105,4 @@ class VL6180xSensorCollection():
             self.sensors.append(adafruit_vl6180x.VL6180X(self.i2c, address=next_addr))
 
     def destroy(self):
-
-        for sensor in self.sensors:
-            sensor.deinit()
+        self.i2c.deinit()
