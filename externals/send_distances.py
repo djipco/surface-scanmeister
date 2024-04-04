@@ -58,8 +58,7 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
 
 def cleanup():
-    for sensor in collection.sensors:
-        sensor.deinit()
+    collection.destroy()
 
 while True:
 
