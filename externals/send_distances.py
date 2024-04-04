@@ -27,6 +27,8 @@ def cleanup():
 # Main function
 def main():
 
+    global collection
+
     signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
 
     # Construct the argument parser and configure available arguments
