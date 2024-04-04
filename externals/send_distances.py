@@ -12,8 +12,6 @@ import adafruit_vl6180x                                 # from CircuitPython (Bl
 # Docs: https://docs.circuitpython.org/projects/vl6180x/en/latest/api.html
 from vl6180x_multi import VL6180xSensorCollection
 
-print("Retrieving data from sensors", file=sys.stdout)
-
 def main():
 
     global collection
@@ -63,6 +61,10 @@ def main():
 #             client.send_message(f"/sensor/{index}/distance", distance) # in mm
 #             client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
             print(f'{distance},{luminosity}', file=sys.stdout)
+
+        # In non-interactive mode (such as when calling this script from another script), the STDOUT
+        # is buffered. So, we must regularly flush the buffer to get the output in the other script.
+        sys.stdout.flush()
 
         # Wait a little before looping
         time.sleep(0.05) # Delay for 50 ms.
