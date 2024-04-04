@@ -47,6 +47,9 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 # ])
 collection = VL6180xSensorCollection(pins)
 
+for sensor in collection.sensors:
+    sensor.start_range_continuous(10)
+
 while True:
 
     for index, sensor in enumerate(collection.sensors):
