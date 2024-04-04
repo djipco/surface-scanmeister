@@ -70,8 +70,8 @@ class VL6180xSensorCollection():
 
         # Create I2C bus and get a list of I2C addresses that cannot be used because they are
         # already in use.
-        i2c = busio.I2C(board.SCL, board.SDA)
-        busy_addr = i2c.scan()
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        busy_addr = self.i2c.scan()
 
         # To be on the safe side, we check if the default address (0x29) is in the found devices
         # list. This could be because a device could not be deactivated by setting the output to
@@ -100,6 +100,9 @@ class VL6180xSensorCollection():
             # Because of the way the adafruit_vl6180x library works, we first need to create a dummy
             # device and assign it it's new address. Then, we can create the final sensor object and
             # the actual I2C address we want to use.
-            temp = adafruit_vl6180x.VL6180X(i2c)
+            temp = adafruit_vl6180x.VL6180X(self.i2c)
             temp._write_8(SUBORDINATE_ADDR_REG, next_addr)
-            self.sensors.append(adafruit_vl6180x.VL6180X(i2c, address=next_addr))
+            self.sensors.append(adafruit_vl6180x.VL6180X(self.i2c, address=next_addr))
+
+    def destroy(self):
+        self.i2c.deinit()
