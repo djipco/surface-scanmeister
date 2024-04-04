@@ -371,7 +371,10 @@ export default class ScanMeister {
     }
 
     // Exit
-    setTimeout(() => process.exit(status), 100); // wait for log files to be written
+    setTimeout(() => {
+      console.log("test");
+      process.exit(status);
+    }, 100); // wait for log files to be written
 
   }
 
