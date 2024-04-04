@@ -60,7 +60,7 @@ def main():
             luminosity = collection.sensors[index].read_lux(gain)
 #             client.send_message(f"/sensor/{index}/distance", distance) # in mm
 #             client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
-            print(f'{distance}:{luminosity}')
+            print(f'{distance},{luminosity}')
 
         # Wait a little before looping
         time.sleep(0.05) # Delay for 50 ms.
