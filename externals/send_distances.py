@@ -1,5 +1,7 @@
 # Standard modules
 import argparse
+import signal
+import sys
 import time
 
 # Import modules from Blinka
@@ -47,18 +49,12 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 # ])
 collection = VL6180xSensorCollection(pins)
 
-import signal
-import sys
+signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
 
 def signal_handler(signum, frame):
     signal.signal(signum, signal.SIG_IGN) # ignore additional signals
-    cleanup() # give your process a chance to clean up
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
-
-def cleanup():
     collection.destroy()
+    sys.exit(0)
 
 while True:
 
