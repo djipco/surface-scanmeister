@@ -137,10 +137,15 @@ export default class ScanMeister {
   }
 
   #onDistanceSensorData(data) {
-    let [distance, luminosity] = data.split(",", 2);
+    let [index, distance, luminosity] = data.split(",", 3);
+    index = parseInt(index);
     distance = parseInt(distance);
     luminosity = parseFloat(luminosity);
-    console.log(distance, luminosity);
+    // console.log(index, distance, luminosity);
+
+    this.sendOscMessage(`/sensor/${index}/distance", [{type: "i", value: ${distance}]`);
+    this.sendOscMessage(`/sensor/${index}/luminosity", [{type: "f", value: ${luminosity}]`);
+
   }
 
   #onStatusInterval() {

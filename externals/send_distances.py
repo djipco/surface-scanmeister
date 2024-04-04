@@ -63,7 +63,7 @@ def main():
             luminosity = collection.sensors[index].read_lux(gain)
 #             client.send_message(f"/sensor/{index}/distance", distance) # in mm
 #             client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
-            print(f'{distance},{luminosity}', file=sys.stdout)
+            print(f'{index},{distance},{luminosity}', file=sys.stdout)
 
         # In non-interactive mode (such as when calling this script from another script), the STDOUT
         # is buffered. So, we must regularly flush the buffer to get the output in the other script.
