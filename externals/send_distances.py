@@ -62,4 +62,4 @@ while True:
         print(distance, luminosity)
 
     # Wait a little before looping
-    time.sleep(0.05) # Delay for 50 ms.
+    time.sleep(0.01) # Delay for 50 ms.
