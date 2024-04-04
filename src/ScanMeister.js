@@ -144,8 +144,11 @@ export default class ScanMeister {
     luminosity = parseFloat(luminosity);
 
     // We check 'index' because the first time it is NaN
-    if (index) this.sendOscMessage(`/sensor/${index}/distance`, [{type: "i", value: distance}]);
-    if (index) this.sendOscMessage(`/sensor/${index}/luminosity`, [{type: "f", value: luminosity}]);
+    if (!isNaN(index))
+      this.sendOscMessage(`/sensor/${index}/distance`, [{type: "i", value: distance}]);
+
+    if (! isNaN(index))
+      this.sendOscMessage(`/sensor/${index}/luminosity`, [{type: "f", value: luminosity}]);
 
   }
 
