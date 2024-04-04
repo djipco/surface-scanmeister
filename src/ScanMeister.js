@@ -141,7 +141,13 @@ export default class ScanMeister {
   }
 
   #onDistanceSensorError(err) {
-    logError(err.toString());
+
+    if (err.toString() === "'GPIO not allocated'") {
+      logWarn("Distance sensors could not be activated. Reboot Raspberry Pi.")
+    } else {
+      logError(err.toString());
+    }
+
   }
 
   #onDistanceSensorData(data) {
@@ -386,7 +392,7 @@ export default class ScanMeister {
 
     // If we get an error before OSC is "ready", there's no point in continuing. If we get the ready
     // event, we're good to go.
-    this.#callbacks.onInitialOscError = err => {
+    this.#callbacks.onInitialOscError = async err => {
 
       if (err.code === "EADDRINUSE") {
         logError(
@@ -396,7 +402,7 @@ export default class ScanMeister {
         logError(`Unable to start OSC server (${err})`);
       }
 
-      this.quit(1);
+      await this.quit(1);
       return;
 
     };
