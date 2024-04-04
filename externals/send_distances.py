@@ -16,8 +16,11 @@ def main():
 
     global collection
 
-    # Watch for SIGINT signal
-    signal.signal(signal.SIGINT, sigint_handler)
+    # Watch for interrupt signals
+    signal.signal(signal.SIGINT, sigint_handler)    # Interrupt from keyboard (Ctrl+C)
+    signal.signal(signal.SIGTERM, sigint_handler)   # Termination signal
+    signal.signal(signal.SIGHUP, sigint_handler)    # Hangup detected on controlling terminal
+    signal.signal(signal.SIGQUIT, sigint_handler)   # Quit from keyboard
 
     # Construct the argument parser and configure available arguments
     ap = argparse.ArgumentParser()
