@@ -72,39 +72,41 @@ class VL6180xSensorCollection():
         # already in use.
         self.i2c = busio.I2C(board.SCL, board.SDA)
         busy_addr = self.i2c.scan()
-        print(busy_addr)
+        print("busy: ", busy_addr)
 
 
-#         # To be on the safe side, we check if the default address (0x29) is in the found devices
-#         # list. This could be because a device could not be deactivated by setting the output to
-#         # GPIO.LOW.
-#         if DEFAULT_SENSOR_ADDRESS in busy_addr:
-#             raise RuntimeError(f"I2C address conflict, please check GPIO.")
-#
-#         # Assign addresses by starting at start address and finding next available addresses
-#         next_addr = self.start_addr
-#         for channel in self.channels:
-#
-#             while next_addr in busy_addr:
-#                 next_addr += 1
-#                 if next_addr > 127:
-#                     next_addr = 0
-#                 if len(busy_addr) >= 128:
-#                     raise RuntimeError("Ran out of I2C addresses")
-#
-#             busy_addr.append(next_addr)
-#
-#             # Now that the new address is set, we can activate the sensor. As per the device
-#             # documentation, we need to wait at least 400μs after activation.
-#             GPIO.output(channel, GPIO.HIGH)
-#             time.sleep(0.1)
-#
-#             # Because of the way the adafruit_vl6180x library works, we first need to create a dummy
-#             # device and assign it it's new address. Then, we can create the final sensor object and
-#             # the actual I2C address we want to use.
-#             temp = adafruit_vl6180x.VL6180X(self.i2c)
-#             temp._write_8(SUBORDINATE_ADDR_REG, next_addr)
-#             self.sensors.append(adafruit_vl6180x.VL6180X(self.i2c, address=next_addr))
+        # To be on the safe side, we check if the default address (0x29) is in the found devices
+        # list. This could be because a device could not be deactivated by setting the output to
+        # GPIO.LOW.
+        if DEFAULT_SENSOR_ADDRESS in busy_addr:
+            raise RuntimeError(f"I2C address conflict, please check GPIO.")
+
+        # Assign addresses by starting at start address and finding next available addresses
+        next_addr = self.start_addr
+        for channel in self.channels:
+
+            while next_addr in busy_addr:
+                next_addr += 1
+                if next_addr > 127:
+                    next_addr = 0
+                if len(busy_addr) >= 128:
+                    raise RuntimeError("Ran out of I2C addresses")
+
+            busy_addr.append(next_addr)
+
+            # Now that the new address is set, we can activate the sensor. As per the device
+            # documentation, we need to wait at least 400μs after activation.
+            GPIO.output(channel, GPIO.HIGH)
+            time.sleep(0.1)
+
+            # Because of the way the adafruit_vl6180x library works, we first need to create a dummy
+            # device and assign it it's new address. Then, we can create the final sensor object and
+            # the actual I2C address we want to use.
+            temp = adafruit_vl6180x.VL6180X(self.i2c)
+            temp._write_8(SUBORDINATE_ADDR_REG, next_addr)
+            self.sensors.append(adafruit_vl6180x.VL6180X(self.i2c, address=next_addr))
+
+        print("reassigned: ", busy_addr)
 
     def destroy(self):
         self.i2c.deinit()
