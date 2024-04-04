@@ -117,9 +117,6 @@ export default class ScanMeister {
 
   #activateDistanceSensors() {
 
-    // @todo check for "GPIO not allocated" error. This happens when a device (or the bus?) has not
-    // been properly released. It usually is fixed by rebooting.
-
     const pins = config.sensors.pins.join(",")
     const gain = config.sensors.luminosityGain;
 
@@ -142,8 +139,11 @@ export default class ScanMeister {
 
   #onDistanceSensorError(err) {
 
+    // This error happens when two processes are trying to control the same GPIO pin. This may be
+    // because a ghost process is still running. A reboot usaully fixes the problem.
     if (err.toString() === "'GPIO not allocated'") {
-      logWarn("Distance sensors could not be activated. Reboot Raspberry Pi.")
+      logWarn("Distance sensors could not be activated " +
+        "(a reboot of the Raspberry Pi should fix the issue).")
     } else {
       logError(err.toString());
     }
