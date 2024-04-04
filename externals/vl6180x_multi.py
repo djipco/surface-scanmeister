@@ -15,6 +15,7 @@ Thanks to Vitaly Grinberg for making the original code available under an MIT li
 import time
 import os
 import json
+import sys
 
 # External imports
 import board
