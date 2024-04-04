@@ -72,6 +72,7 @@ class VL6180xSensorCollection():
         # already in use.
         self.i2c = busio.I2C(board.SCL, board.SDA)
         busy_addr = self.i2c.scan()
+        print(busy_addr)
 
 
 #         # To be on the safe side, we check if the default address (0x29) is in the found devices
