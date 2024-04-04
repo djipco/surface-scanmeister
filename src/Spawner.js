@@ -76,8 +76,10 @@ export class Spawner extends EventEmitter {
 
   #onProcessError(error) {
 
+    console.log("onProcessError");
+
     if (typeof this.#callbacks.onProcessErrorUser === 'function') {
-      this.#callbacks.onProcessErrorUser();
+      this.#callbacks.onProcessErrorUser(error);
     }
 
     this.removeAllListeners();

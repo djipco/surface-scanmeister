@@ -318,8 +318,8 @@ export default class ScanMeister {
     logInfo("Exiting...");
 
     // Kill distance sensor process
-    if (this.#distanceSensorSpawner) await this.distanceSensorSpawner.destroy();
-    this.distanceSensorSpawner = undefined;
+    if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
+    this.#distanceSensorSpawner = undefined;
 
     // Remove USB listeners
     usb.unrefHotplugEvents();
