@@ -24,6 +24,7 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessSuccessUser = options.sucessCallback;
     this.#callbacks.onProcessErrorUser = options.errorCallback;
     this.#callbacks.onProcessStderrUser = options.stderrCallback;
+    this.#callbacks.onProcessDataUser = options.dataCallback;
 
     // Execute command and store resulting process object
     this.#command = command;
@@ -87,7 +88,14 @@ export class Spawner extends EventEmitter {
   }
 
   #onProcessData(data) {
-    this.#buffer += data.toString()
+    this.#buffer += data.toString();
+
+    if (typeof this.#callbacks.onProcessDataUser === 'function') {
+      this.#callbacks.onProcessDataUser(data.toString().trim());
+    }
+
+    this.emit("data", data.toString().trim());
+
   }
 
   #onProcessEnd() {
@@ -118,6 +126,7 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessData = null;
     this.#callbacks.onProcessStderr = null
     this.#callbacks.onProcessEnd = null;
+    this.#callbacks.onProcessDataUser = null;
 
   }
 

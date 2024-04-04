@@ -119,19 +119,26 @@ export default class ScanMeister {
 
     this.#distanceSensorSpawner = new Spawner(
       "source env/bin/activate; python externals/send_distances.py",
-      ["--ip 10.0.0.200", "--port 10000", "--gain 40"],
+      ["--ip 10.0.0.200", "--port 10000", "--gain 40", "--pins 4"],
       {
         detached: false,
-          shell: false,
-        // sucessCallback: this.#onScanImageEnd.bind(this),
+        shell: false,
         errorCallback: this.#onDistanceSensorError.bind(this),
-        stderrCallback: this.#onDistanceSensorError.bind(this)
+        stderrCallback: this.#onDistanceSensorError.bind(this),
+        dataCallback: this.#onDistanceSensorData.bind(this)
       }
     );
   }
 
   #onDistanceSensorError(err) {
     logError(err);
+  }
+
+  #onDistanceSensorData(data) {
+    let [distance, luminosity] = data.split(",", 2);
+    distance = parseInt(distance);
+    luminosity = parseFloat(luminosity);
+    console.log(distance, luminosity);
   }
 
   #onStatusInterval() {
