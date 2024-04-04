@@ -4,4 +4,5 @@ Name=ScanMeister
 Comment=Start the ScanMeister scanner control daemon
 Exec=bash -c "cd %k && node index.js; read"
 Icon=obconf
+Terminal=true
 Categories=Utility
