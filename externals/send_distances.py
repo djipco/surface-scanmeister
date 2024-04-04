@@ -47,8 +47,8 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 # ])
 collection = VL6180xSensorCollection(pins)
 
-# for sensor in collection.sensors:
-#     sensor.start_range_continuous(10)
+for sensor in collection.sensors:
+    sensor.stop_range_continuous()
 
 while True:
 
@@ -62,4 +62,4 @@ while True:
         print(distance, luminosity)
 
     # Wait a little before looping
-    time.sleep(0.025) # Delay for 50 ms.
+    time.sleep(0.025) # Delay for 25 ms.
