@@ -57,7 +57,7 @@ def main():
 
         for index, sensor in enumerate(collection.sensors):
             distance = collection.sensors[index].range
-            luminosity = collection.sensors[index].read_lux(adafruit_vl6180x.ALS_GAIN_10)
+            luminosity = collection.sensors[index].read_lux(gain)
             client.send_message(f"/sensor/{index}/distance", distance) # in mm
             client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
             print(f'{distance}:{luminosity}')
