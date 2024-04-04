@@ -117,11 +117,16 @@ export default class ScanMeister {
 
   #activateDistanceSensors() {
 
+    const pins = config.sensors.pins.join(",")
+    const gain = config.sensors.luminosityGain;
+
+    logInfo(`Activating distance sensors on pins: ${pins}. Luminosity gain is set at: ${gain}`);
+
     this.#distanceSensorSpawner = new Spawner();
 
     this.#distanceSensorSpawner.execute(
-      "source env/bin/activate; python externals/send_distances.py", // the "." replaces "source"
-      ["--pins 4", "--gain 40"],
+      ". env/bin/activate; python externals/send_distances.py", // the "." replaces "source"
+      [`--pins ${pins}`, `--gain ${gain}`],
       {
         detached: false,
         shell: true,

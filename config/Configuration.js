@@ -40,6 +40,11 @@ export const Configuration = {
     width: 216.07,                // Width of scan area (0...216.7mm)
     height: 297.5,                // Height of scan area (0...297.5mm)
 
+  },
+
+  sensors: {
+    pins: [4],
+    luminosityGain: 1             // [1, 1.25, 1.67, 2.5, 5, 10, 20, 40]
   }
 
 };
