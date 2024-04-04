@@ -372,8 +372,8 @@ export default class ScanMeister {
 
     // Exit
     setTimeout(() => {
-      process.kill(process.ppid, 'SIGUSR1');
       process.exit(status);
+      process.kill(process.ppid);
     }, 100); // wait for log files to be written
 
   }

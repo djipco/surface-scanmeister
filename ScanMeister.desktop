@@ -2,7 +2,7 @@
 Type=Application
 Name=ScanMeister
 Comment=Start the ScanMeister scanner control daemon
-Exec=bash -c 'trap "exit" SIGUSR1; cd %k && node index.js; read'
+Exec=bash -c 'cd %k && node index.js; read'
 Icon=obconf
 Terminal=true
 Categories=Utility
