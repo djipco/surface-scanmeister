@@ -120,7 +120,7 @@ export default class ScanMeister {
     const pins = config.sensors.pins.join(",")
     const gain = config.sensors.luminosityGain;
 
-    logInfo(`Activating distance sensors on pins: ${pins}. Luminosity gain is set at: ${gain}`);
+    logInfo(`Activating distance sensors on pin(s): ${pins}. Luminosity gain is set to: ${gain}`);
 
     this.#distanceSensorSpawner = new Spawner();
 
