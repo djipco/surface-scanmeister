@@ -61,6 +61,8 @@ export class Spawner extends EventEmitter {
 
   #onProcessStderr(data) {
 
+    console.log(data);
+
     if (typeof this.#callbacks.onProcessStderrUser === 'function') {
       this.#callbacks.onProcessStderrUser(data.toString().trim());
     }
