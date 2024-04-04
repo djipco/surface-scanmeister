@@ -12,11 +12,11 @@ import adafruit_vl6180x                                 # from CircuitPython (Bl
 # Docs: https://docs.circuitpython.org/projects/vl6180x/en/latest/api.html
 from vl6180x_multi import VL6180xSensorCollection
 
+print("Retrieving data from sensors", file=sys.stdout)
+
 def main():
 
     global collection
-
-    print("Retrieving data from sensors", file=sys.stdout)
 
     # Watch for SIGINT signal
     signal.signal(signal.SIGINT, sigint_handler)
