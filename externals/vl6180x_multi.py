@@ -90,8 +90,6 @@ class VL6180xSensorCollection():
                 if len(busy_addr) >= 128:
                     raise RuntimeError("Ran out of I2C addresses")
 
-            busy_addr.append(next_addr)
-
             # Now that the new address is set, we can activate the sensor. As per the device
             # documentation, we need to wait at least 400μs after activation.
             GPIO.output(channel, GPIO.HIGH)
@@ -107,8 +105,6 @@ class VL6180xSensorCollection():
             sensor = adafruit_vl6180x.VL6180X(self.i2c, address=next_addr)
 #             sensor.start_range_continuous(20)
             self.sensors.append(sensor)
-
-        print("reassigned: ", busy_addr)
 
     def destroy(self):
 #         for sensor in self.sensors:
