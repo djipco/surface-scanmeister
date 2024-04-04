@@ -49,23 +49,27 @@ client = SimpleUDPClient(args.ip, args.port)  # Create client
 # ])
 collection = VL6180xSensorCollection(pins)
 
-signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
+
 
 def signal_handler(signum, frame):
     signal.signal(signum, signal.SIG_IGN) # ignore additional signals
-    collection.destroy()
+    cleanup() # give your process a chance to clean up
     sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler) # register the signal with the signal handler first
+
+def cleanup():
+    collection.destroy()
 
 while True:
 
     for index, sensor in enumerate(collection.sensors):
         distance = collection.sensors[index].range
-#         luminosity = collection.sensors[index].read_lux(gain)
-        luminosity = collection.sensors[index].read_lux(adafruit_vl6180x.ALS_GAIN_40)
+        luminosity = collection.sensors[index].read_lux(gain)
         client.send_message(f"/sensor/{index}/distance", distance) # in mm
         client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
 
         print(distance, luminosity)
 
     # Wait a little before looping
-    time.sleep(0.025) # Delay for 25 ms.
+    time.sleep(0.05) # Delay for 50 ms.
