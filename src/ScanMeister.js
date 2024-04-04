@@ -124,7 +124,7 @@ export default class ScanMeister {
       ["--ip 10.0.0.200", "--port 10000", "--gain 40", "--pins 4"],
       {
         detached: false,
-        shell: false,
+        shell: true,
         errorCallback: this.#onDistanceSensorError.bind(this),
         stderrCallback: this.#onDistanceSensorError.bind(this),
         dataCallback: this.#onDistanceSensorData.bind(this)
