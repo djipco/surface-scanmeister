@@ -6,7 +6,7 @@ import time
 
 # External imports
 import adafruit_vl6180x                                 # from CircuitPython (Blinka)
-from pythonosc.udp_client import SimpleUDPClient        # OSC
+# from pythonosc.udp_client import SimpleUDPClient        # OSC
 
 # Internal imports
 # Docs: https://docs.circuitpython.org/projects/vl6180x/en/latest/api.html
@@ -42,7 +42,7 @@ def main():
     gain = getattr(adafruit_vl6180x, "ALS_GAIN_" + args.gain.replace(".", "_", 1))
 
     # Create OSC client
-    client = SimpleUDPClient(args.ip, args.port)  # Create client
+#     client = SimpleUDPClient(args.ip, args.port)  # Create client
 
     # Create the sensor collection using the specified pins (in order). As far as I can tell, these are
     # the pins that can be used (26 in total):
@@ -58,8 +58,8 @@ def main():
         for index, sensor in enumerate(collection.sensors):
             distance = collection.sensors[index].range
             luminosity = collection.sensors[index].read_lux(gain)
-            client.send_message(f"/sensor/{index}/distance", distance) # in mm
-            client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
+#             client.send_message(f"/sensor/{index}/distance", distance) # in mm
+#             client.send_message(f"/sensor/{index}/luminosity", luminosity) # in lux
             print(f'{distance}:{luminosity}')
 
         # Wait a little before looping
