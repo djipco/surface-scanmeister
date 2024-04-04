@@ -117,6 +117,9 @@ export default class ScanMeister {
 
   #activateDistanceSensors() {
 
+    // @todo check for "GPIO not allocated" error. This happens when a device (or the bus?) has not
+    // been properly released. It usually is fixed by rebooting.
+
     const pins = config.sensors.pins.join(",")
     const gain = config.sensors.luminosityGain;
 
