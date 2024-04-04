@@ -5,27 +5,9 @@ This module exposes a class allowing the creation and management of multiple VL6
 same I2C bus. By default, this is not possible since the devices all have the same address (0x29).
 To circumvent that, the devices are assigned new addresses.
 
-Thanks to Vitaly Grinberg for making the original code available under an MIT licence:
-https://gitlab.com/vitus133/vl6180x_multi
+Thanks to Vitaly Grinberg for making the original code available under an MIT licence. For details:
 
-Requirements:
-
-    - Adafruit-Blinka==5.7.0
-    - adafruit-circuitpython-busdevice==5.0.1
-    - adafruit-circuitpython-lis3dh==5.1.5
-    - adafruit-circuitpython-vl6180x==1.2.3
-    - Adafruit-PlatformDetect==2.21.0
-    - Adafruit-PureIO==1.1.7
-    - colorzero==1.1
-    - gpiozero==1.5.1
-    - pigpio==1.78
-    - pkg-resources==0.0.0
-    - pyftdi==0.52.0
-    - pyserial==3.5
-    - pyusb==1.1.0
-    - rpi-ws281x==4.2.5
-    - RPi.GPIO==0.7.0
-    - sysv-ipc==1.0.1
+    https://gitlab.com/vitus133/vl6180x_multi
 
 """
 
@@ -56,8 +38,7 @@ class VL6180xSensorCollection():
         try:
 
             # Assign channel list (unless no GPIO pins have been specified)
-            if len(ce_gpios) < 1 :
-                raise Exception("You must specify at least one valid GPIO pin.")
+            if len(ce_gpios) < 1 : raise Exception("You must specify at least one valid GPIO pin.")
             self.channels = ce_gpios
 
             # Initialize empty sensor list
