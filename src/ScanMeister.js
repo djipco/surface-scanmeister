@@ -120,7 +120,7 @@ export default class ScanMeister {
     this.#distanceSensorSpawner = new Spawner();
 
     this.#distanceSensorSpawner.execute(
-      ". env/bin/activate; /home/scanmeister/Desktop/surface-scanmeister/env/bin/python /home/scanmeister/Desktop/surface-scanmeister/externals/send_distances.py", // the "." replaces "source"
+      ". env/bin/activate; python externals/send_distances.py", // the "." replaces "source"
       ["--pins 4", "--gain 40"],
       {
         detached: false,
@@ -137,12 +137,16 @@ export default class ScanMeister {
   }
 
   #onDistanceSensorData(data) {
+
     let [index, distance, luminosity] = data.split(",", 3);
     index = parseInt(index);
     distance = parseInt(distance);
     luminosity = parseFloat(luminosity);
-    this.sendOscMessage(`/sensor/${index}/distance`, [{type: "i", value: distance}]);
-    this.sendOscMessage(`/sensor/${index}/luminosity`, [{type: "f", value: luminosity}]);
+
+    // We check 'index' because the first time it is NaN
+    if (index) this.sendOscMessage(`/sensor/${index}/distance`, [{type: "i", value: distance}]);
+    if (index) this.sendOscMessage(`/sensor/${index}/luminosity`, [{type: "f", value: luminosity}]);
+
   }
 
   #onStatusInterval() {
