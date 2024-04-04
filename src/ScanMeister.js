@@ -141,7 +141,7 @@ export default class ScanMeister {
     index = parseInt(index);
     distance = parseInt(distance);
     luminosity = parseFloat(luminosity);
-    // console.log(index, distance, luminosity);
+    console.log(index, distance, luminosity);
 
     this.sendOscMessage(`/sensor/${index}/distance", [{type: "i", value: ${distance}]`);
     this.sendOscMessage(`/sensor/${index}/luminosity", [{type: "f", value: ${luminosity}]`);
