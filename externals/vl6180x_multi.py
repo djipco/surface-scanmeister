@@ -105,12 +105,12 @@ class VL6180xSensorCollection():
 
             # Add sensor to collection
             sensor = adafruit_vl6180x.VL6180X(self.i2c, address=next_addr)
-            sensor.start_range_continuous(20)
+#             sensor.start_range_continuous(20)
             self.sensors.append(sensor)
 
         print("reassigned: ", busy_addr)
 
     def destroy(self):
-        for sensor in self.sensors:
-            sensor.stop_range_continuous()
+#         for sensor in self.sensors:
+#             sensor.stop_range_continuous()
         self.i2c.deinit()

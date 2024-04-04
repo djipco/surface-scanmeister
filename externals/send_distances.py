@@ -70,7 +70,7 @@ def main():
         sys.stdout.flush()
 
         # Wait a little before looping
-        time.sleep(0.02) # Delay for 20 ms.
+        time.sleep(0.01) # Delay for 10 ms.
 
 def sigint_handler(signum, frame):
     quit()
