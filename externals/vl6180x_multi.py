@@ -63,7 +63,7 @@ class VL6180xSensorCollection():
             self._realloc_addr()
 
         except Exception as e:
-            print(e)
+            print(e, file=sys.stderr)
             exit(1)
 
     def _realloc_addr(self):
