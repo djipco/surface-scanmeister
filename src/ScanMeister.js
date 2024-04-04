@@ -120,7 +120,7 @@ export default class ScanMeister {
     this.#distanceSensorSpawner = new Spawner();
 
     this.#distanceSensorSpawner.execute(
-      ". env/bin/activate; python externals/send_distances.py", // the "." replaces "source"
+      ". env/bin/activate; /home/scanmeister/Desktop/surface-scanmeister/env/bin/python /home/scanmeister/Desktop/surface-scanmeister/externals/send_distances.py", // the "." replaces "source"
       ["--pins 4", "--gain 40"],
       {
         detached: false,
