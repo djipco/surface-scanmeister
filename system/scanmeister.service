@@ -3,6 +3,8 @@
 #
 #   /etc/systemd/system/scanmeister.service
 #
+#   sudo cp scanmeister.service /etc/systemd/system/
+#
 # Once the file is in place, issue the following command to inform systemd that a new service is
 # available:
 #

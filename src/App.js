@@ -16,7 +16,7 @@ import {Spawner} from "./Spawner.js";
 export default class App {
 
   // Valid OSC commands to respond to
-  static OSC_COMMANDS = ["scan"];
+  static OSC_COMMANDS = ["scan", "reboot"];
 
   // Termination signals to respond to
   static EXIT_SIGNALS = [
@@ -478,7 +478,10 @@ export default class App {
 
     // Filter out invalid commands
     const command = segments[0].toLowerCase()
-    if (!App.OSC_COMMANDS.includes(command)) return;
+    if (!App.OSC_COMMANDS.includes(command)) {
+      logWarn(`Invalid OSC command received (${command}).`)
+      return;
+    }
 
     // Fetch device index
     const channel = parseInt(segments[1]);
@@ -501,8 +504,26 @@ export default class App {
       }
       scanner.scan(options);
 
+    } else if (command === "reboot") {
+
+      logInfo("Reboot requested by remote...");
+
+      const spawner = new Spawner();
+      spawner.execute(
+        "sudo reboot",
+        [],
+        {
+          errorCallback: this.#onRebootError.bind(this),
+          stderrCallback: this.#onRebootError.bind(this)
+        }
+      )
+
     }
 
+  }
+
+  #onRebootError(err) {
+    logWarn(err);
   }
 
 }
