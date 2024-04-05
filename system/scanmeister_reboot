@@ -1,0 +1,10 @@
+# Allow user 'scanmeister' to reboot the machine (from the ScanMeister.js application). This file
+# should be placed in:
+#
+#   /etc/sudoers.d/
+#
+# To edit the file, always use visudo (it will parse the file for syntax errors on save) :
+#
+#   sudo visudo -f /etc/sudoers.d/scanmeister_reboot
+
+scanmeister ALL=(ALL) NOPASSWD: /sbin/reboot

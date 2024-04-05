@@ -144,6 +144,12 @@ triggered:
 sudo systemctl status scanmeister.service
 ```
 
+
+#### Allow remote reboot
+
+To allow remote reboot from OSC command, you must grant that permission to the scanmeister user. To 
+do that, copy file `scanmeister_reboot` in `system` folder to `/etc/sudoers.d/`.
+
 #### Configuration
 
 Open `surface-scanmeister/config/config.js` in the Geany editor (Main Menu -> Programming) to 
