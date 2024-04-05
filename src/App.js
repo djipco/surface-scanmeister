@@ -508,15 +508,21 @@ export default class App {
 
       logInfo("Reboot requested by remote...");
 
-      const spawner = new Spawner();
-      spawner.execute(
-        "reboot",
-        [],
-        {
-          errorCallback: this.#onRebootError.bind(this),
-          stderrCallback: this.#onRebootError.bind(this)
-        }
-      )
+      // Little delay so we can see the output on the console (for debugging purposes)
+      setTimeout(() => {
+
+        const spawner = new Spawner();
+
+        spawner.execute(
+          "reboot",
+          [],
+          {
+            errorCallback: this.#onRebootError.bind(this),
+            stderrCallback: this.#onRebootError.bind(this)
+          }
+        )
+
+      }, 1000);
 
     }
 
