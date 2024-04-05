@@ -2,7 +2,7 @@
 Type=Application
 Name=ScanMeister
 Comment=Start the ScanMeister scanner control daemon
-Exec=bash -c "node ScanMeister.js; read"
+Exec=bash -c "cd %k; node ScanMeister.js; read"
 Icon=obconf
 Terminal=true
 Categories=Utility
