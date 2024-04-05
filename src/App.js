@@ -510,7 +510,7 @@ export default class App {
 
       const spawner = new Spawner();
       spawner.execute(
-        "/usr/sbin/reboot",
+        "reboot",
         [],
         {
           errorCallback: this.#onRebootError.bind(this),
@@ -523,7 +523,7 @@ export default class App {
   }
 
   #onRebootError(err) {
-    logWarn(err);
+    logWarn(`Cannot reboot because of error: ${err}`);
   }
 
 }
