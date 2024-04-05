@@ -501,8 +501,26 @@ export default class App {
       }
       scanner.scan(options);
 
+    } else if (command === "reboot") {
+
+      logInfo("Reboot requested by remote...");
+
+      const spawner = new Spawner();
+      spawner.execute(
+        "sudo reboot",
+        [],
+        {
+          errorCallback: this.#onRebootError.bind(this),
+          stderrCallback: this.#onRebootError.bind(this)
+        }
+      )
+
     }
 
+  }
+
+  #onRebootError(err) {
+    logWarn(err);
   }
 
 }
