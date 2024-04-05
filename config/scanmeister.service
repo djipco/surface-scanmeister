@@ -1,0 +1,27 @@
+# This file is used to configure ScanMeister as a systemd service that can be configured to start at
+# system launch. It should be placed in this location:
+#   /etc/systemd/system/scanmeister.service
+#
+# Once the file is in place, issue the following command to tell systemd it exists:
+#   sudo systemctl daemon-reload
+#
+# To start it:
+#   sudo systemctl start scanmeister.service
+#
+# To have ScanMeister start on boot:
+#   sudo systemctl enable scanmeister.service
+#
+# To check if the application is running properly (or see error messages) :
+#   sudo systemctl status scanmeister.service
+
+
+[Unit]
+Description=ScanMeister Scanner Daemon
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /home/scanmeister/Desktop/surface-scanmeister/index.js
+
+[Install]
+WantedBy=multi-user.target

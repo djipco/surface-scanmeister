@@ -1,7 +1,7 @@
 {
   "name": "scanmeister",
   "title": "ScanMeister",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "ScanMeister lets you scan images and stream them over a TCP socket",
   "author": "Jean-Philippe Côté <null@djip.co> (https://djip.co)",
   "license": "UNLICENSED",
