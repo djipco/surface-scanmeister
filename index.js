@@ -5,17 +5,16 @@ import { existsSync } from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
-// Get file's directory
+// Check if the current working directory is the one where index.js resides. If not (such as when
+// started from systemd) change it.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Check if the current working directory is the one where index.js resides. If not (such as when
-// started from systemd) change it.
 if (process.cwd() !== __dirname) {
 
   try {
     process.chdir(__dirname);
-    console.log('Working directory successfully changed to: ' + process.cwd());
+    console.log('Working directory changed to: ' + process.cwd());
   } catch (err) {
     console.error(`\x1b[91m Could not change working directory: ${err} \x1b[0m`);
     process.exit(1);
@@ -41,5 +40,6 @@ if (existsSync('./node_modules')) {
     `\x1b[91m Error: Modules have not been installed. ` +
     `To install them, use 'npm install' in a Terminal at root of project.\x1b[0m`
   );
+  process.exit(1);
 
 }
