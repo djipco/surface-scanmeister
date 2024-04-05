@@ -57,7 +57,7 @@ def main():
         for index, sensor in enumerate(collection.sensors):
             distance = collection.sensors[index].range
             luminosity = collection.sensors[index].read_lux(gain)
-            print(f'{index},{distance},{luminosity}', file=sys.stdout)
+            print(f'{index+1},{distance},{luminosity}', file=sys.stdout)
 
         # In non-interactive mode (such as when calling this script from another script), the STDOUT
         # is buffered. So, we must regularly flush the buffer to get the output in the other script.
