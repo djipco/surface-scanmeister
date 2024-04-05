@@ -7,4 +7,4 @@
 #
 #   sudo visudo -f /etc/sudoers.d/scanmeister_reboot
 
-scanmeister ALL=(ALL) NOPASSWD: /sbin/reboot
+scanmeister ALL=(ALL) NOPASSWD: /usr/sbin/reboot
