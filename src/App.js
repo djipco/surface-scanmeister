@@ -510,7 +510,7 @@ export default class App {
 
       const spawner = new Spawner();
       spawner.execute(
-        "sudo /usr/sbin/reboot",
+        "/usr/sbin/reboot",
         [],
         {
           errorCallback: this.#onRebootError.bind(this),
