@@ -9,15 +9,19 @@ import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-try {
-  process.chdir(__dirname);
-  console.log('New directory: ' + process.cwd());
-} catch (err) {
-  console.error(`\x1b[91m ${err} \x1b[0m`);
+// Check if the current working directory is the one where index.js resides. If not (such as when
+// started from systemd) change it.
+if (process.cwd() !== __dirname) {
+
+  try {
+    process.chdir(__dirname);
+    console.log('Working directory successfully changed to: ' + process.cwd());
+  } catch (err) {
+    console.error(`\x1b[91m Could not change working directory: ${err} \x1b[0m`);
+    process.exit(1);
+  }
+
 }
-
-
-
 
 // Check if external modules have been installed by looking for the 'node_modules' folder. If it
 // exists, start normally. If not, display error with instructions.
