@@ -159,7 +159,8 @@ export class Scanner extends EventEmitter {
     this.scanImageSpawner = new Spawner();
 
     this.scanImageSpawner.execute(
-      "stdbuf --output=0 scanimage",
+      // "stdbuf --output=0 scanimage",
+      "scanimage",
       this.#scanArgs,
       {
         detached: false,
