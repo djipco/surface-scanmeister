@@ -344,8 +344,6 @@ export default class ScanMeister {
     if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
     this.#distanceSensorSpawner = undefined;
 
-    console.log("bbb");
-
     // Remove USB listeners
     usb.unrefHotplugEvents();
     this.#callbacks.onUsbAttach = undefined;
@@ -357,8 +355,6 @@ export default class ScanMeister {
     // Destroy scanners and remove callbacks
     this.scanners.forEach(async device => await device.destroy());
     this.#removeOscCallbacks();
-
-    console.log("ccc");
 
     // Send final notification and close OSC
     if (this.#oscPort && this.#oscPort.socket) {
@@ -376,7 +372,6 @@ export default class ScanMeister {
 
     // Exit
     setTimeout(() => {
-      console.log("test");
       process.exit(status);
     }, 100); // wait for log files to be written
 
