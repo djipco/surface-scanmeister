@@ -1,24 +1,23 @@
 #!/usr/bin/node
 
-
+// Import necessary builtin modules
+import { existsSync } from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
+// Get file's directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log(__dirname);
-
-// try {
-//   process.chdir(__dirname);
-//   console.log('New directory: ' + process.cwd());
-// } catch (err) {
-//   console.error('chdir: ' + err);
-// }
+try {
+  process.chdir(__dirname);
+  console.log('New directory: ' + process.cwd());
+} catch (err) {
+  console.error(`\x1b[91m ${err} \x1b[0m`);
+}
 
 
-// Import necessary builtin modules
-import { existsSync } from 'fs';
+
 
 // Check if external modules have been installed by looking for the 'node_modules' folder. If it
 // exists, start normally. If not, display error with instructions.
