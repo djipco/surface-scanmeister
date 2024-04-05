@@ -13,7 +13,7 @@ import {ScannerMappings} from "../config/ScannerMappings.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
 
-export default class ScanMeister {
+export default class App {
 
   // Valid OSC commands to respond to
   static OSC_COMMANDS = ["scan"];
@@ -39,7 +39,7 @@ export default class ScanMeister {
 
     // Watch for quit signals
     this.#callbacks.onExitRequest = this.#onExitRequest.bind(this);
-    ScanMeister.EXIT_SIGNALS.forEach(s => process.on(s, this.#callbacks.onExitRequest));
+    App.EXIT_SIGNALS.forEach(s => process.on(s, this.#callbacks.onExitRequest));
 
     // Grab info from package.json
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
@@ -350,7 +350,7 @@ export default class ScanMeister {
     this.#callbacks.onUsbDetach = undefined;
 
     // Remove termination listeners
-    ScanMeister.EXIT_SIGNALS.forEach(s => process.off(s, this.#callbacks.onExitRequest));
+    App.EXIT_SIGNALS.forEach(s => process.off(s, this.#callbacks.onExitRequest));
 
     // Destroy scanners and remove callbacks
     this.scanners.forEach(async device => await device.destroy());
@@ -478,7 +478,7 @@ export default class ScanMeister {
 
     // Filter out invalid commands
     const command = segments[0].toLowerCase()
-    if (!ScanMeister.OSC_COMMANDS.includes(command)) return;
+    if (!App.OSC_COMMANDS.includes(command)) return;
 
     // Fetch device index
     const channel = parseInt(segments[1]);

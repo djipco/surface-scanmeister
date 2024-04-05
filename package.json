@@ -1,14 +1,14 @@
 {
   "name": "scanmeister",
   "title": "ScanMeister",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "ScanMeister lets you scan images and stream them over a TCP socket",
   "author": "Jean-Philippe Côté <null@djip.co> (https://djip.co)",
   "license": "UNLICENSED",
-  "main": "index.js",
+  "main": "ScanMeister.js",
   "type": "module",
   "scripts": {
-    "run": "node index.js"
+    "run": "node ScanMeister.js"
   },
   "dependencies": {
     "date-fns": "^2.30.0",

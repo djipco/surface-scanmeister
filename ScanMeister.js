@@ -1,12 +1,13 @@
 #!/usr/bin/node
 
-// Import necessary builtin modules
+// At this stage, we only import necessary builtin modules because we first need to check if the
+// external modules have been installed.
 import { existsSync } from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
-// Check if the current working directory is the one where index.js resides. If not (such as when
-// started from systemd) change it.
+// Check if the current working directory is the one where ScanMeister.js resides. If not (such as
+// when started from systemd) we change it.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -26,12 +27,12 @@ if (process.cwd() !== __dirname) {
 // exists, start normally. If not, display error with instructions.
 if (existsSync('./node_modules')) {
 
-  const ScanMeister = (await import(`./src/ScanMeister.js`)).default;
-  const scanmeister = new ScanMeister();
-  scanmeister.start()
+  const App = (await import(`./src/App.js`)).default;
+  const app = new App();
+  app.start()
     .catch(async error => {
       console.error(`\x1b[91m ${error} \x1b[0m`);
-      await scanmeister.quit(1);
+      await app.quit(1);
     });
 
 } else {
