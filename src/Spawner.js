@@ -140,9 +140,30 @@ export class Spawner extends EventEmitter {
     this.removeAllListeners();
 
     if (this.#process) {
-      setTimeout(() => this.#process.kill('SIGKILL'), 500); // Forceful kill
-      this.#process.kill('SIGTERM'); // Graceful kill
+
+      // setTimeout(() => this.#process.kill('SIGKILL'), 500); // Forceful kill
+      // this.#process.kill('SIGTERM'); // Graceful kill
       // await new Promise(resolve => this.#process.on('exit', () => resolve));
+
+
+      await new Promise(resolve => {
+
+        // Attempt to gracefully terminate the process.
+        this.#process.on('exit', () => {
+          console.log("graceful");
+          resolve()
+        });
+        this.#process.kill('SIGTERM');
+
+        // If the process does not quit within a reasonable time, kill it.
+        setTimeout(() => {
+          console.log("KILL !!!!!!!!!!");
+          this.#process.kill('SIGKILL');
+          resolve()
+        }, 1000);
+
+      });
+
     }
 
   }
