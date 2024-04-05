@@ -149,18 +149,14 @@ export class Spawner extends EventEmitter {
       await new Promise(resolve => {
 
         // Attempt to gracefully terminate the process.
-        this.#process.on('exit', () => {
-          console.log("graceful");
-          resolve()
-        });
+        this.#process.on('exit', resolve);
         this.#process.kill('SIGTERM');
 
         // If the process does not quit within a reasonable time, kill it.
         setTimeout(() => {
-          console.log("KILL !!!!!!!!!!");
           this.#process.kill('SIGKILL');
-          resolve()
-        }, 1000);
+          resolve();
+        }, 2000);
 
       });
 
