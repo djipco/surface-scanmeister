@@ -336,7 +336,7 @@ export default class App {
 
   }
 
-  async quit(status = 0) {
+  async quit(status = 0, exit = true) {
 
     logInfo("Exiting...");
 
@@ -371,9 +371,9 @@ export default class App {
     }
 
     // Exit
-    setTimeout(() => {
-      process.exit(status);
-    }, 100); // wait for log files to be written
+    if (exit) {
+      setTimeout(() => process.exit(status), 100); // wait for log files to be written
+    }
 
   }
 
@@ -472,7 +472,7 @@ export default class App {
     return this.#scanners.find(scanner => scanner.channel === channel);
   }
 
-  #onOscMessage(message) {
+  async #onOscMessage(message) {
 
     const segments = message.address.split("/").slice(1);
 
@@ -508,28 +508,13 @@ export default class App {
 
       logInfo("Reboot requested by remote...");
 
-      // Little delay so we can see the output on the console (for debugging purposes)
-      setTimeout(() => {
-
-        const spawner = new Spawner();
-
-        spawner.execute(
-          "reboot",
-          [],
-          {
-            errorCallback: this.#onRebootError.bind(this),
-            stderrCallback: this.#onRebootError.bind(this)
-          }
-        )
-
-      }, 1000);
+      // Call quit without actually exiting the Node.js process (this will be forced by reboot)
+      await this.quit(0, false);
+      const spawner = new Spawner();
+      spawner.execute("reboot");
 
     }
 
-  }
-
-  #onRebootError(err) {
-    logWarn(`Cannot reboot because of error: ${err}`);
   }
 
 }
