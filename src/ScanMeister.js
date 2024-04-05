@@ -37,8 +37,6 @@ export default class ScanMeister {
 
   async start() {
 
-    logInfo("ppid: " + process.ppid);
-
     // Watch for quit signals
     this.#callbacks.onExitRequest = this.#onExitRequest.bind(this);
     ScanMeister.EXIT_SIGNALS.forEach(s => process.on(s, this.#callbacks.onExitRequest));

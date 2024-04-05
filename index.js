@@ -1,5 +1,15 @@
 #!/usr/bin/node
 
+console.log(__dirname);
+
+// try {
+//   process.chdir(__dirname);
+//   console.log('New directory: ' + process.cwd());
+// } catch (err) {
+//   console.error('chdir: ' + err);
+// }
+
+
 // Import necessary builtin modules
 import { existsSync } from 'fs';
 
