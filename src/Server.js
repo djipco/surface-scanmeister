@@ -21,10 +21,16 @@ export class Server {
 
     // Start server
     await new Promise((resolve, reject) => {
-      this.#httpServer.listen(options.port, err => {
-        if (err) reject("Could not start HTTP server");
-        resolve();
-      });
+
+      try {
+        this.#httpServer.listen(options.port, err => {
+          if (err) reject("Could not start HTTP server");
+          resolve();
+        });
+      } catch (err) {
+        reject(err);
+      }
+
     });
 
   }
