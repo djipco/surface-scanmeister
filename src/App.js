@@ -98,8 +98,6 @@ export default class App {
     await this.#updateScanners();
 
     // Start HTTP server and pass the list of available scanners
-    this.#scanners.forEach(s => console.log(s.channel, s.systemName));
-
     this.server = new Server(this.#scanners);
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.server.addListener("error", this.#callbacks.onHttpServerError);

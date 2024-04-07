@@ -71,6 +71,10 @@ export class Server extends EventEmitter {
     const channel = segments[1] || 0;
     logInfo(`Initiating scan on channel ${channel}...`);
 
+
+    this.#scanners.forEach(s => console.log(s.channel, s.systemName));
+
+
     this.scanImageSpawner.execute(
       "scanimage",
       this.#getScanimageArgs(channel),
