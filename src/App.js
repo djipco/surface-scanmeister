@@ -99,7 +99,8 @@ export default class App {
 
     // Start HTTP server and pass the list of available scanners
     this.server = new Server(this.#scanners);
-    console.log("port1", config.http.port);
+    this.#callbacks.onHttpServerError = this.#onHttpServerError.bind();
+    this.server.addListener("error", this.#callbacks.onHttpServerError);
     await this.server.start({port: config.http.port});
     logInfo(`HTTP server listening on port ${config.http.port}.`)
 
@@ -120,6 +121,11 @@ export default class App {
     // information to be written. In that sense, CTRL-C is better.
     logInfo("Press CTRL-C to properly exit.")
 
+  }
+
+  async #onHttpServerError(err) {
+    logError(err);
+    await this.quit(1);
   }
 
   #activateDistanceSensors() {

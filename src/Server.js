@@ -2,14 +2,16 @@ import http from 'http';
 import {Spawner} from "./Spawner.js";
 import {Configuration as config} from "../config/Configuration.js";
 import {logInfo, logWarn} from "./Logger.js";
+import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
-export class Server {
+export class Server extends EventEmitter {
 
   #callbacks = {};
   #httpServer = undefined;
   #scanners = undefined;
 
   constructor(scanners) {
+    super();
     this.#scanners = scanners || [];
   }
 
@@ -19,20 +21,22 @@ export class Server {
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
+    // Add error callback
+    this.#callbacks.onServerError = this.#onServerError.bind(this);
+    this.#httpServer.on("error", this.#callbacks.onServerError);
+
     // Start server
     await new Promise((resolve, reject) => {
-
-      try {
-        this.#httpServer.listen(options.port, err => {
-          if (err) reject("Could not start HTTP server");
-          resolve();
-        });
-      } catch (err) {
-        reject(err);
-      }
-
+      this.#httpServer.listen(options.port, err => {
+        if (err) reject("Could not start HTTP server");
+        resolve();
+      });
     });
 
+  }
+
+  #onServerError(err) {
+    this.emit("error", err);
   }
 
   #onClientRequest(req, res)  {
