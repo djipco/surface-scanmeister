@@ -22,16 +22,16 @@ export class Server {
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
     // Start server
-    await new Promise(resolve => {
+    await new Promise((resolve, reject) => {
 
       this.#httpServer.listen(this.port, err => {
 
         if (err) {
-          logError('Failed to start HTTP server', err);
-          throw new Error(err);
+          logError("Could not start HTTP server");
+          reject(err);
+        } else {
+          resolve();
         }
-
-        resolve();
 
       });
 
