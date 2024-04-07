@@ -15,8 +15,6 @@ export class Server {
 
   async start(options = {port: 8080}) {
 
-    this.port = options.port;
-
     // Create a server and set a callback for client requests
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
@@ -24,9 +22,9 @@ export class Server {
     // Start server
     await new Promise((resolve, reject) => {
 
-      console.log("port", this.port);
+      console.log("port", options.port);
 
-      this.#httpServer.listen(5678, err => {
+      this.#httpServer.listen(options.port, err => {
         if (err) reject("Could not start HTTP server");
         resolve();
       });
