@@ -15,7 +15,7 @@ export class Server extends EventEmitter {
     this.#scanners = scanners || [];
   }
 
-  async start(options = {port: 80}) {
+  async start(options = {port: 8080}) {
 
     // Create a server and set a callback for client requests
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
@@ -36,7 +36,7 @@ export class Server extends EventEmitter {
   }
 
   #onServerError(err) {
-    this.emit("error", `Cannot start HTTP server: ${err}`);
+    this.emit("error", `Cannot start HTTP server. ${err}.`);
   }
 
   #onClientRequest(req, res)  {
