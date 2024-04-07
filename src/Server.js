@@ -109,10 +109,13 @@ export class Server extends EventEmitter {
   }
 
   getScannerSystemName(channel) {
-    this.#scanners.forEach(s => console.log(s.channel, s.systemName));
+
+    this.#scanners.forEach(scanner => console.log(scanner.channel, scanner.systemName));
+
     const scanner = this.#scanners.find(scanner => scanner.channel === channel);
     console.log(channel, scanner);
     if (scanner) return scanner.systemName;
+
   }
 
   #getScanimageArgs(channel) {
