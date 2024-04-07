@@ -36,7 +36,7 @@ export class Server extends EventEmitter {
   }
 
   #onServerError(err) {
-    this.emit("error", err);
+    this.emit("error", `Cannot start HTTP server: ${err}`);
   }
 
   #onClientRequest(req, res)  {
