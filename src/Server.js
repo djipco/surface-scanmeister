@@ -22,7 +22,9 @@ export class Server {
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
     // Start server
-    await new Promise(resolve => this.#httpServer.listen(this.port, resolve));
+    this.#httpServer.listen(this.port);
+
+    // await new Promise(resolve => );
 
   }
 
