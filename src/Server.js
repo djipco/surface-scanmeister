@@ -109,6 +109,7 @@ export class Server extends EventEmitter {
   }
 
   getScannerSystemName(channel) {
+    console.log(this.#scanners);
     const scanner = this.#scanners.find(scanner => scanner.channel === channel);
     if (scanner) return scanner.systemName;
   }
@@ -161,8 +162,6 @@ export class Server extends EventEmitter {
     args.push('-t ' + config.devices.y);
     args.push('-x ' + config.devices.width);
     args.push('-y ' + config.devices.height);
-
-    console.log(args);
 
     return args;
 
