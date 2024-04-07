@@ -17,7 +17,7 @@ export class Server extends EventEmitter {
 
   async start(options = {port: 5678}) {
 
-    // Create a server and set a callback for client requests
+    // Create a server and set a callback for client requests ('request' event)
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
@@ -47,6 +47,7 @@ export class Server extends EventEmitter {
 
     // Check validity of request (expecting /channel/x where x is an int). Not specifying a channel
     // is also acceptable. In this case, the default scanner will be used.
+    console.log(segments);
     if (
       segments.length < 2 ||
       segments[0] !== 'scan'
