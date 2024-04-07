@@ -187,7 +187,7 @@ export default class App {
 
     // Stop in progress scans and destroy any previous scanner objects
     this.#scanners.forEach(async scanner => await scanner.destroy());
-    this.#scanners = [];
+    this.#scanners.length = 0; // me must not destroy the reference
 
     // Retrieve list of objects describing scanner ports and device numbers
     const scannerDescriptors = this.getScannerDescriptors();
