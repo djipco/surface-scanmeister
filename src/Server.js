@@ -41,15 +41,14 @@ export class Server extends EventEmitter {
 
   #onClientRequest(req, res)  {
 
-    // Parse the URL and split it into segments
+    // Parse the path of the URL and split it into segments
     const url = new URL(req.url, `http://${req.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
 
     // Check validity of request (expecting /channel/x where x is an int). Not specifying a channel
     // is also acceptable. In this case, the default scanner will be used.
-    console.log(segments);
     if (
-      segments.length < 2 ||
+      segments.length < 1 ||
       segments[0] !== 'scan'
     ) {
       res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -64,16 +63,12 @@ export class Server extends EventEmitter {
     // Send proper HTTP header (there's no official MIME type for PNM format)
     res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
 
-    // Channel
-    const channel = segments[1] || 0;
-
-    // Spawn the scanning process
+    // Spawn the scanning process and add listeners
     this.scanImageSpawner = new Spawner();
-
     this.#callbacks.onScanimageError = err => this.#onScanimageError(err, res);
     this.#callbacks.onScanSuccess = () => this.#onScanSuccess(channel);
 
-
+    const channel = segments[1] || 0;
     logInfo(`Initiating scan on channel ${channel}...`);
 
     this.scanImageSpawner.execute(
@@ -166,6 +161,8 @@ export class Server extends EventEmitter {
     args.push('-t ' + config.devices.y);
     args.push('-x ' + config.devices.width);
     args.push('-y ' + config.devices.height);
+
+    console.log(args);
 
     return args;
 
