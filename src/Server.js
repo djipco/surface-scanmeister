@@ -13,9 +13,7 @@ export class Server {
     this.#scanners = scanners || [];
   }
 
-  async start(options = {port: 8080}) {
-
-    console.log("port2", options);
+  async start(options = {port: 80}) {
 
     // Create a server and set a callback for client requests
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
@@ -23,16 +21,11 @@ export class Server {
 
     // Start server
     await new Promise((resolve, reject) => {
-
-
       this.#httpServer.listen(options.port, err => {
         if (err) reject("Could not start HTTP server");
         resolve();
       });
-
     });
-
-
 
   }
 

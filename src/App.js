@@ -100,7 +100,7 @@ export default class App {
     // Start HTTP server and pass the list of available scanners
     this.server = new Server(this.#scanners);
     console.log("port1", config.http.port);
-    await this.server.start({options: config.http.port});
+    await this.server.start({port: config.http.port});
     logInfo(`HTTP server listening on port ${config.http.port}.`)
 
     // Start sending OSC status messages
