@@ -43,7 +43,7 @@ export class Server extends EventEmitter {
 
     // Parse the URL and split it into segments
     const url = new URL(req.url, `http://${req.headers.host}`);
-    const segments = url.pathname.split('/').slice(1, 2);
+    const segments = url.pathname.split('/').slice(1);
 
     // Check validity of request (expecting /channel/x where x is an int). Not specifying a channel
     // is also acceptable. In this case, the default scanner will be used.
