@@ -1,7 +1,7 @@
 import http from 'http';
 import {Spawner} from "./Spawner.js";
 import {Configuration as config} from "../config/Configuration.js";
-import {logError, logInfo, logWarn} from "./Logger.js";
+import {logInfo, logWarn} from "./Logger.js";
 
 export class Server {
 
@@ -21,21 +21,14 @@ export class Server {
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
-    // logInfo("coucou");
-    // this.#httpServer.listen(5678);
-
     // Start server
     await new Promise((resolve, reject) => {
 
+      console.log("port", this.port);
+
       this.#httpServer.listen(5678, err => {
-
-        if (err) {
-          logError("Could not start HTTP server");
-          reject(err);
-        } else {
-          resolve();
-        }
-
+        if (err) reject("Could not start HTTP server");
+        resolve();
       });
 
     });
