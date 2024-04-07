@@ -110,7 +110,7 @@ export class Server extends EventEmitter {
 
   getScannerSystemName(channel) {
     const scanner = this.#scanners.find(scanner => scanner.channel === channel);
-    console.log(scanner);
+    console.log(channel, scanner);
     if (scanner) return scanner.systemName;
   }
 
