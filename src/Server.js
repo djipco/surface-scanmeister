@@ -21,24 +21,24 @@ export class Server {
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer = http.createServer(this.#callbacks.onClientRequest);
 
-    logInfo("coucou");
-    this.#httpServer.listen(5678);
+    // logInfo("coucou");
+    // this.#httpServer.listen(5678);
 
     // Start server
-    // await new Promise((resolve, reject) => {
-    //
-    //   this.#httpServer.listen(this.port, err => {
-    //
-    //     if (err) {
-    //       logError("Could not start HTTP server");
-    //       reject(err);
-    //     } else {
-    //       resolve();
-    //     }
-    //
-    //   });
-    //
-    // });
+    await new Promise((resolve, reject) => {
+
+      this.#httpServer.listen(5678, err => {
+
+        if (err) {
+          logError("Could not start HTTP server");
+          reject(err);
+        } else {
+          resolve();
+        }
+
+      });
+
+    });
 
 
 
