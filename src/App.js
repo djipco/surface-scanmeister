@@ -10,6 +10,7 @@ import {Configuration as config} from "../config/Configuration.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Scanner} from './Scanner.js';
 import {ScannerMappings} from "../config/ScannerMappings.js";
+import {Server} from "./Server.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
 
@@ -94,7 +95,10 @@ export default class App {
     );
 
     // Update scanners list
-    this.#updateScanners();
+    await this.#updateScanners();
+
+    // Start HTTP server and pass the list of available scanners
+    this.server = new Server(this.#scanners);
 
     // Start sending OSC status messages
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
