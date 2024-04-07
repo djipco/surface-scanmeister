@@ -15,7 +15,7 @@ export const Configuration = {
   },
 
   http: {
-    port: 8080
+    port: 5678
   },
 
   osc: {
