@@ -14,6 +14,10 @@ export const Configuration = {
     port: "1234"                    // Port of the remote server
   },
 
+  http: {
+    port: 8080
+  },
+
   osc: {
     localAddress: '0.0.0.0',        // Local IP address to bind to for OSC
     localPort: 8000,                // Local port to listen on for OSC

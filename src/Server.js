@@ -59,7 +59,9 @@ export class Server {
     this.#callbacks.onScanimageError = err => this.#onScanimageError(err, res);
     this.#callbacks.onScanSuccess = () => this.#onScanSuccess(channel);
 
-    logInfo(`Initiating scan on channel ${channel}...`)
+
+    logInfo(`Initiating scan on channel ${channel}...`);
+
     this.scanImageSpawner.execute(
       "scanimage",
       this.#getScanimageArgs(channel),

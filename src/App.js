@@ -99,6 +99,7 @@ export default class App {
 
     // Start HTTP server and pass the list of available scanners
     this.server = new Server(this.#scanners);
+    this.server.start({options: config.http.port});
 
     // Start sending OSC status messages
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
