@@ -15,7 +15,7 @@ export class Server {
 
   async start(options = {port: 8080}) {
 
-    console.log("port2", options.port);
+    console.log("port2", options);
 
     // Create a server and set a callback for client requests
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
