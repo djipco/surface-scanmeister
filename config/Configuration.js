@@ -15,7 +15,7 @@ export const Configuration = {
   },
 
   http: {
-    port: 80
+    port: 5678                    // Port must be between 1024 and 65538
   },
 
   osc: {

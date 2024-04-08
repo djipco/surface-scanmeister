@@ -72,7 +72,7 @@ export class Server extends EventEmitter {
     logInfo(`Initiating scan on channel ${channel}...`);
 
     this.scanImageSpawner.execute(
-      "sudo scanimage",
+      "scanimage",
       this.#getScanimageArgs(channel),
       {
         detached: false,
@@ -167,7 +167,17 @@ export class Server extends EventEmitter {
   }
 
   quit() {
-  //   à compléter
+
+    if (this.#httpServer) {
+      this.#httpServer.removeAllListeners();
+      this.#httpServer.close();
+      this.#httpServer.closeAllConnections();
+      this.#httpServer.unref();
+    }
+
+    this.#callbacks.onClientRequest = undefined;
+    this.#callbacks.onServerError = undefined;
+
   }
 
 }
