@@ -10,6 +10,8 @@ import Client from "./Client.js";
 
 export class Server extends EventEmitter {
 
+  static COMMANDS = ["scan"];
+
   #callbacks = {};
   #clients = [];
   #httpServer = undefined;
@@ -21,17 +23,7 @@ export class Server extends EventEmitter {
   }
 
   #onClientConnection(socket) {
-
-    // Create a new 'client' object and add it to active clients list. A client corresponds to a
-    // single remote connection. A remote device can generate several connections if it wants to. We
-    // only keep those whose query is valid.
-    const client = new Client(socket);
-    this.#clients[client.id] = client;
-
-    // // Add callback
-    // this.#callbacks.onClientDestroy = event => this.#onClientDestroy(event, client);
-    // client.addListener("destroy", this.#callbacks.onClientDestroy);
-
+    logInfo(`New connection from ${socket.remoteAddress}:${socket.remotePort}.`);
   }
 
   #onClientRequest(request, response)  {
@@ -40,37 +32,49 @@ export class Server extends EventEmitter {
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
 
+    const command = segments[0];
+    const channel = parseInt(segments[1]) || 0;
+
     // Check validity of request (expecting /scan or /scan/x where x is the channel number expressed
     // as an int). When the channel is not specified, channel 0 is used.
     if (
       segments.length < 1 ||
-      segments[0] !== 'scan'
+      ! Server.COMMANDS.includes(command)
     ) {
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.end('Invalid request');
-    console.log(this.#clients);
+      logInfo(
+        `Invalid request from ${request.socket.remoteAddress}:${request.socket.remotePort}. ` +
+        `Closing connection.`
+      );
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end('Invalid request', 'utf-8', request.socket.destroy());
       return;
     }
 
+    // Check if channel is already in use
+    if (this.#clients.find(client => client.channel === channel)) {
+      logWarn(
+        `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} ` +
+        `was canceled because channel ${channel} is already in use.`
+      );
+      response.end('Channel already in use.', 'utf-8', request.socket.destroy());
+      return;
+    }
 
-    // Send proper HTTP header (there's no official MIME type for PNM format)
+    // If we make it here, the request is valid and so we create a new Client. A client corresponds
+    // to a single, valid, remote connection.
+    const client = new Client(request.socket, {channel});
+    this.#clients[client.id] = client;
+
+    // // // Add callback
+    // // this.#callbacks.onClientDestroy = event => this.#onClientDestroy(event, client);
+    // // client.addListener("destroy", this.#callbacks.onClientDestroy);
+
+    // Quickly send answer in the form of a proper HTTP header (there's no official MIME type for
+    // PNM format).
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
 
-    // Get reference to client object
-    const client = this.#clients[request.socket.remoteAddress + ":" + request.socket.remotePort];
 
-    // Fetch channel or assign to default channel (0)
-    const channel = parseInt(segments[1]) || 0;
-
-    // Check if another client is already scanning on that channel
-    if (this.#clients.find(client => client.channel === channel)) {
-      response.end('Channel already in use.');
-      logWarn(`Scanning request canceled because channel ${channel} is already in use.`)
-      return;
-    }
-
-    // Assigning a channel to the client means that this client is currently scanning
-    client.channel = channel;
+    response.end("done")
 
 
 
@@ -116,6 +120,10 @@ export class Server extends EventEmitter {
   // #onServerError(err) {
   //   this.emit("error", `Cannot start HTTP server. ${err}.`);
   // }
+
+  destroyClient(id) {
+
+  }
 
   async start(scanners, options = {port: 5678}) {
 

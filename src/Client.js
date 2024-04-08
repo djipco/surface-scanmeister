@@ -2,12 +2,12 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 
 export default class Client extends EventEmitter {
 
-  constructor(socket) {
+  constructor(socket, options = {}) {
 
     super();
 
     this.callbacks = {};
-    this.channel = undefined;     // defined only when a scan is ongoing
+    this.channel = options.channel;     // defined only when a scan is ongoing
     this.socket = socket;
 
     this.callbacks.onSocketClose = this.#onSocketClose.bind(this);
