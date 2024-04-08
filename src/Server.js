@@ -22,11 +22,11 @@ export class Server extends EventEmitter {
 
   #onClientConnection(socket) {
 
-    // Create a new 'client' object and add it to active clients list
+    // Create a new 'client' object and add it to active clients list. A client corresponds to a
+    // single remote connection. A remote device can generate several connections if it wants to. We
+    // only keep those whose query is valid.
     const client = new Client(socket);
     this.#clients[client.id] = client;
-
-    console.log(this.#clients);
 
     // // Add callback
     // this.#callbacks.onClientDestroy = event => this.#onClientDestroy(event, client);
@@ -34,76 +34,79 @@ export class Server extends EventEmitter {
 
   }
 
-  // #onClientRequest(request, response)  {
-  //
-  //   // Parse the path of the URL and split it into segments
-  //   const url = new URL(request.url, `http://${request.headers.host}`);
-  //   const segments = url.pathname.split('/').slice(1);
-  //
-  //   // Check validity of request (expecting /channel/x where x is an int). Not specifying a channel
-  //   // is also acceptable. In this case, the default scanner will be used.
-  //   if (
-  //     segments.length < 1 ||
-  //     segments[0] !== 'scan'
-  //   ) {
-  //     response.writeHead(400, { 'Content-Type': 'text/plain' });
-  //     response.end('Invalid request');
-  //     return;
-  //   }
-  //
-  //   // Send proper HTTP header (there's no official MIME type for PNM format)
-  //   response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
-  //
-  //   // Get reference to client object
-  //   const clientId = request.socket.remoteAddress + ":" + request.socket.remotePort;
-  //   const client = this.#clients[clientId];
-  //
-  //   // Fetch channel or assign to default channel (0)
-  //   const channel = parseInt(segments[1]) || 0;
-  //
-  //   // Check if another client is already scanning on that channel
-  //   if (this.#clients.find(client => client.channel === channel)) {
-  //     response.end('Channel already in use');
-  //     logWarn(`Scanning request canceled because channel ${channel} is already in use.`)
-  //     return;
-  //   }
-  //
-  //   // Create the Spawner object
-  //   client.channel = channel;
-  //   this.#spawners[channel] = new Spawner();
-  //   logInfo(`Initiating scan on channel ${channel} for client ${clientId}...`);
-  //
-  //   // Define error callback
-  //   const onScanError = async err => {
-  //     response.end('Failed to scan');
-  //     await this.#spawners[channel].destroy();
-  //     client.channel = undefined;
-  //     logWarn(`Could not execute scan command: ${err}`);
-  //   }
-  //
-  //   // Define success callback
-  //   const onScanSuccess = () => {
-  //     client.channel = undefined;
-  //     logInfo(`Scan on channel ${channel} successfully completed.`);
-  //   }
-  //
-  //   client.scanSpawner.execute(
-  //     "scanimage",
-  //     this.#getScanimageArgs(channel),
-  //     {
-  //       detached: false,
-  //       shell: false,
-  //       sucessCallback: client.callbacks.onScanSuccess,
-  //       errorCallback: client.callbacks.onScanError,
-  //       stderrCallback: client.callbacks.onScanError
-  //     }
-  //   );
-  //
-  //   // Pipe the output to the response
-  //   client.scanSpawner.pipe(response, "stdout");
-  //
-  // }
-  //
+  #onClientRequest(request, response)  {
+
+    // Parse the path of the URL and split it into segments
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const segments = url.pathname.split('/').slice(1);
+
+    // Check validity of request (expecting /scan or /scan/x where x is the channel number expressed
+    // as an int). When the channel is not specified, channel 0 is used.
+    if (
+      segments.length < 1 ||
+      segments[0] !== 'scan'
+    ) {
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.end('Invalid request');
+      return;
+    }
+
+    // Send proper HTTP header (there's no official MIME type for PNM format)
+    response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+
+    // Get reference to client object
+    const client = this.#clients[request.socket.remoteAddress + ":" + request.socket.remotePort];
+
+    // Fetch channel or assign to default channel (0)
+    const channel = parseInt(segments[1]) || 0;
+
+    // Check if another client is already scanning on that channel
+    if (this.#clients.find(client => client.channel === channel)) {
+      response.end('Channel already in use.');
+      logWarn(`Scanning request canceled because channel ${channel} is already in use.`)
+      return;
+    }
+
+    // Assigning a channel to the client means that this client is currently scanning
+    client.channel = channel;
+
+    console.log(this.#clients);
+
+    // // Create the Spawner object
+    // this.#spawners[channel] = new Spawner();
+    // logInfo(`Initiating scan on channel ${channel} for client ${clientId}...`);
+    //
+    // // Define error callback
+    // const onScanError = async err => {
+    //   response.end('Failed to scan');
+    //   await this.#spawners[channel].destroy();
+    //   client.channel = undefined;
+    //   logWarn(`Could not execute scan command: ${err}`);
+    // }
+    //
+    // // Define success callback
+    // const onScanSuccess = () => {
+    //   client.channel = undefined;
+    //   logInfo(`Scan on channel ${channel} successfully completed.`);
+    // }
+    //
+    // client.scanSpawner.execute(
+    //   "scanimage",
+    //   this.#getScanimageArgs(channel),
+    //   {
+    //     detached: false,
+    //     shell: false,
+    //     sucessCallback: client.callbacks.onScanSuccess,
+    //     errorCallback: client.callbacks.onScanError,
+    //     stderrCallback: client.callbacks.onScanError
+    //   }
+    // );
+    //
+    // // Pipe the output to the response
+    // client.scanSpawner.pipe(response, "stdout");
+
+  }
+
   // async #onClientDestroy(event, client) {
   //   delete this.#clients[client.id];
   // }
@@ -127,8 +130,8 @@ export class Server extends EventEmitter {
     // Add callbacks
     this.#callbacks.onClientConnection = this.#onClientConnection.bind(this);
     this.#httpServer.on('connection', this.#callbacks.onClientConnection);
-    // this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
-    // this.#httpServer.on("request", this.#callbacks.onClientRequest);
+    this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
+    this.#httpServer.on("request", this.#callbacks.onClientRequest);
     // this.#callbacks.onServerError = this.#onServerError.bind(this);
     // this.#httpServer.on("error", this.#callbacks.onServerError);
 

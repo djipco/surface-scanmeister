@@ -7,12 +7,11 @@ export default class Client extends EventEmitter {
     super();
 
     this.callbacks = {};
-    this.channel = undefined;
-    this.scanSpawner = undefined;
+    this.channel = undefined;     // defined only when a scan is ongoing
     this.socket = socket;
 
     this.callbacks.onSocketClose = this.#onSocketClose.bind(this);
-    this.socket.on("close", this.callbacks.onSocketClose);
+    this.socket.once("close", this.callbacks.onSocketClose);
 
   }
 
@@ -20,28 +19,31 @@ export default class Client extends EventEmitter {
     return `${this.socket.remoteAddress}:${this.socket.remotePort}`;
   }
 
+  get scanning() {
+    return Number.isInteger(this.channel);
+  }
+
   async #onSocketClose() {
-    this.destroy();
+    // this.destroy();
   }
 
   async destroy() {
-
-    if (this.socket) this.socket.close();
 
     if (this.callbacks.onSocketClose) {
       this.socket.off("close", this.callbacks.onSocketClose);
       this.callbacks.onSocketClose = undefined;
     }
 
-    if (this.scanSpawner) await this.scanSpawner.destroy();
+    if (this.socket) this.socket.destroy();
+
+    // if (this.scanSpawner) await this.scanSpawner.destroy();
 
     this.callbacks = {};
     this.channel = undefined;
-    this.scanning = false;
-    this.scanSpawner = undefined;
-    this.socket = undefined;
-
-    this.emit("destroy");
+    // this.scanSpawner = undefined;
+    // this.socket = undefined;
+    //
+    // this.emit("destroy");
 
   }
 
