@@ -51,6 +51,8 @@ export class Server extends EventEmitter {
       return;
     }
 
+    console.log(this.#clients);
+
     // Send proper HTTP header (there's no official MIME type for PNM format)
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
 
@@ -70,7 +72,7 @@ export class Server extends EventEmitter {
     // Assigning a channel to the client means that this client is currently scanning
     client.channel = channel;
 
-    console.log(this.#clients);
+
 
     // // Create the Spawner object
     // this.#spawners[channel] = new Spawner();
