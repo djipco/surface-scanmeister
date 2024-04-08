@@ -68,7 +68,7 @@ export class Server extends EventEmitter {
     this.#callbacks.onScanimageError = err => this.#onScanimageError(err, res);
     this.#callbacks.onScanSuccess = () => this.#onScanSuccess(channel);
 
-    const channel = segments[1] || 0;
+    const channel = parseInt(segments[1]) || 0;
     logInfo(`Initiating scan on channel ${channel}...`);
 
     this.scanImageSpawner.execute(
