@@ -72,7 +72,7 @@ export class Server extends EventEmitter {
     logInfo(`Initiating scan on channel ${channel}...`);
 
     this.scanImageSpawner.execute(
-      "scanimage",
+      "sudo scanimage",
       this.#getScanimageArgs(channel),
       {
         detached: false,
