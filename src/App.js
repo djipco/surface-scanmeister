@@ -98,10 +98,10 @@ export default class App {
     await this.#updateScanners();
 
     // Start HTTP server and pass the list of available scanners
-    this.server = new Server(this.#scanners);
+    this.server = new Server();
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.server.addListener("error", this.#callbacks.onHttpServerError);
-    await this.server.start({port: config.http.port});
+    await this.server.start(this.scanners, {port: config.http.port});
     logInfo(`HTTP server listening on port ${config.http.port}.`)
 
     // Start sending OSC status messages
