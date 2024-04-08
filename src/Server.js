@@ -48,10 +48,10 @@ export class Server extends EventEmitter {
     ) {
       response.writeHead(400, { 'Content-Type': 'text/plain' });
       response.end('Invalid request');
+    console.log(this.#clients);
       return;
     }
 
-    console.log(this.#clients);
 
     // Send proper HTTP header (there's no official MIME type for PNM format)
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
