@@ -65,17 +65,21 @@ export class Server extends EventEmitter {
 
     // Quickly send answer in the form of a proper HTTP header (there's no official MIME type for
     // PNM format).
+    response.setHeader('Connection', 'close');
     response.writeHead(200, {'Content-Type': 'application/octet-stream'});
 
     // Retrieve scanner and set up callbacks
     const scanner = this.getScannerByChannel(channel);
     scanner.addOneTimeListener("scancompleted", () => {
+      response.end();
+      logInfo(`scancompleted`);
       request.removeAllListeners();
       scanner.removeListener("scancompleted");
       scanner.removeListener("error");
       this.destroyClient(client.id);
     });
     scanner.addOneTimeListener("error", err => {
+      response.end();
       logWarn("Could not complete the scan. Error: " + err);
       request.removeAllListeners();
       scanner.removeListener("scancompleted");
@@ -90,7 +94,6 @@ export class Server extends EventEmitter {
     request.once('close', () => {
       logInfo(`Client unexpectedly closed the request. Terminating.`);
       scanner.abort();
-      this.destroyClient(client.id);
     });
 
   }

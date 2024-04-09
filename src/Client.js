@@ -2,16 +2,17 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 
 export default class Client extends EventEmitter {
 
+  #callbacks = {};
+
   constructor(socket, options = {}) {
 
     super();
 
-    this.callbacks = {};
     this.channel = options.channel;     // defined only when a scan is ongoing
     this.socket = socket;
 
-    this.callbacks.onSocketClose = this.#onSocketClose.bind(this);
-    this.socket.once("close", this.callbacks.onSocketClose);
+    this.#callbacks.onSocketClose = this.#onSocketClose.bind(this);
+    this.socket.once("close", this.#callbacks.onSocketClose);
 
   }
 
@@ -24,32 +25,27 @@ export default class Client extends EventEmitter {
   }
 
   async #onSocketClose() {
-    // this.destroy();
+    this.destroy();
   }
 
   async destroy() {
 
-    // Remove all listeners from the client
+    // Remove all listeners from the Client object
     this.removeListener();
 
-    if (this.callbacks.onSocketClose) {
-      this.socket.off("close", this.callbacks.onSocketClose);
-      this.callbacks.onSocketClose = undefined;
+    if (this.#callbacks.onSocketClose) {
+      this.socket.off("close", this.#callbacks.onSocketClose);
+      this.#callbacks.onSocketClose = undefined;
     }
 
-    if (this.socket) this.socket.destroy();
+    if (this.socket) {
+      this.socket.destroy();
+      this.socket = undefined;
+    }
 
-    // if (this.scanSpawner) await this.scanSpawner.destroy();
-
-    this.callbacks = {};
+    this.#callbacks = {};
     this.channel = undefined;
-    // this.scanSpawner = undefined;
-    // this.socket = undefined;
-    //
-    // this.emit("destroy");
 
   }
 
 }
-
-

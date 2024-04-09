@@ -67,11 +67,11 @@ export class Scanner extends EventEmitter {
 
   get systemName() { return this.#systemName; }
 
-  async scan(options = {}) {
+  async scan(options = {outputFile: undefined}) {
 
     // Ignore if already scanning
     if (this.scanning) {
-      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring.`)
+      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring scan request.`)
       return;
     }
 
@@ -79,61 +79,6 @@ export class Scanner extends EventEmitter {
     this.#scanning = true;
     logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
-
-    // Prepare 'scanimage' args array
-    this.#scanArgs = [];
-
-    // The device name is optional. If not specified, the first found scanner will be used.
-    if (this.systemName) {
-      this.#scanArgs.push(`--device-name=${this.systemName}`);
-    }
-
-    // File format and output
-    if (config.operation.mode === "file") {
-      this.#scanArgs.push('--format=png');
-      if (options.outputFile) this.#scanArgs.push('--output-file=' + options.outputFile);
-    } else if (config.operation.mode === "tcp") {
-      this.#scanArgs.push('--format=pnm');
-    } else {
-      throw new Error(`Invalid operation mode: ${config.operation.mode}`)
-    }
-
-    // Color mode
-    this.#scanArgs.push('--mode=Color');
-
-    // Scanning bit depth (8-bit per channel, RGB)
-    this.#scanArgs.push('--depth=8');
-
-    // Scanning resolution
-    this.#scanArgs.push('--resolution=' + config.devices.resolution);
-
-    // Brightness (-100...100)
-    this.#scanArgs.push('--brightness=' + config.devices.brightness);
-
-    // Contrast (-100...100)
-    this.#scanArgs.push('--contrast=' + config.devices.contrast);
-
-    // Lamp off scan
-    if (config.devices.lampOffScan) {
-      this.#scanArgs.push('--lamp-off-scan=yes');
-    } else {
-      this.#scanArgs.push('--lamp-off-scan=no');
-    }
-
-    // Lamp off time
-    this.#scanArgs.push('--lamp-off-time=' + config.devices.lampOffTime);
-
-    // Prevent cached calibration from expiring (not sure what it does!)
-    this.#scanArgs.push('--expiration-time=-1');
-
-    // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    this.#scanArgs.push('--buffer-size=32');
-
-    // Geometry
-    this.#scanArgs.push('-l ' + config.devices.x);
-    this.#scanArgs.push('-t ' + config.devices.y);
-    this.#scanArgs.push('-x ' + config.devices.width);
-    this.#scanArgs.push('-y ' + config.devices.height);
 
     // If we are using the "tcp" mode, we create a TCP client and connect to server
     if (config.operation.mode === "tcp") {
@@ -160,7 +105,7 @@ export class Scanner extends EventEmitter {
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.#scanArgs,
+      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
       {
         detached: false,
         shell: false,
@@ -183,6 +128,66 @@ export class Scanner extends EventEmitter {
 
 
 
+
+  }
+
+  getScanCommandArgs(config, options = {outputFile: undefined}) {
+
+    const args = [];
+
+    // The device name is optional. If not specified, the first found scanner will be used.
+    if (this.systemName) {
+      args.push(`--device-name=${this.systemName}`);
+    }
+
+    // File format and output
+    if (config.operation.mode === "file") {
+      args.push('--format=png');
+      if (options.outputFile) args.push('--output-file=' + options.outputFile);
+    } else if (config.operation.mode === "tcp") {
+      args.push('--format=pnm');
+    } else {
+      throw new Error(`Invalid operation mode: ${config.operation.mode}`)
+    }
+
+    // Color mode
+    args.push('--mode=Color');
+
+    // Scanning bit depth (8-bit per channel, RGB)
+    args.push('--depth=8');
+
+    // Scanning resolution
+    args.push('--resolution=' + config.devices.resolution);
+
+    // Brightness (-100...100)
+    args.push('--brightness=' + config.devices.brightness);
+
+    // Contrast (-100...100)
+    args.push('--contrast=' + config.devices.contrast);
+
+    // Lamp off scan
+    if (config.devices.lampOffScan) {
+      args.push('--lamp-off-scan=yes');
+    } else {
+      args.push('--lamp-off-scan=no');
+    }
+
+    // Lamp off time
+    args.push('--lamp-off-time=' + config.devices.lampOffTime);
+
+    // Prevent cached calibration from expiring (not sure what it does!)
+    args.push('--expiration-time=-1');
+
+    // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
+    args.push('--buffer-size=32');
+
+    // Geometry
+    args.push('-l ' + config.devices.x);
+    args.push('-t ' + config.devices.y);
+    args.push('-x ' + config.devices.width);
+    args.push('-y ' + config.devices.height);
+
+    return args;
 
   }
 
@@ -219,7 +224,7 @@ export class Scanner extends EventEmitter {
   #onScanImageStderr(data) {
     this.#scanning = false;
     this.emit("error", data);
-    logError(`STDERR with ${this.description}: ${data}. Arguments: ${this.#scanArgs}`);
+    logError(`STDERR with ${this.description}: ${data}.`);
   }
 
   #onScanImageError(error) {
