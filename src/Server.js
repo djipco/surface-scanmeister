@@ -122,7 +122,7 @@ export class Server extends EventEmitter {
     this.#clients.forEach(async client => await client.destroy());
 
     // Stop all scanning processes
-    this.scanners.forEach(async scanner => await scanner.abort());
+    this.#scanners.forEach(async scanner => await scanner.abort());
 
     // Remove events and stop the HTTP Server
     if (this.#httpServer) {
