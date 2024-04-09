@@ -48,12 +48,13 @@ export class Server extends EventEmitter {
     // Retrieve scanner matching channel and check if it'is already in use.
     const scanner = this.getScannerByChannel(channel);
     if (scanner.scanning) {
-        logWarn(
-          `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
-          `was canceled because channel ${channel} is already in use.`
-        );
-        response.end('Channel already in use.', 'utf-8', request.socket.destroy());
-        return;
+      logWarn(
+        `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
+        `was canceled because channel ${channel} is already in use.`
+      );
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end('Channel already in use.', 'utf-8', request.socket.destroy());
+      return;
     }
 
     // If we make it here, the request is valid and so we create a new Client. A client corresponds
