@@ -62,6 +62,9 @@ export class Server extends EventEmitter {
 
     // If we make it here, the request is valid and so we create a new Client. A client corresponds
     // to a single, valid, remote connection.
+    logInfo(
+      `Valid equest received from ${request.socket.remoteAddress}:${request.socket.remotePort}.`
+    );
     const client = new Client(request.socket, {channel});
     this.#clients[client.id] = client;
 
