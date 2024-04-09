@@ -45,14 +45,15 @@ export class Server extends EventEmitter {
       return;
     }
 
-    // Check if channel is already in use
-    if (this.#clients.find(client => client.channel === channel)) {
-      logWarn(
-        `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} ` +
-        `was canceled because channel ${channel} is already in use.`
-      );
-      response.end('Channel already in use.', 'utf-8', request.socket.destroy());
-      return;
+    // Retrieve scanner matching channel and check if it'is already in use.
+    const scanner = this.getScannerByChannel(channel);
+    if (scanner.scanning) {
+        logWarn(
+          `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
+          `was canceled because channel ${channel} is already in use.`
+        );
+        response.end('Channel already in use.', 'utf-8', request.socket.destroy());
+        return;
     }
 
     // If we make it here, the request is valid and so we create a new Client. A client corresponds
@@ -69,10 +70,9 @@ export class Server extends EventEmitter {
     response.writeHead(200, {'Content-Type': 'application/octet-stream'});
 
     // Retrieve scanner and set up callbacks
-    const scanner = this.getScannerByChannel(channel);
+
     scanner.addOneTimeListener("scancompleted", () => {
       response.end();
-      logInfo(`scancompleted`);
       request.removeAllListeners();
       scanner.removeListener("scancompleted");
       scanner.removeListener("error");
