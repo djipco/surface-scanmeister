@@ -23,7 +23,7 @@ export class Server extends EventEmitter {
   }
 
   #onClientConnection(socket) {
-    logInfo(`New connection from ${socket.remoteAddress}:${socket.remotePort}.`);
+    // logInfo(`New connection from ${socket.remoteAddress}:${socket.remotePort}.`);
   }
 
   #onClientRequest(request, response)  {
@@ -75,6 +75,7 @@ export class Server extends EventEmitter {
 
 
     response.end("done")
+    console.log(this.#clients);
 
 
 
