@@ -16,14 +16,17 @@ export class Server extends EventEmitter {
   #clients = [];
   #httpServer = undefined;
   #scanners = undefined;
-  #spawners = [];
 
   constructor() {
     super();
   }
 
   #onClientConnection(socket) {
-    // logInfo(`New connection from ${socket.remoteAddress}:${socket.remotePort}.`);
+    // We need to watch the connection fr remote close
+  }
+
+  getScannerByChannel(channel) {
+    return this.#scanners.find(scanner => scanner.channel === channel);
   }
 
   #onClientRequest(request, response)  {
@@ -33,7 +36,7 @@ export class Server extends EventEmitter {
     const segments = url.pathname.split('/').slice(1);
 
     const command = segments[0];
-    const channel = parseInt(segments[1]) || 0;
+    const channel = parseInt(segments[1]);
 
     // Check validity of request (expecting /scan or /scan/x where x is the channel number expressed
     // as an int). When the channel is not specified, channel 0 is used.
@@ -68,65 +71,25 @@ export class Server extends EventEmitter {
     const client = new Client(request.socket, {channel});
     this.#clients[client.id] = client;
 
-    // // // Add callback
-    // // this.#callbacks.onClientDestroy = event => this.#onClientDestroy(event, client);
-    // // client.addListener("destroy", this.#callbacks.onClientDestroy);
-
     // Quickly send answer in the form of a proper HTTP header (there's no official MIME type for
     // PNM format).
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
 
-
-    response.end("done")
-    console.log(this.#clients);
-
-
-
-    // // Create the Spawner object
-    // this.#spawners[channel] = new Spawner();
-    // logInfo(`Initiating scan on channel ${channel} for client ${clientId}...`);
-    //
-    // // Define error callback
-    // const onScanError = async err => {
-    //   response.end('Failed to scan');
-    //   await this.#spawners[channel].destroy();
-    //   client.channel = undefined;
-    //   logWarn(`Could not execute scan command: ${err}`);
-    // }
-    //
-    // // Define success callback
-    // const onScanSuccess = () => {
-    //   client.channel = undefined;
-    //   logInfo(`Scan on channel ${channel} successfully completed.`);
-    // }
-    //
-    // client.scanSpawner.execute(
-    //   "scanimage",
-    //   this.#getScanimageArgs(channel),
-    //   {
-    //     detached: false,
-    //     shell: false,
-    //     sucessCallback: client.callbacks.onScanSuccess,
-    //     errorCallback: client.callbacks.onScanError,
-    //     stderrCallback: client.callbacks.onScanError
-    //   }
-    // );
-    //
-    // // Pipe the output to the response
-    // client.scanSpawner.pipe(response, "stdout");
+    // Scan!
+    const scanner = this.getScannerByChannel(channel);
+    scanner.addOneTimeListener("scancompleted", () => this.destroyClient(client.id));
+    scanner.addOneTimeListener("error", () => this.destroyClient(client.id));
+    scanner.scan({pipe: response});
 
   }
 
-  // async #onClientDestroy(event, client) {
-  //   delete this.#clients[client.id];
-  // }
-  //
-  // #onServerError(err) {
-  //   this.emit("error", `Cannot start HTTP server. ${err}.`);
-  // }
+  #onServerError(err) {
+    this.emit("error", `Cannot start HTTP server. ${err}.`);
+  }
 
   destroyClient(id) {
-
+    this.#clients[id].destroy();
+    delete this.#clients[id];
   }
 
   async start(scanners, options = {port: 5678}) {
@@ -146,8 +109,8 @@ export class Server extends EventEmitter {
     this.#httpServer.on('connection', this.#callbacks.onClientConnection);
     this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
     this.#httpServer.on("request", this.#callbacks.onClientRequest);
-    // this.#callbacks.onServerError = this.#onServerError.bind(this);
-    // this.#httpServer.on("error", this.#callbacks.onServerError);
+    this.#callbacks.onServerError = this.#onServerError.bind(this);
+    this.#httpServer.on("error", this.#callbacks.onServerError);
 
     // Start server
     await new Promise((resolve, reject) => {

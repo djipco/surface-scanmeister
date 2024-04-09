@@ -29,6 +29,9 @@ export default class Client extends EventEmitter {
 
   async destroy() {
 
+    // Remove all listeners from the client
+    this.removeListener();
+
     if (this.callbacks.onSocketClose) {
       this.socket.off("close", this.callbacks.onSocketClose);
       this.callbacks.onSocketClose = undefined;

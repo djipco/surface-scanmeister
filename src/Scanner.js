@@ -174,6 +174,16 @@ export class Scanner extends EventEmitter {
       this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
     }
 
+
+
+    // NEW!!
+    if (options.pipe) {
+      this.scanImageSpawner.pipe(options.pipe, "stdout");
+    }
+
+
+
+
   }
 
   async destroy() {
