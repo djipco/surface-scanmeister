@@ -186,7 +186,7 @@ export class Scanner extends EventEmitter {
 
   }
 
-  async destroy() {
+  async abort() {
 
     // Send OSC update
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
@@ -195,10 +195,16 @@ export class Scanner extends EventEmitter {
     if (this.scanImageSpawner) await this.scanImageSpawner.destroy();
     this.scanImageSpawner = undefined;
 
-    this.removeListener();
-
-    // For a little for OSC to be done sending
+    // Wait for a little for OSC to be done sending
     await new Promise(resolve => setTimeout(resolve, 25));
+
+  }
+
+  async destroy() {
+
+    await this.abort();
+
+    this.removeListener();
 
   }
 

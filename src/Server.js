@@ -1,35 +1,27 @@
 // Node.js standard imports
-import http from 'http';
+import http from 'node:http';
 
 // Application imports
-import {Spawner} from "./Spawner.js";
-import {Configuration as config} from "../config/Configuration.js";
 import {logError, logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import Client from "./Client.js";
 
 export class Server extends EventEmitter {
 
-  static COMMANDS = ["scan"];
+  // Static members
+  static COMMANDS = ["scan"];       // Valid commands (first part of the URL)
 
-  #callbacks = {};
-  #clients = [];
-  #httpServer = undefined;
-  #scanners = undefined;
+  // Private members
+  #callbacks = {};                  // callback functions used in this class
+  #clients = [];                    // List of clients that requested a scan
+  #httpServer = undefined;          // HTTP Server
+  #scanners = undefined;            // List of available scanners
 
   constructor() {
     super();
   }
 
-  #onClientConnection(socket) {
-    // We need to watch the connection fr remote close
-  }
-
-  getScannerByChannel(channel) {
-    return this.#scanners.find(scanner => scanner.channel === channel);
-  }
-
-  #onClientRequest(request, response)  {
+  #onHttpRequest(request, response)  {
 
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
@@ -64,32 +56,48 @@ export class Server extends EventEmitter {
     }
 
     // If we make it here, the request is valid and so we create a new Client. A client corresponds
-    // to a single, valid, remote connection.
+    // to a single, valid, remote connection which will be closed as soon as download is complete.
     logInfo(
-      `Valid equest received from ${request.socket.remoteAddress}:${request.socket.remotePort}.`
+      `Valid request received from ${request.socket.remoteAddress}:${request.socket.remotePort}.`
     );
     const client = new Client(request.socket, {channel});
     this.#clients[client.id] = client;
 
     // Quickly send answer in the form of a proper HTTP header (there's no official MIME type for
     // PNM format).
-    response.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+    response.writeHead(200, {'Content-Type': 'application/octet-stream'});
+
+    // Retrieve scanner and set up callbacks
+    const scanner = this.getScannerByChannel(channel);
+    scanner.addOneTimeListener("scancompleted", () => {
+      request.removeAllListeners();
+      scanner.removeListener("scancompleted");
+      scanner.removeListener("error");
+      this.destroyClient(client.id);
+    });
+    scanner.addOneTimeListener("error", err => {
+      logWarn("Could not complete the scan. Error: " + err);
+      request.removeAllListeners();
+      scanner.removeListener("scancompleted");
+      scanner.removeListener("error");
+      this.destroyClient(client.id);
+    });
 
     // Scan!
-    const scanner = this.getScannerByChannel(channel);
-    scanner.addOneTimeListener("scancompleted", () => this.destroyClient(client.id));
-    scanner.addOneTimeListener("error", () => this.destroyClient(client.id));
     scanner.scan({pipe: response});
+
+    // Watch if the client unexpectedly closes the request, in which case we must clean up.
+    request.once('close', () => {
+      logInfo(`Client unexpectedly closed the request. Terminating.`);
+      scanner.abort();
+      this.destroyClient(client.id);
+    });
 
   }
 
   #onServerError(err) {
-    this.emit("error", `Cannot start HTTP server. ${err}.`);
-  }
-
-  destroyClient(id) {
-    this.#clients[id].destroy();
-    delete this.#clients[id];
+    this.emit("error", `HTTP server error. ${err}.`);
+    this.quit();
   }
 
   async start(scanners, options = {port: 5678}) {
@@ -101,102 +109,59 @@ export class Server extends EventEmitter {
 
     this.#scanners = scanners;
 
-    // Create HTTP server
+    // Create HTTP server and add callbacks
     this.#httpServer = http.createServer();
-
-    // Add callbacks
-    this.#callbacks.onClientConnection = this.#onClientConnection.bind(this);
-    this.#httpServer.on('connection', this.#callbacks.onClientConnection);
-    this.#callbacks.onClientRequest = this.#onClientRequest.bind(this);
-    this.#httpServer.on("request", this.#callbacks.onClientRequest);
+    this.#callbacks.onHttpRequest = this.#onHttpRequest.bind(this);
+    this.#httpServer.on("request", this.#callbacks.onHttpRequest);
     this.#callbacks.onServerError = this.#onServerError.bind(this);
     this.#httpServer.on("error", this.#callbacks.onServerError);
 
     // Start server
     await new Promise((resolve, reject) => {
+
       this.#httpServer.listen(options.port, err => {
-        if (err) reject("Could not start HTTP server");
-        resolve();
+        if (err) {
+          reject("Could not start HTTP server. " + err);
+          this.quit();
+        } else {
+          resolve();
+        }
       });
+
     });
 
   }
 
-  // getScannerSystemName(channel) {
-  //   const scanner = this.#scanners.find(scanner => scanner.channel === channel);
-  //   if (scanner) return scanner.systemName;
-  // }
-  //
-  // #getScanimageArgs(channel) {
-  //
-  //   // Prepare 'scanimage' args array
-  //   const args = [];
-  //
-  //   // The device name is optional. If not specified, the first found scanner will be used.
-  //   const scannerSystemName = this.getScannerSystemName(channel);
-  //   if (scannerSystemName) args.push(`--device-name=${scannerSystemName}`);
-  //
-  //   // File format and output
-  //   args.push('--format=pnm');
-  //
-  //   // Color mode
-  //   args.push('--mode=Color');
-  //
-  //   // Scanning bit depth (8-bit per channel, RGB)
-  //   args.push('--depth=8');
-  //
-  //   // Scanning resolution
-  //   args.push('--resolution=' + config.devices.resolution);
-  //
-  //   // Brightness (-100...100)
-  //   args.push('--brightness=' + config.devices.brightness);
-  //
-  //   // Contrast (-100...100)
-  //   args.push('--contrast=' + config.devices.contrast);
-  //
-  //   // Lamp off scan
-  //   if (config.devices.lampOffScan) {
-  //     args.push('--lamp-off-scan=yes');
-  //   } else {
-  //     args.push('--lamp-off-scan=no');
-  //   }
-  //
-  //   // Lamp off time
-  //   args.push('--lamp-off-time=' + config.devices.lampOffTime);
-  //
-  //   // Prevent cached calibration from expiring (not sure what it does!)
-  //   args.push('--expiration-time=-1');
-  //
-  //   // Buffer size (default is 32kB)
-  //   args.push('--buffer-size=32');
-  //
-  //   // Geometry
-  //   args.push('-l ' + config.devices.x);
-  //   args.push('-t ' + config.devices.y);
-  //   args.push('-x ' + config.devices.width);
-  //   args.push('-y ' + config.devices.height);
-  //
-  //   return args;
-  //
-  // }
-  //
-  // quit() {
-  //
-  //   // Object.values(this.#scanProcesses).forEach(value => {
-  //   //   console.log(value);
-  //   // });
-  //
-  //   if (this.#httpServer) {
-  //     this.#httpServer.removeAllListeners();
-  //     this.#httpServer.close();
-  //     this.#httpServer.closeAllConnections();
-  //     this.#httpServer.unref();
-  //   }
-  //
-  //   this.#callbacks.onClientRequest = undefined;
-  //   this.#callbacks.onServerError = undefined;
-  //
-  // }
+  destroyClient(id) {
+    if (!this.#clients[id]) return;
+    this.#clients[id].destroy();
+    delete this.#clients[id];
+  }
+
+  getScannerByChannel(channel) {
+    return this.#scanners.find(scanner => scanner.channel === channel);
+  }
+
+  async quit() {
+
+    // Remove all listeners from the Server class
+    this.removeListener();
+
+    // Destroy all clients
+    this.#clients.forEach(async client => await client.destroy());
+
+    // Stop all scanning processes
+    this.scanners.forEach(async scanner => await scanner.abort());
+
+    // Remove events and stop the HTTP Server
+    if (this.#httpServer) {
+      this.#httpServer.removeAllListeners();
+      this.#httpServer.close();
+      this.#httpServer.closeAllConnections();
+      this.#httpServer.unref();
+    }
+
+  }
 
 }
 

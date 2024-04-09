@@ -33,6 +33,7 @@ export default class App {
   #oscPort;
   #scanners = [];
   #distanceSensorSpawner;
+  #server = undefined;
 
   constructor() {}
 
@@ -98,10 +99,10 @@ export default class App {
     await this.#updateScanners();
 
     // Start HTTP server and pass the list of available scanners
-    this.server = new Server();
+    this.#server = new Server();
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
-    this.server.addListener("error", this.#callbacks.onHttpServerError);
-    await this.server.start(this.scanners, {port: config.http.port});
+    this.#server.addListener("error", this.#callbacks.onHttpServerError);
+    await this.#server.start(this.scanners, {port: config.http.port});
     logInfo(`HTTP server listening on port ${config.http.port}.`)
 
     // Start sending OSC status messages
@@ -356,6 +357,12 @@ export default class App {
     // Kill distance sensor process
     if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
     this.#distanceSensorSpawner = undefined;
+
+    // Quit HTTP server
+    if (this.#server) {
+      await this.#server.quit();
+      this.#server = undefined;
+    }
 
     // Remove USB listeners
     usb.unrefHotplugEvents();
