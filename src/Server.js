@@ -92,6 +92,7 @@ export class Server extends EventEmitter {
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.
     request.once('close', () => {
+      response.end();
       logInfo(`Client unexpectedly closed the request. Terminating.`);
       scanner.abort();
     });

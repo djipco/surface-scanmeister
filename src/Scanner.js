@@ -193,6 +193,8 @@ export class Scanner extends EventEmitter {
 
   async abort() {
 
+    this.#scanning = false;
+
     // Send OSC update
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
 
@@ -221,8 +223,8 @@ export class Scanner extends EventEmitter {
     }
   }
 
-  #onScanImageStderr(data) {
-    this.#scanning = false;
+  async #onScanImageStderr(data) {
+    this.abort();
     this.emit("error", data);
     logError(`STDERR with ${this.description}: ${data}.`);
   }
