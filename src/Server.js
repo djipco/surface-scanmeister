@@ -28,7 +28,7 @@ export class Server extends EventEmitter {
     const segments = url.pathname.split('/').slice(1);
 
     const command = segments[0];
-    const channel = parseInt(segments[1]);
+    const channel = parseInt(segments[1]) || 1;
 
     // Check validity of request (expecting /scan or /scan/x where x is the channel number expressed
     // as an int). When the channel is not specified, channel 0 is used.
@@ -120,8 +120,6 @@ export class Server extends EventEmitter {
   }
 
   getScannerByChannel(channel) {
-    this.#scanners.forEach(s => console.log(s.channel));
-
     return this.#scanners.find(scanner => scanner.channel === channel);
   }
 
