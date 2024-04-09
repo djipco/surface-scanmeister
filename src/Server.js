@@ -53,7 +53,8 @@ export class Server extends EventEmitter {
         `was canceled because channel ${channel} is already in use.`
       );
       response.writeHead(400, {'Content-Type': 'text/plain'});
-      response.end('Channel already in use.', 'utf-8', request.socket.destroy());
+      // response.end('Channel already in use.', 'utf-8', request.socket.destroy());
+      response.end('Channel already in use.');
       return;
     }
 
