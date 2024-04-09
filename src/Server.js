@@ -41,19 +41,26 @@ export class Server extends EventEmitter {
         `Closing connection.`
       );
       response.writeHead(400, {'Content-Type': 'text/plain'});
-      response.end('Invalid request', 'utf-8', request.socket.destroy());
+      response.end('Invalid request');
       return;
     }
 
     // Retrieve scanner matching channel and check if it'is already in use.
     const scanner = this.getScannerByChannel(channel);
-    if (scanner.scanning) {
+    if (!scanner) {
+      logWarn(
+        `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
+        `was canceled because channel ${channel} is out of bounds.`
+      );
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end('Channel out of bounds.');
+      return;
+    } else if (scanner.scanning) {
       logWarn(
         `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
         `was canceled because channel ${channel} is already in use.`
       );
       response.writeHead(400, {'Content-Type': 'text/plain'});
-      // response.end('Channel already in use.', 'utf-8', request.socket.destroy());
       response.end('Channel already in use.');
       return;
     }
