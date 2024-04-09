@@ -120,6 +120,8 @@ export class Server extends EventEmitter {
   }
 
   getScannerByChannel(channel) {
+    this.#scanners.forEach(s => console.log(s.channel));
+
     return this.#scanners.find(scanner => scanner.channel === channel);
   }
 
