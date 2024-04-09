@@ -100,6 +100,37 @@ export class Server extends EventEmitter {
     this.quit();
   }
 
+  destroyClient(id) {
+    if (!this.#clients[id]) return;
+    this.#clients[id].destroy();
+    delete this.#clients[id];
+  }
+
+  getScannerByChannel(channel) {
+    return this.#scanners.find(scanner => scanner.channel === channel);
+  }
+
+  async quit() {
+
+    // Remove all listeners from the Server class
+    this.removeListener();
+
+    // Destroy all clients
+    this.#clients.forEach(async client => await client.destroy());
+
+    // Stop all scanning processes
+    this.scanners.forEach(async scanner => await scanner.abort());
+
+    // Remove events and stop the HTTP Server
+    if (this.#httpServer) {
+      this.#httpServer.removeAllListeners();
+      this.#httpServer.close();
+      this.#httpServer.closeAllConnections();
+      this.#httpServer.unref();
+    }
+
+  }
+
   async start(scanners, options = {port: 5678}) {
 
     if (!Array.isArray(scanners)) {
@@ -132,39 +163,4 @@ export class Server extends EventEmitter {
 
   }
 
-  destroyClient(id) {
-    if (!this.#clients[id]) return;
-    this.#clients[id].destroy();
-    delete this.#clients[id];
-  }
-
-  getScannerByChannel(channel) {
-    return this.#scanners.find(scanner => scanner.channel === channel);
-  }
-
-  async quit() {
-
-    // Remove all listeners from the Server class
-    this.removeListener();
-
-    // Destroy all clients
-    this.#clients.forEach(async client => await client.destroy());
-
-    // Stop all scanning processes
-    this.scanners.forEach(async scanner => await scanner.abort());
-
-    // Remove events and stop the HTTP Server
-    if (this.#httpServer) {
-      this.#httpServer.removeAllListeners();
-      this.#httpServer.close();
-      this.#httpServer.closeAllConnections();
-      this.#httpServer.unref();
-    }
-
-  }
-
 }
-
-
-
-
