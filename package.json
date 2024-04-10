@@ -16,6 +16,7 @@
     "fs-extra": "^11.2.0",
     "osc": "^2.4.4",
     "samba-client": "^7.2.0",
+    "serialport": "^12.0.0",
     "usb": "^2.11.0",
     "winston": "^3.10.0",
     "winston-daily-rotate-file": "^4.7.1"

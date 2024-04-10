@@ -13,6 +13,7 @@ import {ScannerMappings} from "../config/ScannerMappings.js";
 import {Server} from "./Server.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
+import {LightSensors} from "./LightSensors.js";
 
 export default class App {
 
@@ -148,7 +149,13 @@ export default class App {
         stderrCallback: this.#onDistanceSensorError.bind(this),
         dataCallback: this.#onDistanceSensorData.bind(this)
       }
-    )
+    );
+
+  }
+
+  async #activateLightSensors() {
+    this.lightSensors = new LightSensors();
+    await this.lightSensors.start();
   }
 
   #onDistanceSensorError(err) {
