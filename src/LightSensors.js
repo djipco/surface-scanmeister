@@ -28,19 +28,18 @@ export class LightSensors extends EventEmitter {
 
   async start() {
 
+    // Fetch the port Arduino is connected to
     const ports = await SerialPort.list();
-    logInfo(ports);
-    // // const arduinoPort = ports.find(port => port.manufacturer?.includes('Arduino'));
-    // // return arduinoPort ? arduinoPort.path : null;
+    const port = ports.find(port => port.manufacturer?.includes('Arduino'));
 
     // Set up serial connection and line parser and listen to 'data' events
     try {
-      this.#port = new SerialPort({path: '/dev/ttyACM0', baudRate: 115200});
+      this.#port = new SerialPort({path: port, baudRate: 115200});
       this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
       this.#callbacks.onData = this.#onData.bind(this);
       this.#parser.on('data', this.#callbacks.onData);
     } catch (err) {
-      logWarn(`Could not access Arduino.}`);
+      logWarn(`Could not access Arduino on port ${port}`);
     }
 
   }

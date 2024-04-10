@@ -158,6 +158,13 @@ export default class App {
   async #activateLightSensors() {
     this.lightSensors = new LightSensors();
     await this.lightSensors.start();
+
+    this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);
+    this.lightSensors.addListener("data", )
+  }
+
+  #onLightSensorsData(data) {
+    logInfo(data);
   }
 
   #onDistanceSensorError(err) {
