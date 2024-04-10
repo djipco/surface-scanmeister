@@ -160,7 +160,7 @@ export default class App {
     await this.lightSensors.start();
 
     this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);
-    this.lightSensors.addListener("data", )
+    this.lightSensors.addListener("data", this.#callbacks.onLightSensorsData);
   }
 
   #onLightSensorsData(data) {
