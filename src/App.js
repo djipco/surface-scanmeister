@@ -117,7 +117,7 @@ export default class App {
     usb.on("detach", this.#callbacks.onUsbDetach);
 
     // Start background Python distance transmitter process
-    this.#activateDistanceSensors();
+    // this.#activateDistanceSensors();
 
     await this.#activateLightSensors();
 
@@ -168,6 +168,8 @@ export default class App {
   }
 
   #onLightSensorsData(data) {
+
+    console.log(data);
 
     data.forEach((value, index) => {
       this.sendOscMessage(`/sensor/${index+1}/luminosity`, [{type: "f", value: value}]);
