@@ -32,9 +32,11 @@ export class LightSensors extends EventEmitter {
     const ports = await SerialPort.list();
     const port = ports.find(port => port.manufacturer?.includes('Arduino'));
 
+    console.log(port.path);
+
     // Set up serial connection and line parser and listen to 'data' events
     try {
-      this.#port = new SerialPort({path: port, baudRate: 115200});
+      this.#port = new SerialPort({path: port.path, baudRate: 115200});
       this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
       this.#callbacks.onData = this.#onData.bind(this);
       this.#parser.on('data', this.#callbacks.onData);
