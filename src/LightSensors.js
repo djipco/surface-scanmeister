@@ -41,7 +41,7 @@ export class LightSensors extends EventEmitter {
       logError(e);
     }
 
-    Listen for 'data' event
+    // Listen for 'data' event
     this.#callbacks.onData = this.#onData.bind(this);
     this.#parser.on('data', this.#callbacks.onData);
 
