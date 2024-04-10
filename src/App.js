@@ -160,7 +160,6 @@ export default class App {
     // Create object and start
     this.lightSensors = new LightSensors();
     await this.lightSensors.start();
-    logInfo(`Light sensors activated via port ${this.lightSensors.port.path}`);
 
     // Add callback
     this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);
@@ -380,6 +379,12 @@ export default class App {
   async quit(status = 0, exit = true) {
 
     logInfo("Exiting...");
+
+    if (this.lightSensors) {
+      this.lightSensors.quit();
+      this.lightSensors.removeListener("data", this.#callbacks.onLightSensorsData);
+      this.#callbacks.onLightSensorsData = undefined;
+    }
 
     // Kill distance sensor process
     if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();

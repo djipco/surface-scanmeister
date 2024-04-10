@@ -1,5 +1,5 @@
 // Application imports
-import {logError, logInfo, logWarn} from "./Logger.js";
+import {logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
 import {SerialPort} from 'serialport';
@@ -36,21 +36,21 @@ export class LightSensors extends EventEmitter {
     const ports = await SerialPort.list();
     const port = ports.find(port => port.manufacturer?.includes('Arduino'));
 
-    console.log(port.path);
-
     // Set up serial connection and line parser and listen to 'data' events
     try {
       this.#port = new SerialPort({path: port.path, baudRate: 115200});
       this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
       this.#callbacks.onData = this.#onData.bind(this);
       this.#parser.on('data', this.#callbacks.onData);
+      logInfo(`Light sensors activated via port ${this.lightSensors.port.path}.`);
     } catch (err) {
-      logWarn(`Could not access Arduino on port ${port}`);
+      logWarn(`Could not access Arduino via port ${port}. Light sensors are not available.`);
     }
 
   }
 
   quit() {
+    this.removeListener();
     this.#parser.off('data', this.#callbacks.onData);
     this.#callbacks.onData = undefined;
   }
