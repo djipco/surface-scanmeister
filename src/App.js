@@ -119,7 +119,7 @@ export default class App {
     // Start background Python distance transmitter process
     this.#activateDistanceSensors();
 
-    await this.#activateLightSensors();
+    // await this.#activateLightSensors();
 
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
     // information to be written. In that sense, CTRL-C is better.
