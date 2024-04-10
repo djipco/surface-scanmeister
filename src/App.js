@@ -471,7 +471,7 @@ export default class App {
   }
 
   sendOscMessage(address, args = []) {
-    if (!this.#oscPort.socket) {
+    if (!this.#oscPort || !this.#oscPort.socket) {
       logWarn("Impossible to send OSC, no socket available.")
       return;
     }
