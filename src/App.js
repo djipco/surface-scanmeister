@@ -7,13 +7,13 @@ import { usb } from 'usb';
 
 // Import project classes
 import {Configuration as config} from "../config/Configuration.js";
+import {LightSensors} from "./LightSensors.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Scanner} from './Scanner.js';
 import {ScannerMappings} from "../config/ScannerMappings.js";
 import {Server} from "./Server.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
-import {LightSensors} from "./LightSensors.js";
 
 export default class App {
 

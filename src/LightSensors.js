@@ -29,7 +29,7 @@ export class LightSensors extends EventEmitter {
   async start() {
 
     const ports = await SerialPort.list();
-    logInfo(ports);
+    logInfo('coucou', ports);
 
 
     // // This example filters based on the manufacturer name. Adjust as needed.
