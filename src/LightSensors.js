@@ -37,13 +37,12 @@ export class LightSensors extends EventEmitter {
     try {
       this.#port = new SerialPort('/dev/ttyACM0', {baudRate: 115200});
       this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
+      // Listen for 'data' event
+      this.#callbacks.onData = this.#onData.bind(this);
+      this.#parser.on('data', this.#callbacks.onData);
     } catch (e) {
       logError(e);
     }
-
-    // Listen for 'data' event
-    this.#callbacks.onData = this.#onData.bind(this);
-    this.#parser.on('data', this.#callbacks.onData);
 
   }
 
