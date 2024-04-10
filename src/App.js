@@ -156,15 +156,23 @@ export default class App {
   }
 
   async #activateLightSensors() {
+
+    // Create object and start
     this.lightSensors = new LightSensors();
     await this.lightSensors.start();
 
+    // Add callback
     this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);
     this.lightSensors.addListener("data", this.#callbacks.onLightSensorsData);
+
   }
 
   #onLightSensorsData(data) {
-    logInfo(data);
+
+    data.forEach((value, index) => {
+      this.sendOscMessage(`/sensor/${index+1}/luminosity`, [{type: "f", value: value}]);
+    });
+
   }
 
   #onDistanceSensorError(err) {
