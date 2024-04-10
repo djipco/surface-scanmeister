@@ -160,6 +160,7 @@ export default class App {
     // Create object and start
     this.lightSensors = new LightSensors();
     await this.lightSensors.start();
+    logInfo(`Light sensors activated via port ${this.lightSensors.port.path}`);
 
     // Add callback
     this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);

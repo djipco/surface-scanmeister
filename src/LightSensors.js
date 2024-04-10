@@ -26,6 +26,10 @@ export class LightSensors extends EventEmitter {
     return this.#values;
   }
 
+  get port() {
+    return this.#port;
+  }
+
   async start() {
 
     // Fetch the port Arduino is connected to
