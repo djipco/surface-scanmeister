@@ -34,12 +34,16 @@ export class LightSensors extends EventEmitter {
     // // return arduinoPort ? arduinoPort.path : null;
 
     // Set up serial connection and line parser
-    this.#port = new SerialPort('/dev/ttyACM0', {baudRate: 115200});
-    // this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
+    try {
+      this.#port = new SerialPort('/dev/ttyACM0', {baudRate: 115200});
+      this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
+    } catch (e) {
+      logError(e);
+    }
 
-    // Listen for 'data' event
-    // this.#callbacks.onData = this.#onData.bind(this);
-    // this.#parser.on('data', this.#callbacks.onData);
+    Listen for 'data' event
+    this.#callbacks.onData = this.#onData.bind(this);
+    this.#parser.on('data', this.#callbacks.onData);
 
   }
 
