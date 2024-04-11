@@ -36,7 +36,7 @@ void loop() {
 
     // Get value and print it
     values[i] = readPhotoresistor(i);
-    Serial.print(values[i], 3);
+    Serial.print(values[i], 2);
 
     // Print separator (except after last value where we print \n)
     if (i < NUMBER_OF_INPUTS - 1) {
