@@ -23,6 +23,8 @@ export class Server extends EventEmitter {
 
   #onHttpRequest(request, response)  {
 
+    console.log(request);
+
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
