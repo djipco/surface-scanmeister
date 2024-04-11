@@ -216,7 +216,7 @@ export class Scanner extends EventEmitter {
   }
 
   #onTcpSocketError(error) {
-    if (error.code === "EHOSTUNREACH") {
+    if (error.code === "EHOSTUNREACH" || error.code === "ECONNREFUSED") {
       logWarn(`Unable to open TCP connection to ${error.address}:${error.port}.`)
     } else {
       logWarn(error);
