@@ -169,8 +169,6 @@ export default class App {
 
   #onLightSensorsData(data) {
 
-    console.log(data);
-
     data.forEach((value, index) => {
       this.sendOscMessage(`/sensor/${index+1}/luminosity`, [{type: "f", value: value}]);
     });

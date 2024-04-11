@@ -1,5 +1,5 @@
 // Configuration
-const int DELAY = 25;
+const int DELAY = 50;
 const int NUMBER_OF_INPUTS = 6;
 
 // Variables
@@ -25,7 +25,7 @@ float readPhotoresistor(int pin) {
   }
 
   return mappedValue / 1023.0;
-  
+
 }
 
 // Loop

@@ -5,7 +5,6 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 import {SerialPort} from 'serialport';
 import {ReadlineParser} from '@serialport/parser-readline';
 
-
 export class LightSensors extends EventEmitter {
 
   #callbacks = {};
