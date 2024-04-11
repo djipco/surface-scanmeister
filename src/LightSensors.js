@@ -41,7 +41,7 @@ export class LightSensors extends EventEmitter {
       this.#parser = this.#port.pipe(new ReadlineParser({delimiter: '\n'}));
       this.#callbacks.onData = this.#onData.bind(this);
       this.#parser.on('data', this.#callbacks.onData);
-      logInfo(`Light sensors activated via port ${this.lightSensors.port.path}.`);
+      logInfo(`Light sensors activated via port ${port.path}.`);
     } catch (err) {
       console.log(err);
       logWarn(`Could not access Arduino via port ${port.path}. Light sensors are not available.`);
