@@ -119,15 +119,39 @@ export class Scanner extends EventEmitter {
       this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
     }
 
+  }
 
+  async scanWithHttp(options = {outputFile: undefined}) {
 
-    // NEW!!
+    // Ignore if already scanning
+    if (this.scanning) {
+      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring scan request.`)
+      return;
+    }
+
+    // Start scan
+    this.#scanning = true;
+    logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
+    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
+
+    // Initiate scanning
+    this.scanImageSpawner = new Spawner();
+
+    this.scanImageSpawner.execute(
+      "scanimage",
+      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
+      {
+        detached: false,
+        shell: false,
+        sucessCallback: this.#onScanImageEnd.bind(this),
+        errorCallback: this.#onScanImageError.bind(this),
+        stderrCallback: this.#onScanImageStderr.bind(this)
+      }
+    );
+
     if (options.pipe) {
       this.scanImageSpawner.pipe(options.pipe, "stdout");
     }
-
-
-
 
   }
 
