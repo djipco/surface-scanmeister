@@ -17,7 +17,11 @@ export default class Client extends EventEmitter {
   }
 
   get id() {
-    return `${this.socket.remoteAddress}:${this.socket.remotePort}`;
+    if (this.socket) {
+      return `${this.socket.remoteAddress}:${this.socket.remotePort}`;
+    } else {
+      return undefined;
+    }
   }
 
   get scanning() {
