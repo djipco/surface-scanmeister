@@ -1,21 +1,11 @@
 export const Configuration = {
 
   paths: {
-    images: './scans',                // Directory where scans should be saved (in "file" mode)
-    logs: "./logs"                    // Directory where logfiles should be saved
-  },
-
-  operation: {
-    mode: 'tcp'                     // Save scan locally (file) or stream them via network (tcp), or http (new)
-  },
-
-  tcp: {
-    address: "10.0.0.200",          // Address of the remote TCP socket server to stream images to
-    port: "1234"                    // Port of the remote server
+    logs: "./logs"                  // Directory where logfiles should be saved
   },
 
   http: {
-    port: 5678                    // Port must be between 1024 and 65538
+    port: 5678                      // Port must be between 1024 and 65535
   },
 
   osc: {

@@ -97,7 +97,7 @@ export class Server extends EventEmitter {
     });
 
     // Scan!
-    scanner.scanWithHttp({pipe: response});
+    scanner.scan({pipe: response});
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.
     request.once('close', () => {

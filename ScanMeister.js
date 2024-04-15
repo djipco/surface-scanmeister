@@ -12,7 +12,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 
 // Check if the current working directory is the one where ScanMeister.js resides. If not (such as
-// when started from systemd) we change it.
+// when started from systemd),s change it.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

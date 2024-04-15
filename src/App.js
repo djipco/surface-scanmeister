@@ -1,5 +1,5 @@
 // Import Node.js modules
-import fs from "fs-extra";
+// import fs from "fs-extra";
 import osc from "osc";
 import process from "node:process";
 import { readFile } from 'fs/promises';
@@ -18,7 +18,7 @@ import {Spawner} from "./Spawner.js";
 export default class App {
 
   // Valid OSC commands to respond to
-  static OSC_COMMANDS = ["scan", "reboot"];
+  static OSC_COMMANDS = ["reboot"];
 
   // Termination signals to respond to
   static EXIT_SIGNALS = [
@@ -48,7 +48,7 @@ export default class App {
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
     // Log start details
-    logInfo(`Starting ${pkg.title} v${pkg.version} in '${config.operation.mode}' mode...`);
+    logInfo(`Starting ${pkg.title} v${pkg.version}...`);
 
     // Check platform
     if (process.platform !== "linux") {
@@ -57,27 +57,22 @@ export default class App {
       return;
     }
 
-    // Log details for specific mode
-    if (config.operation.mode === "tcp"){
-
-      logInfo(`Sendind images to ${config.tcp.address}:${config.tcp.port}.`);
-
-    } else if (config.operation.mode === "file") {
-
-      // Check if the directory to save images in can be found (in "file" mode)
-      try {
-        await fs.ensureDir(config.paths.images);
-      } catch (err) {
-        logError(
-          `The directory to save images in cannot be created (${config.paths.images})`
-        );
-        await this.quit(1);
-        return;
-      }
-
-      logInfo(`Saving images to '${config.paths.images}'.`);
-
-    }
+    // if (config.operation.mode === "file") {
+    //
+    //   // Check if the directory to save images in can be found (in "file" mode)
+    //   try {
+    //     await fs.ensureDir(config.paths.images);
+    //   } catch (err) {
+    //     logError(
+    //       `The directory to save images in cannot be created (${config.paths.images})`
+    //     );
+    //     await this.quit(1);
+    //     return;
+    //   }
+    //
+    //   logInfo(`Saving images to '${config.paths.images}'.`);
+    //
+    // }
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
     // reference to the OSC object to send status.
@@ -99,14 +94,15 @@ export default class App {
     // Update scanners list
     await this.#updateScanners();
 
-    // Start HTTP server and pass the list of available scanners
+    // Start HTTP server and call its start() method passing a reference to the list of available
+    // scanners
     this.#server = new Server();
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.#server.addListener("error", this.#callbacks.onHttpServerError);
     await this.#server.start(this.scanners, {port: config.http.port});
     logInfo(`HTTP server listening on port ${config.http.port}.`)
 
-    // Start sending OSC status messages
+    // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
     this.#intervals.status = setInterval(this.#callbacks.onStatusInterval, 1000);
 
@@ -118,7 +114,6 @@ export default class App {
 
     // Start background Python distance transmitter process
     // this.#activateDistanceSensors();
-
     await this.#activateLightSensors();
 
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
@@ -533,28 +528,8 @@ export default class App {
       return;
     }
 
-    // Fetch device index
-    const channel = parseInt(segments[1]);
-
     // Execute command
-    if (command === "scan") {
-
-      // Find scanner by port
-      const scanner = this.getScannerByChannel(channel);
-      if (!scanner) {
-        logWarn(
-          "Unable to execute OSC command: no device tied to requested channel (" +
-          message.address + ")."
-        );
-        return;
-      }
-
-      const options = {
-        outputFile: config.paths.images + `/scanner${channel}.png`
-      }
-      scanner.scan(options);
-
-    } else if (command === "reboot") {
+    if (command === "reboot") {
 
       logInfo("Reboot requested by remote...");
 

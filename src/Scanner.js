@@ -1,5 +1,4 @@
 // Node.js modules
-import net from "net";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
 // Project classes
@@ -80,66 +79,12 @@ export class Scanner extends EventEmitter {
     logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
-    // If we are using the "tcp" mode, we create a TCP client and connect to server
-    if (config.operation.mode === "tcp") {
-
-      await new Promise(resolve => {
-
-        this.tcpSocket = net.createConnection(
-          { port: config.tcp.port, host: config.tcp.address },
-          resolve
-        );
-
-        this.#callbacks.onTcpSocketError = this.#onTcpSocketError.bind(this);
-        this.tcpSocket.on("error", this.#callbacks.onTcpSocketError);
-
-      });
-
-      // Send the device's hardware port so TD knows which scanners it's receiving from
-      this.tcpSocket.write("# Channel = " + this.channel + "\n");
-
-    }
-
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
-      {
-        detached: false,
-        shell: false,
-        sucessCallback: this.#onScanImageEnd.bind(this),
-        errorCallback: this.#onScanImageError.bind(this),
-        stderrCallback: this.#onScanImageStderr.bind(this)
-      }
-    );
-
-    if (config.operation.mode === "tcp") {
-      this.scanImageSpawner.pipe(this.tcpSocket, "stdout");
-    }
-
-  }
-
-  async scanWithHttp(options = {outputFile: undefined}) {
-
-    // Ignore if already scanning
-    if (this.scanning) {
-      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring scan request.`)
-      return;
-    }
-
-    // Start scan
-    this.#scanning = true;
-    logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
-    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
-
-    // Initiate scanning
-    this.scanImageSpawner = new Spawner();
-
-    this.scanImageSpawner.execute(
-      "scanimage",
-      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
+      this.getScanCommandArgs(config),
       {
         detached: false,
         shell: false,
@@ -155,23 +100,13 @@ export class Scanner extends EventEmitter {
 
   }
 
-  getScanCommandArgs(config, options = {outputFile: undefined}) {
+  getScanCommandArgs(config) {
 
     const args = [];
 
     // The device name is optional. If not specified, the first found scanner will be used.
     if (this.systemName) {
       args.push(`--device-name=${this.systemName}`);
-    }
-
-    // File format and output
-    if (config.operation.mode === "file") {
-      args.push('--format=png');
-      if (options.outputFile) args.push('--output-file=' + options.outputFile);
-    } else if (config.operation.mode === "tcp") {
-      args.push('--format=pnm');
-    } else {
-      throw new Error(`Invalid operation mode: ${config.operation.mode}`)
     }
 
     // Color mode
