@@ -360,7 +360,7 @@ export default class App {
 
     } else {
 
-      logInfo(`Assigning channels according to port hierarchy.`);
+      logInfo(`Assigning channels according to port hierarchy (no mapping used)`);
       scannerDescriptors.forEach((descriptor, index) => descriptor.channel = index + 1)
 
     }

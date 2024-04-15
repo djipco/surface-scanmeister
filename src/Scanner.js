@@ -84,7 +84,7 @@ export class Scanner extends EventEmitter {
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.getScanCommandArgs(config),
+      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
       {
         detached: false,
         shell: false,
@@ -105,9 +105,10 @@ export class Scanner extends EventEmitter {
     const args = [];
 
     // The device name is optional. If not specified, the first found scanner will be used.
-    if (this.systemName) {
-      args.push(`--device-name=${this.systemName}`);
-    }
+    if (this.systemName) args.push(`--device-name=${this.systemName}`);
+
+    // File format
+    args.push('--format=pnm');
 
     // Color mode
     args.push('--mode=Color');
