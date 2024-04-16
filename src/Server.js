@@ -144,7 +144,7 @@ export class Server extends EventEmitter {
 
   }
 
-  async start(scanners, options = {host: "0.0.0.0", port: 5678}) {
+  async start(scanners, options = {address: "0.0.0.0", port: 5678}) {
 
     if (!Array.isArray(scanners)) {
       logError("An array of Scanner objects must be specified to start the Server.");

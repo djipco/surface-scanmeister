@@ -57,23 +57,6 @@ export default class App {
       return;
     }
 
-    // if (config.operation.mode === "file") {
-    //
-    //   // Check if the directory to save images in can be found (in "file" mode)
-    //   try {
-    //     await fs.ensureDir(config.paths.images);
-    //   } catch (err) {
-    //     logError(
-    //       `The directory to save images in cannot be created (${config.paths.images})`
-    //     );
-    //     await this.quit(1);
-    //     return;
-    //   }
-    //
-    //   logInfo(`Saving images to '${config.paths.images}'.`);
-    //
-    // }
-
     // Set up OSC. This must be done before updating the scanners list because scanners need a
     // reference to the OSC object to send status.
     try {
@@ -99,8 +82,8 @@ export default class App {
     this.#server = new Server();
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.#server.addListener("error", this.#callbacks.onHttpServerError);
-    await this.#server.start(this.scanners, {port: config.http.port});
-    logInfo(`HTTP server listening on port ${config.http.port}.`)
+    await this.#server.start(this.scanners, {address: config.http.address, port: config.http.port});
+    logInfo(`HTTP server listening on ${config.http.address}:${config.http.port}.`)
 
     // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
