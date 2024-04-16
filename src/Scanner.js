@@ -137,7 +137,7 @@ export class Scanner extends EventEmitter {
     args.push('--expiration-time=-1');
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    args.push('--buffer-size=128');
+    args.push('--buffer-size=32');
 
     // Geometry
     args.push('-l ' + config.devices.x);
