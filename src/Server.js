@@ -144,7 +144,7 @@ export class Server extends EventEmitter {
 
   }
 
-  async start(scanners, options = {port: 5678}) {
+  async start(scanners, options = {host: "0.0.0.0", port: 5678}) {
 
     if (!Array.isArray(scanners)) {
       logError("An array of Scanner objects must be specified to start the Server.");
@@ -163,7 +163,7 @@ export class Server extends EventEmitter {
     // Start server
     await new Promise((resolve, reject) => {
 
-      this.#httpServer.listen(options.port, err => {
+      this.#httpServer.listen(options, err => {
         if (err) {
           reject("Could not start HTTP server. " + err);
           this.quit();
