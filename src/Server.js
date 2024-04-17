@@ -23,6 +23,12 @@ export class Server extends EventEmitter {
 
   #onHttpRequest(request, response)  {
 
+    // Set headers for CORS
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Request-Method', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+    response.setHeader('Access-Control-Allow-Headers', '*');
+
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
