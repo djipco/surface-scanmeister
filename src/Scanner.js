@@ -8,14 +8,12 @@ import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
-  #callbacks = {};      // Object to store callbacks defined internally
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
   #manufacturer;        // Manufacturer name of the device
   #model;               // Model name of the device
   #osc;                 // OSC port object for communication
   #ports = []           // Hierarchy of USB ports (as array)
-  #scanArgs;            // Arguments passed to 'scanimage' (kept for error reporting)
   #scanning = false;    // Whether the device is currently scanning
   #systemName;          // System name (e.g. genesys:libusb:001:071)
 
@@ -173,14 +171,6 @@ export class Scanner extends EventEmitter {
 
     this.removeListener();
 
-  }
-
-  #onTcpSocketError(error) {
-    if (error.code === "EHOSTUNREACH" || error.code === "ECONNREFUSED") {
-      logWarn(`Unable to open TCP connection to ${error.address}:${error.port}.`)
-    } else {
-      logWarn(error);
-    }
   }
 
   async #onScanImageStderr(data) {
