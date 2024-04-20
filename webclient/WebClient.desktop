@@ -2,7 +2,7 @@
 Type=Application
 Name=WebClient
 Comment=Surface WebClient application
-Exec=bash -c "cd %k; node ScanMeister.js; read"
+Exec=bash -c "cd %k; nwjs/nw .; read"
 Icon=obconf
 Terminal=true
 Categories=Utility

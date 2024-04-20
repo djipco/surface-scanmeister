@@ -7,3 +7,6 @@
 
 # Images directory
 /scans/*
+
+# NW.js Application (different on different platforms)
+/webclient/nwjs
