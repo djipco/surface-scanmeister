@@ -198,7 +198,9 @@ export class Server extends EventEmitter {
       '.html': 'text/html',
       '.css': 'text/css',
       '.js': 'application/javascript',
+      '.ico': 'image/x-icon',
       '.json': 'application/json',
+      '.map': 'application/json',
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
       '.gif': 'image/gif',
@@ -215,7 +217,7 @@ export class Server extends EventEmitter {
     const fileExt = path.extname(filePath);
     const mimeType = mimeTypes[fileExt];
 
-    console.log(filePath);
+    console.log(fileUrl, filePath);
 
     // If it's not the right file extension, let the default process handle it
     // if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
