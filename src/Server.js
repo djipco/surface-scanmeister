@@ -205,7 +205,6 @@ export class Server extends EventEmitter {
       '.svg': 'image/svg+xml'
     };
 
-    console.log(filePath);
 
     // If it's not the GET method, let the default process handle it
     if (req.method !== 'GET') return false;
@@ -216,6 +215,7 @@ export class Server extends EventEmitter {
     const fileExt = path.extname(filePath);
     const mimeType = mimeTypes[fileExt];
 
+    console.log(filePath);
 
     // If it's not the right file extension, let the default process handle it
     // if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
