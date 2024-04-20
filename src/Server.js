@@ -35,6 +35,9 @@ export class Server extends EventEmitter {
     response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
     response.setHeader('Access-Control-Allow-Headers', '*');
 
+    //
+    if (this.handleStaticFileRequests()) return;
+
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
@@ -188,33 +191,35 @@ export class Server extends EventEmitter {
 
   }
 
-  serveStaticFile(req, res) {
+  async handleStaticFileRequests(req, res) {
 
+    // If it's not the GET method, let the default process handle it
     if (req.method !== 'GET') return false;
 
     let fileUrl = req.url;
     if (fileUrl === '/') fileUrl = '/index.html';
-
     const filePath = path.resolve(__dirname, "webclient/" + fileUrl);
     const fileExt = path.extname(filePath);
 
-    if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) {
-      res.statusCode = 403;
-      res.end(`Forbidden`);
-      return true;
-    }
+    // If it's not the right file extension, let the default process handle it
+    if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
 
-    fs.access(filePath, fs.constants.F_OK, err => {
-      if (err) {
-        res.statusCode = 404;
-        res.end(`File ${filePath} not found!`);
-        return;
-      }
-      res.statusCode = 200;
-      fs.createReadStream(filePath).pipe(res);
-    });
+    await new Promise(resolve => {
 
-    return true;
+      fs.access(filePath, fs.constants.F_OK, err => {
+
+        // If it's not an existing file, let the default process handle it
+        if (err) {
+          resolve(false);
+        } else {
+          res.statusCode = 200;
+          fs.createReadStream(filePath).pipe(res);
+          resolve(true);
+        }
+
+      });
+
+    })
 
   }
 
