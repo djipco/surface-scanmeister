@@ -198,7 +198,7 @@ export class Server extends EventEmitter {
 
     let fileUrl = req.url;
     if (fileUrl === '/') fileUrl = '/index.html';
-    const filePath = path.resolve(__dirname, "webclient/" + fileUrl);
+    const filePath = path.resolve(__dirname, "../webclient/" + fileUrl);
     const fileExt = path.extname(filePath);
 
     console.log(filePath, fileExt);
