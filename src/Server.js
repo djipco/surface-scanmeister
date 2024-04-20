@@ -138,13 +138,15 @@ export class Server extends EventEmitter {
 
     // Remove all listeners from the Server class
     this.removeListener();
-
+console.log("AAA");
     // Destroy all clients
     this.#clients.forEach(async client => await client.destroy());
 
+console.log("BBB");
     // Stop all scanning processes
     this.#scanners.forEach(async scanner => await scanner.abort());
 
+console.log("CCC");
     // Remove events and stop the HTTP Server
     if (this.#httpScannerServer) {
       this.#httpScannerServer.removeAllListeners();
@@ -153,6 +155,7 @@ export class Server extends EventEmitter {
       this.#httpScannerServer.unref();
     }
 
+console.log("DDD");
     // Stop Express server
     return new Promise(resolve => {
       this.#staticServer.close(() => resolve);
