@@ -36,7 +36,7 @@ export class Server extends EventEmitter {
     response.setHeader('Access-Control-Allow-Headers', '*');
 
     //
-    if (this.handleStaticFileRequests()) return;
+    if (this.handleStaticFileRequests(request, response)) return;
 
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
