@@ -21,6 +21,7 @@ export class Server extends EventEmitter {
   #clients = [];                    // List of clients that requested a scan
   #httpScannerServer = undefined;   // HTTP Server (5678)
   #express = undefined;             // Express server, for static files (8080)
+  #staticServer = undefined;
   #scanners = undefined;            // List of available scanners
 
   constructor() {
@@ -156,7 +157,7 @@ export class Server extends EventEmitter {
 
     // Stop Express server
     await new Promise(resolve => {
-      this.#express.close(() => resolve);
+      this.#staticServer.close(() => resolve);
     });
 
   }
@@ -173,7 +174,7 @@ export class Server extends EventEmitter {
     // });
 
     // Start the server
-    this.#express.listen(8080, () => {
+    this.#staticServer = this.#express.listen(8080, () => {
       console.log(`Server is running on http://localhost: 8080`);
     });
 
