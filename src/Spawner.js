@@ -147,7 +147,7 @@ export class Spawner extends EventEmitter {
         setTimeout(() => {
           this.#process.kill('SIGKILL');
           resolve();
-        }, 2000);
+        }, 10000);
 
       });
 

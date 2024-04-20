@@ -198,6 +198,7 @@ export class Scanner extends EventEmitter {
 
   #onScanImageEnd() {
     this.#scanning = false;
+    this.scanImageSpawner = undefined;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
     logInfo(`Scan completed with ${this.nameAndPort}`);
