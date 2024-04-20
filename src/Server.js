@@ -1,5 +1,10 @@
 // Node.js standard imports
 import http from 'node:http';
+import fs from 'fs';
+import path from 'path';
+
+import { fileURLToPath } from 'url'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Application imports
 import {logError, logInfo, logWarn} from "./Logger.js";
@@ -10,6 +15,7 @@ export class Server extends EventEmitter {
 
   // Static members
   static COMMANDS = ["scan"];       // Valid commands (first part of the URL)
+  static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
 
   // Private members
   #callbacks = {};                  // callback functions used in this class
@@ -181,5 +187,36 @@ export class Server extends EventEmitter {
     });
 
   }
+
+  serveStaticFile(req, res) {
+
+    if (req.method !== 'GET') return false;
+
+    let fileUrl = req.url;
+    if (fileUrl === '/') fileUrl = '/index.html';
+
+    const filePath = path.resolve(__dirname, "webclient/" + fileUrl);
+    const fileExt = path.extname(filePath);
+
+    if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) {
+      res.statusCode = 403;
+      res.end(`Forbidden`);
+      return true;
+    }
+
+    fs.access(filePath, fs.constants.F_OK, err => {
+      if (err) {
+        res.statusCode = 404;
+        res.end(`File ${filePath} not found!`);
+        return;
+      }
+      res.statusCode = 200;
+      fs.createReadStream(filePath).pipe(res);
+    });
+
+    return true;
+
+  }
+
 
 }
