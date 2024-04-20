@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=WebClient
-Comment=Surface WebClient application
-Exec=bash -c "cd %k; nwjs/nw .; read"
+Comment=ScanMeister client (web version)
+Exec=bash -c "cd %k; firefox index.html; read"
 Icon=obconf
 Terminal=true
 Categories=Utility
