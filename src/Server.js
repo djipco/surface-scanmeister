@@ -193,6 +193,18 @@ export class Server extends EventEmitter {
 
   async handleStaticFileRequests(req, res) {
 
+    const mimeTypes = {
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml'
+    };
+
+
     // If it's not the GET method, let the default process handle it
     if (req.method !== 'GET') return false;
 
@@ -200,11 +212,13 @@ export class Server extends EventEmitter {
     if (fileUrl === '/') fileUrl = '/index.html';
     const filePath = path.resolve(__dirname, "../webclient/" + fileUrl);
     const fileExt = path.extname(filePath);
+    const mimeType = mimeTypes[fileExt];
 
-    console.log(filePath, fileExt);
+    console.log(filePath);
 
     // If it's not the right file extension, let the default process handle it
-    if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
+    // if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
+    if (!mimeType) return false;
 
     await new Promise(resolve => {
 
@@ -215,6 +229,7 @@ export class Server extends EventEmitter {
           resolve(false);
         } else {
           res.statusCode = 200;
+          res.setHeader('Content-Type', mimeType);
           fs.createReadStream(filePath).pipe(res);
           resolve(true);
         }
