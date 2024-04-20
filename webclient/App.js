@@ -135,7 +135,7 @@ export class App {
     });
 
     // Remove temporary link
-    document.removeChild(link);
+    link.remove();
 
   }
 
