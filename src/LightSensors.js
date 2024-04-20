@@ -51,8 +51,10 @@ export class LightSensors extends EventEmitter {
 
   quit() {
     this.removeListener();
-    this.#parser.off('data', this.#callbacks.onData);
-    this.#callbacks.onData = undefined;
+    if (this.#callbacks.onData) {
+      this.#parser.off('data', this.#callbacks.onData);
+      this.#callbacks.onData = undefined;
+    }
   }
 
 }
