@@ -110,9 +110,11 @@ export class App {
 
     if (done) {
       this.position = 0;
-      this.channel = undefined;
       this.state = App.STATE_DATA_PARSED;
-      this.saveCanvasToFile();
+      const date = this.getFormattedDate(new Date());
+      const ch = this.channel.toString().padStart(2, "0");
+      this.saveCanvasToFile(`channel${ch}-${date}.png`);
+      this.channel = undefined;
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
     }
@@ -133,13 +135,12 @@ export class App {
     return `${year}-${month}-${day} ${hour}-${minute}-${second}.${millisecond}`;
   }
 
-  async saveCanvasToFile() {
+  async saveCanvasToFile(filename) {
 
     // Create temporary download link
     const link = document.createElement('a');
-    const date = this.getFormattedDate(new Date());
-    const ch = this.channel.toString().padStart(2, "0");
-    link.setAttribute('download', `channel${ch}-${date}.png`);
+
+    link.setAttribute('download', filename);
 
     await new Promise(resolve => {
 

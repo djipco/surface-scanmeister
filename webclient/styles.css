@@ -25,6 +25,7 @@ section {
   align-items: center;
   flex-direction: column;
   gap: 5px;
+  background-color: aliceblue;
 }
 
 button {
