@@ -13,6 +13,7 @@
   "dependencies": {
     "date-fns": "^2.30.0",
     "djipevents": "^2.0.7",
+    "express": "^4.19.2",
     "fs-extra": "^11.2.0",
     "osc": "^2.4.4",
     "samba-client": "^7.2.0",
