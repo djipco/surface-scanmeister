@@ -56,6 +56,8 @@ export class App {
           this.height = parseInt(tokens[2]);
           console.log(this.width, this.height);
 
+          document.getElementById("size").innerText = `${this.width} × ${this.height}`;
+
           if (this.format !== 'P6') {
             console.error('Unsupported PNM format:', this.format);
             return;
@@ -117,11 +119,26 @@ export class App {
 
   }
 
+  getFormattedDate(date) {
+    const pad = (number, length = 2) => number.toString().padStart(length, '0');
+
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1); // getMonth() returns month from 0-11
+    const day = pad(date.getDate());
+    const hour = pad(date.getHours());
+    const minute = pad(date.getMinutes());
+    const second = pad(date.getSeconds());
+    const millisecond = pad(date.getMilliseconds(), 3);
+
+    return `${year}-${month}-${day} ${hour}-${minute}-${second}.${millisecond}`;
+  }
+
   async saveCanvasToFile() {
 
     // Create temporary download link
     const link = document.createElement('a');
-    link.setAttribute('download', 'CanvasAsImage.png');
+    const date = this.getFormattedDate(new Date());
+    link.setAttribute('download', `channel${this.channel}-${date}.png`);
 
     await new Promise(resolve => {
 
