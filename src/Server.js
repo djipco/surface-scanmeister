@@ -35,8 +35,9 @@ export class Server extends EventEmitter {
     response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
     response.setHeader('Access-Control-Allow-Headers', '*');
 
-    //
-    if (this.handleStaticFileRequests(request, response)) return;
+    const result = this.handleStaticFileRequests(request, response);
+    console.log(result);
+    if (result) return;
 
     // Parse the path of the URL and split it into segments
     const url = new URL(request.url, `http://${request.headers.host}`);
@@ -204,6 +205,7 @@ export class Server extends EventEmitter {
       '.svg': 'image/svg+xml'
     };
 
+    console.log(filePath);
 
     // If it's not the GET method, let the default process handle it
     if (req.method !== 'GET') return false;
@@ -219,7 +221,6 @@ export class Server extends EventEmitter {
     // if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
     if (!mimeType) return false;
 
-    console.log(filePath);
 
     await new Promise(resolve => {
 
