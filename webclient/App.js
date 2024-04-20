@@ -138,8 +138,8 @@ export class App {
     // Create temporary download link
     const link = document.createElement('a');
     const date = this.getFormattedDate(new Date());
-    const channel = this.channel.toString().padStart(2, "0");
-    link.setAttribute('download', `channel${channel}-${date}.png`);
+    const ch = this.channel.toString().padStart(2, "0");
+    link.setAttribute('download', `channel${ch}-${date}.png`);
 
     await new Promise(resolve => {
 
