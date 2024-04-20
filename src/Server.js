@@ -222,7 +222,7 @@ export class Server extends EventEmitter {
     if (!mimeType) return false;
 
 
-    await new Promise(resolve => {
+    return new Promise(resolve => {
 
       fs.access(filePath, fs.constants.F_OK, err => {
 
