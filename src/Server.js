@@ -201,6 +201,8 @@ export class Server extends EventEmitter {
     const filePath = path.resolve(__dirname, "webclient/" + fileUrl);
     const fileExt = path.extname(filePath);
 
+    console.log(filePath, fileExt);
+
     // If it's not the right file extension, let the default process handle it
     if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
 
