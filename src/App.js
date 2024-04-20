@@ -367,28 +367,33 @@ export default class App {
       this.lightSensors.removeListener("data", this.#callbacks.onLightSensorsData);
       this.#callbacks.onLightSensorsData = undefined;
     }
+    logInfo("Exiting222...");
 
     // Kill distance sensor process
     if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
     this.#distanceSensorSpawner = undefined;
+    logInfo("Exiting333...");
 
     // Quit HTTP server
     if (this.#server) {
       await this.#server.quit();
       this.#server = undefined;
     }
+    logInfo("Exiting444...");
 
     // Remove USB listeners
     usb.unrefHotplugEvents();
     this.#callbacks.onUsbAttach = undefined;
     this.#callbacks.onUsbDetach = undefined;
 
+    logInfo("Exiting555...");
     // Remove termination listeners
     App.EXIT_SIGNALS.forEach(s => process.off(s, this.#callbacks.onExitRequest));
 
     // Destroy scanners and remove callbacks
     this.scanners.forEach(async device => await device.destroy());
     this.#removeOscCallbacks();
+    logInfo("Exiting666...");
 
     // Send final notification and close OSC
     if (this.#oscPort && this.#oscPort.socket) {
@@ -403,6 +408,7 @@ export default class App {
       this.#oscPort = undefined;
 
     }
+    logInfo("Exiting777...");
 
     // Exit
     if (exit) {
