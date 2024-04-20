@@ -27,7 +27,7 @@ export class Server extends EventEmitter {
     super();
   }
 
-  #onHttpRequest(request, response)  {
+  async #onHttpRequest(request, response)  {
 
     // Set headers for CORS
     response.setHeader('Access-Control-Allow-Origin', '*');
@@ -35,7 +35,7 @@ export class Server extends EventEmitter {
     response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
     response.setHeader('Access-Control-Allow-Headers', '*');
 
-    const result = this.handleStaticFileRequests(request, response);
+    const result = await this.handleStaticFileRequests(request, response);
     console.log(result);
     if (result) return;
 
