@@ -113,7 +113,7 @@ export class App {
       this.state = App.STATE_DATA_PARSED;
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
-      this.saveCanvasToFile(`channel${ch}-${date}.png`);
+      this.saveCanvasToFile(`CH-${ch} ${date}.png`);
       this.channel = undefined;
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
