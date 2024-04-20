@@ -156,7 +156,7 @@ export class Server extends EventEmitter {
     }
 
     // Stop Express server
-    await new Promise(resolve => {
+    return new Promise(resolve => {
       this.#staticServer.close(() => resolve);
     });
 
