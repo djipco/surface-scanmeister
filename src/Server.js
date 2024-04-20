@@ -156,10 +156,11 @@ console.log("CCC");
     }
 
 console.log("DDD");
+
     // Stop Express server
-    return new Promise(resolve => {
-      this.#staticServer.close(() => resolve);
-    });
+    if (this.#staticServer) {
+      return new Promise(resolve => this.#staticServer.close(resolve));
+    }
 
   }
 
