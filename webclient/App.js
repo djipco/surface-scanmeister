@@ -4,7 +4,7 @@ export class App {
   static STATE_REQUEST_SENT = 1;
   static STATE_HEADER_PARSED = 2;
   static STATE_DATA_PARSED = 3;
-  static URL = "http://10.0.0.98:5678";
+  static URL = "http://127.0.0.1:5678";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
