@@ -165,7 +165,7 @@ export class Server extends EventEmitter {
 
     // Set up server for static client files (Express) and specify the directory to serve files from
     this.#express = express();
-    this.#express.use(express.static('../webclient'));
+    this.#express.use(express.static('webclient'));
 
     // // Optional: Define a fallback route for handling requests to non-existent files
     // this.#express.use((req, res) => {
