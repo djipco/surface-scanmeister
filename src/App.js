@@ -82,8 +82,14 @@ export default class App {
     this.#server = new Server();
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.#server.addListener("error", this.#callbacks.onHttpServerError);
-    await this.#server.start(this.scanners, {address: config.http.address, port: config.http.port});
-    logInfo(`HTTP server ready. Listening on ${config.http.address}:${config.http.port}.`)
+    await this.#server.start(
+      this.scanners,
+      {address: config.httpServers.scannerApi.address, port: config.httpServers.scannerApi.port}
+    );
+    logInfo(
+      `HTTP server ready. Listening on ` +
+      `${config.httpServers.scannerApi.address}:${config.httpServers.scannerApi.port}.`
+    );
 
     // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);

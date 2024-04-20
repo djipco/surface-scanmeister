@@ -1,9 +1,7 @@
 // Node.js standard imports
+import {Configuration as config} from "../config/Configuration.js";
 import http from 'node:http';
 import express from 'express';
-
-// import { fileURLToPath } from 'url'
-// const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Application imports
 import {logError, logInfo, logWarn} from "./Logger.js";
@@ -164,24 +162,6 @@ export class Server extends EventEmitter {
 
   async start(scanners, options = {address: "0.0.0.0", port: 5678}) {
 
-    // Set up server for static client files (Express) and specify the directory to serve files from
-    this.#express = express();
-    this.#express.use(express.static('webclient'));
-
-    // // Optional: Define a fallback route for handling requests to non-existent files
-    // this.#express.use((req, res) => {
-    //   res.status(404).send('File not found!');
-    // });
-
-    // Start the server
-    this.#staticServer = this.#express.listen(8080, () => {
-      console.log(`Server is running on http://localhost: 8080`);
-    });
-
-
-
-
-
     if (!Array.isArray(scanners)) {
       logError("An array of Scanner objects must be specified to start the Server.");
       return;
@@ -196,7 +176,7 @@ export class Server extends EventEmitter {
     this.#callbacks.onServerError = this.#onServerError.bind(this);
     this.#httpScannerServer.on("error", this.#callbacks.onServerError);
 
-    // Start server
+    // Start scanner API server
     await new Promise((resolve, reject) => {
 
       this.#httpScannerServer.listen(options, err => {
@@ -210,59 +190,30 @@ export class Server extends EventEmitter {
 
     });
 
+    // Set up server for static web client files (using Express) and specify the directory to serve
+    // files from.
+    this.#express = express();
+    this.#express.use(express.static('webclient'));
+
+    // Start the static files server
+    return new Promise((resolve, reject) => {
+
+      this.#staticServer = this.#express.listen(config.httpServers.staticFiles.port, err => {
+
+        if (err) reject(err);
+
+        logInfo(
+          `Static file server is ready. Listening on ` +
+          `${config.httpServers.staticFiles.address}:${config.httpServers.staticFiles.port}.`
+        );
+
+        resolve();
+
+      });
+
+    });
+
+
   }
-
-  // async handleStaticFileRequests(req, res) {
-  //
-  //   const mimeTypes = {
-  //     '.html': 'text/html',
-  //     '.css': 'text/css',
-  //     '.js': 'application/javascript',
-  //     '.ico': 'image/x-icon',
-  //     '.json': 'application/json',
-  //     '.map': 'application/json',
-  //     '.png': 'image/png',
-  //     '.jpg': 'image/jpeg',
-  //     '.gif': 'image/gif',
-  //     '.svg': 'image/svg+xml'
-  //   };
-  //
-  //
-  //   // If it's not the GET method, let the default process handle it
-  //   if (req.method !== 'GET') return false;
-  //
-  //   let fileUrl = req.url;
-  //   if (fileUrl === '/') fileUrl = '/index.html';
-  //   const filePath = path.resolve(__dirname, "../webclient/" + fileUrl);
-  //   const fileExt = path.extname(filePath);
-  //   const mimeType = mimeTypes[fileExt];
-  //
-  //   console.log(fileUrl, filePath);
-  //
-  //   // If it's not the right file extension, let the default process handle it
-  //   // if (!Server.ALLOWED_STATIC_FILE_EXTENSIONS.includes(fileExt)) return false;
-  //   if (!mimeType) return false;
-  //
-  //
-  //   return new Promise(resolve => {
-  //
-  //     fs.access(filePath, fs.constants.F_OK, err => {
-  //
-  //       // If it's not an existing file, let the default process handle it
-  //       if (err) {
-  //         resolve(false);
-  //       } else {
-  //         res.statusCode = 200;
-  //         res.setHeader('Content-Type', mimeType);
-  //         fs.createReadStream(filePath).pipe(res);
-  //         resolve(true);
-  //       }
-  //
-  //     });
-  //
-  //   })
-  //
-  // }
-
 
 }

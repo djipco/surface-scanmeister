@@ -4,9 +4,15 @@ export const Configuration = {
     logs: "./logs"                  // Directory where logfiles should be saved
   },
 
-  http: {
-    address: "0.0.0.0",             // IP address the server will listen on
-    port: 5678,                     // Port the server will listen on (between 1024 and 65535)
+  httpServers: {
+    scannerApi: {                     // Server responding to scan-related requests
+      address: "0.0.0.0",             // IP address the server will listen on
+      port: 5678,                     // Port the server will listen on (between 1024 and 65535)
+    },
+    staticFiles: {                    // Server serving static files (for the web client)
+      address: "0.0.0.0",             // IP address the server will listen on
+      port: 8080,                     // Port the server will listen on (between 1024 and 65535)
+    }
   },
 
   osc: {
