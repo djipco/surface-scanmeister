@@ -5,7 +5,7 @@ export const Configuration = {
   },
 
   http: {
-    address: "0.0.0.0",                // IP address the server will listen on
+    address: "0.0.0.0",             // IP address the server will listen on
     port: 5678                      // Port the server will listen on (between 1024 and 65535)
   },
 

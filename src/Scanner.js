@@ -151,38 +151,49 @@ export class Scanner extends EventEmitter {
 
   async abort() {
 
-    this.#scanning = false;
-
-    // Send OSC update
-    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
-
     // Kill 'scanimage' process if running
-    if (this.scanImageSpawner) await this.scanImageSpawner.destroy();
-    this.scanImageSpawner = undefined;
+    if (this.scanImageSpawner) {
 
-    // Wait for a little for OSC to be done sending
-    await new Promise(resolve => setTimeout(resolve, 25));
+      logInfo(`Stopping scanner on channel ${this.channel}...`);
+
+      await this.scanImageSpawner.destroy();
+      this.scanImageSpawner = undefined;
+
+      // Leave some time for the scanner to go back to 'ready' position before marking it as
+      // available.
+      await new Promise(resolve => setTimeout(resolve, 4000));
+
+    }
+
+    // Send OSC update (wait a little so the messages can be properly sent)
+    this.#scanning = false;
+    this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
+    await new Promise(resolve => setTimeout(resolve, 50));
 
   }
 
   async destroy() {
-
     await this.abort();
-
     this.removeListener();
-
   }
 
   async #onScanImageStderr(data) {
-    this.abort();
+
+    if (data.includes("Device busy")) {
+      logWarn(`Device busy, cannot open: ${this.description}`);
+    } else {
+      logError(`STDERR with ${this.description}: ${data}.`);
+    }
+
     this.emit("error", data);
-    logError(`STDERR with ${this.description}: ${data}.`);
+    await this.abort();
+
   }
 
   #onScanImageError(error) {
-    this.#scanning = false;
-    this.emit("warning", error);
     logWarn(error);
+    this.emit("warning", error);
+    this.abort();
   }
 
   #onScanImageEnd() {
