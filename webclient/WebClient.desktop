@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=WebClient
+Comment=Surface WebClient application
+Exec=bash -c "cd %k; node ScanMeister.js; read"
+Icon=obconf
+Terminal=true
+Categories=Utility
