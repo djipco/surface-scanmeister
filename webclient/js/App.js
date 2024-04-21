@@ -8,7 +8,6 @@ export class App {
 
   constructor() {
     this.canvas = document.getElementById('canvas');
-    this.channel = undefined;
     this.context = this.canvas.getContext('2d');
     this.response = undefined;
     this.reader = undefined;
@@ -20,13 +19,21 @@ export class App {
     this.setUpUi();
   }
 
-  setUpUi() {
-    const buttons = document.getElementsByClassName("scan");
-
-    for (let i = 0; i < buttons.length; i++) {
-      const button = buttons[i];
-      button.addEventListener('click', () => this.getImage(button.innerText));
+  get channel() {
+    const ch = parseInt(document.getElementById('channel').value);
+    if (isNaN(ch)) {
+      return 1;
+    } else {
+      return ch;
     }
+  }
+
+  setUpUi() {
+
+    const button = document.getElementById("scan");
+    button.addEventListener('click', () => {
+      this.getImage(this.channel)
+    });
 
     document.getElementById('fs-toggle').addEventListener('click', () => {
       this.toggleFullScreen();
@@ -34,8 +41,7 @@ export class App {
 
   }
 
-  async getImage(device = 1) {
-    this.channel = parseInt(device);
+  async getImage() {
     this.state = App.STATE_REQUEST_SENT;
     this.response = await fetch(App.URL + "/scan/" + this.channel);
     this.reader = this.response.body.getReader();
@@ -129,7 +135,6 @@ export class App {
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
-      this.channel = undefined;
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
     }

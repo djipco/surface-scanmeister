@@ -14,18 +14,18 @@
   </head>
 
   <body>
+
     <section>
       <p>Scanners: </p>
-      <button class="scan">1</button>
-      <button class="scan">2</button>
-      <button class="scan">3</button>
-      <button class="scan">4</button>
-      <button class="scan">5</button>
-      <button class="scan">6</button>
+      <label for="channel">Channel: </label>
+      <input type="number" id="channel" name="channel" min="0" max="10" step="1">
+      <button id="scan">Scan</button>
       <p>Size: <br><span id="size">unknown</span></p>
       <button id="fs-toggle">Fullscreen</button>
     </section>
+
     <canvas id="canvas" width="319" height="439"></canvas>
+
   </body>
 
 </html>
