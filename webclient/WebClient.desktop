@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=WebClient
-Comment=ScanMeister client (web version)
-Exec=bash -c "cd %k; firefox index.html; read"
-Icon=obconf
-Terminal=true
-Categories=Utility

@@ -6,6 +6,8 @@ html, body {
   align-items: center;
   justify-content: center;
   background-color: black;
+  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+  font-size: 12px;
 }
 
 #canvas {
@@ -26,10 +28,14 @@ section {
   flex-direction: column;
   gap: 5px;
   background-color: aliceblue;
+
+  p {
+    margin: 0.5em 0 0 0;
+    text-align: center;
+  }
+
 }
 
 button {
   display: block;
 }
-
-/*# sourceMappingURL=styles.css.map */

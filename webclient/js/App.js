@@ -17,6 +17,16 @@ export class App {
     this.header = '';
     this.buffer = new Uint8Array();
     this.position = 0;
+    this.setUpUi();
+  }
+
+  setUpUi() {
+    const buttons = document.getElementsByTagName("button");
+
+    for (let i = 0; i < buttons.length; i++) {
+      const button = buttons[i];
+      button.addEventListener('click', () => this.getImage(button.innerText));
+    }
   }
 
   async getImage(device = 1) {
