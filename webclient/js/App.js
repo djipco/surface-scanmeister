@@ -27,6 +27,11 @@ export class App {
       const button = buttons[i];
       button.addEventListener('click', () => this.getImage(button.innerText));
     }
+
+    document.getElementById('fs-toggle').addEventListener('click', () => {
+      this.toggleFullScreen();
+    });
+
   }
 
   async getImage(device = 1) {
@@ -165,6 +170,18 @@ export class App {
 
     // Remove temporary link
     link.remove();
+
+  }
+
+  toggleFullScreen() {
+
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+      });
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+    }
 
   }
 
