@@ -135,6 +135,7 @@ export class App {
       this.ui.scanButton.disabled = false;
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
+      console.log(this.channel, ch);
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
