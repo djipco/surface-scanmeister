@@ -32,7 +32,7 @@ export class App {
 
     const button = document.getElementById("scan");
     button.addEventListener('click', () => {
-      this.getImage(this.channel)
+      this.getImage();
     });
 
     document.getElementById('fs-toggle').addEventListener('click', () => {
@@ -42,6 +42,7 @@ export class App {
   }
 
   async getImage() {
+    console.log(this.channel);
     this.state = App.STATE_REQUEST_SENT;
     this.response = await fetch(App.URL + "/scan/" + this.channel);
     this.reader = this.response.body.getReader();
