@@ -22,7 +22,7 @@ export class App {
   }
 
   get channel() {
-    const ch = parseInt(document.getElementById('channel').value);
+    const ch = parseInt(this.ui.channelInput.value);
     if (isNaN(ch)) {
       return 1;
     } else {
@@ -35,6 +35,8 @@ export class App {
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => this.getImage());
 
+    this.ui.channelInput = document.getElementById('channel');
+
     this.ui.fullscreenButton = document.getElementById('fs-toggle')
     this.ui.fullscreenButton.addEventListener('click', () => this.toggleFullScreen());
 
@@ -43,6 +45,7 @@ export class App {
   async getImage() {
     this.state = App.STATE_REQUEST_SENT;
     this.ui.scanButton.disabled = true;
+    this.ui.channelInput.disabled = true;
     this.response = await fetch(App.URL + "/scan/" + this.channel);
     this.reader = this.response.body.getReader();
     this.#processChunk();
@@ -133,6 +136,7 @@ export class App {
       this.position = 0;
       this.state = App.STATE_DATA_PARSED;
       this.ui.scanButton.disabled = false;
+      this.ui.channelInput.disabled = false;
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       console.log(this.channel, ch);
