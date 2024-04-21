@@ -4,6 +4,7 @@ export class App {
   static STATE_REQUEST_SENT = 1;
   static STATE_HEADER_PARSED = 2;
   static STATE_DATA_PARSED = 3;
+
   static URL = "http://127.0.0.1:5678";
 
   constructor() {
@@ -16,6 +17,7 @@ export class App {
     this.header = '';
     this.buffer = new Uint8Array();
     this.position = 0;
+    this.ui = {};
     this.setUpUi();
   }
 
@@ -30,20 +32,17 @@ export class App {
 
   setUpUi() {
 
-    const button = document.getElementById("scan");
-    button.addEventListener('click', () => {
-      this.getImage();
-    });
+    this.ui.scanButton = document.getElementById("scan");
+    this.ui.scanButton.addEventListener('click', () => this.getImage());
 
-    document.getElementById('fs-toggle').addEventListener('click', () => {
-      this.toggleFullScreen();
-    });
+    this.ui.fullscreenButton = document.getElementById('fs-toggle')
+    this.ui.fullscreenButton.addEventListener('click', () => this.toggleFullScreen());
 
   }
 
   async getImage() {
-    console.log(this.channel);
     this.state = App.STATE_REQUEST_SENT;
+    this.ui.scanButton.disabled = true;
     this.response = await fetch(App.URL + "/scan/" + this.channel);
     this.reader = this.response.body.getReader();
     this.#processChunk();
@@ -133,6 +132,7 @@ export class App {
     if (done) {
       this.position = 0;
       this.state = App.STATE_DATA_PARSED;
+      this.ui.scanButton.disabled = false;
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
