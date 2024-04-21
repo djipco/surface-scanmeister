@@ -21,7 +21,7 @@ export class App {
   }
 
   setUpUi() {
-    const buttons = document.getElementsByTagName("button");
+    const buttons = document.getElementsByClassName("scan");
 
     for (let i = 0; i < buttons.length; i++) {
       const button = buttons[i];
