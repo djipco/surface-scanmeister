@@ -70,22 +70,16 @@ export default class App {
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
     logInfo(
       `OSC ready. Listening on ` +
-      config.osc.localAddress + ":" + config.osc.localPort + ", sending to " +
-      config.osc.remoteAddress + ":" + config.osc.remotePort + "."
+      config.network.osc_server.address + ":" + config.network.osc_server.port + ", sending to " +
+      config.network.osc_client.address  + ":" + config.network.osc_client.port  + "."
     );
 
     // Update scanners list
     await this.#updateScanners();
 
     // Start HTTP server and call its start() method passing a reference to the list of available
-    // scanners
-    this.#server = new Server();
-    this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
-    this.#server.addListener("error", this.#callbacks.onHttpServerError);
-    await this.#server.start(
-      this.scanners,
-      {address: config.network.api_server.address, port: config.network.api_server.port}
-    );
+    // scanners.
+    await this.#startHtttpServer();
     logInfo(
       `HTTP server ready. Listening on ` +
       `${config.network.api_server.address}:${config.network.api_server.port}.`
@@ -108,6 +102,20 @@ export default class App {
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
     // information to be written. In that sense, CTRL-C is better.
     logInfo("Press CTRL-C to properly exit.")
+
+  }
+
+  async #startHtttpServer() {
+
+    this.#server = new Server();
+
+    this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
+    this.#server.addListener("error", this.#callbacks.onHttpServerError);
+
+    await this.#server.start(
+      this.scanners,
+      {address: config.network.api_server.address, port: config.network.api_server.port}
+    );
 
   }
 
@@ -279,8 +287,6 @@ export default class App {
     });
 
     // Filter the descriptors to retain only the ones for supported scanners
-    // const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
-    // let scannerDescriptors = descriptors.filter(dev => identifiers.includes(dev.identifier));
     let scannerDescriptors = descriptors.filter(dev => this.isSupportedScannerDescriptor(dev));
 
     // Assign additional useful information to scanner descriptors
@@ -428,10 +434,10 @@ export default class App {
 
     // Instantiate OSC UDP port
     this.#oscPort = new osc.UDPPort({
-      localAddress: config.osc.localAddress,
-      localPort: config.osc.localPort,
-      remoteAddress: config.osc.remoteAddress,
-      remotePort: config.osc.remotePort,
+      localAddress: config.network.osc_server.address,
+      localPort: config.network.osc_server.port,
+      remoteAddress: config.network.osc_client.address,
+      remotePort: config.network.osc_client.port,
       metadata: true
     });
 

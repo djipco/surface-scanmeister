@@ -23,24 +23,6 @@ export const Configuration = {
     },
   },
 
-  httpServers: {
-    scannerApi: {                     // Server responding to scan-related requests
-      address: "0.0.0.0",             // IP address the server will listen on
-      port: 5678,                     // Port the server will listen on (between 1024 and 65535)
-    },
-    staticFiles: {                    // Server serving static files (for the web client)
-      address: "0.0.0.0",             // IP address the server will listen on
-      port: 8080,                     // Port the server will listen on (between 1024 and 65535)
-    }
-  },
-
-  osc: {
-    localAddress: '0.0.0.0',        // Local IP address to bind to for OSC
-    localPort: 8000,                // Local port to listen on for OSC
-    remoteAddress: '10.0.0.200',    // Remote IP address to send OSC to
-    remotePort: 10000               // Remote port to send OSC on
-  },
-
   devices: {
 
     // Whether to use a custom mapping for the channels assigned to each scanner. The value can be

@@ -10,16 +10,18 @@ import Client from "./Client.js";
 
 export class Server extends EventEmitter {
 
-  // Static members
-  static COMMANDS = ["scan"];       // Valid commands (first part of the URL)
+  // Valid API commands (first part of the URL)
+  static COMMANDS = ["scan"];
+
+  // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
 
   // Private members
   #callbacks = {};                  // callback functions used in this class
   #clients = [];                    // List of clients that requested a scan
-  #httpScannerServer = undefined;   // HTTP Server (5678)
+  #apiServer = undefined;   // HTTP Server (5678)
   #express = undefined;             // Express server, for static files (8080)
-  #staticServer = undefined;
+  #filesServer = undefined;
   #scanners = undefined;            // List of available scanners
 
   constructor() {
@@ -145,16 +147,16 @@ export class Server extends EventEmitter {
     this.#scanners.forEach(async scanner => await scanner.abort());
 
     // Remove events and stop the HTTP Server
-    if (this.#httpScannerServer) {
-      this.#httpScannerServer.removeAllListeners();
-      this.#httpScannerServer.close();
-      this.#httpScannerServer.closeAllConnections();
-      this.#httpScannerServer.unref();
+    if (this.#apiServer) {
+      this.#apiServer.removeAllListeners();
+      this.#apiServer.close();
+      this.#apiServer.closeAllConnections();
+      this.#apiServer.unref();
     }
 
     // Stop Express server
-    if (this.#staticServer) {
-      return new Promise(resolve => this.#staticServer.close(resolve));
+    if (this.#filesServer) {
+      return new Promise(resolve => this.#filesServer.close(resolve));
     }
 
   }
@@ -169,16 +171,16 @@ export class Server extends EventEmitter {
     this.#scanners = scanners;
 
     // Create HTTP server and add callbacks
-    this.#httpScannerServer = http.createServer();
+    this.#apiServer = http.createServer();
     this.#callbacks.onHttpRequest = this.#onHttpRequest.bind(this);
-    this.#httpScannerServer.on("request", this.#callbacks.onHttpRequest);
+    this.#apiServer.on("request", this.#callbacks.onHttpRequest);
     this.#callbacks.onServerError = this.#onServerError.bind(this);
-    this.#httpScannerServer.on("error", this.#callbacks.onServerError);
+    this.#apiServer.on("error", this.#callbacks.onServerError);
 
     // Start scanner API server
     await new Promise((resolve, reject) => {
 
-      this.#httpScannerServer.listen(options, err => {
+      this.#apiServer.listen(options, err => {
         if (err) {
           reject("Could not start HTTP server. " + err);
           this.quit();
@@ -197,7 +199,7 @@ export class Server extends EventEmitter {
     // Start the static files server
     return new Promise((resolve, reject) => {
 
-      this.#staticServer = this.#express.listen(
+      this.#filesServer = this.#express.listen(
         config.network.files_server.port,
         config.network.files_server.address,
         err => {
