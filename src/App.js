@@ -84,11 +84,11 @@ export default class App {
     this.#server.addListener("error", this.#callbacks.onHttpServerError);
     await this.#server.start(
       this.scanners,
-      {address: config.httpServers.scannerApi.address, port: config.httpServers.scannerApi.port}
+      {address: config.network.api_server.address, port: config.network.api_server.port}
     );
     logInfo(
       `HTTP server ready. Listening on ` +
-      `${config.httpServers.scannerApi.address}:${config.httpServers.scannerApi.port}.`
+      `${config.network.api_server.address}:${config.network.api_server.port}.`
     );
 
     // Start sending OSC status messages (on a regular interval)

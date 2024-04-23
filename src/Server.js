@@ -197,21 +197,23 @@ export class Server extends EventEmitter {
     // Start the static files server
     return new Promise((resolve, reject) => {
 
-      this.#staticServer = this.#express.listen(config.httpServers.staticFiles.port, err => {
+      this.#staticServer = this.#express.listen(
+        config.network.files_server.port,
+        config.network.files_server.address,
+        err => {
 
-        if (err) reject(err);
+          if (err) reject(err);
 
-        logInfo(
-          `Static file server is ready. Listening on ` +
-          `${config.httpServers.staticFiles.address}:${config.httpServers.staticFiles.port}.`
-        );
+          logInfo(
+            `Static file server is ready. Listening on ` +
+            `${config.network.files_server.address}:${config.network.files_server.port}.`
+          );
 
-        resolve();
+          resolve();
 
       });
 
     });
-
 
   }
 
