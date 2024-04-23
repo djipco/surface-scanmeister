@@ -81,7 +81,7 @@ export default class App {
     // scanners.
     await this.#startHtttpServer();
     logInfo(
-      `HTTP server ready. Listening on ` +
+      `API server ready. Listening on ` +
       `${config.network.api_server.address}:${config.network.api_server.port}.`
     );
 
