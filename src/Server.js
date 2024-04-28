@@ -50,6 +50,7 @@ export class Server extends EventEmitter {
 
     // Parse query string for parameters
     const queryString = qs.parse(url.search);
+    console.log(queryString);
 
     // Valdiate resolution
     if (Server.RESOLUTIONS.includes(parseInt(queryString.resolution))) {
