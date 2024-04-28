@@ -8,6 +8,8 @@ import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
+  static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
+
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
   #manufacturer;        // Manufacturer name of the device
@@ -64,7 +66,7 @@ export class Scanner extends EventEmitter {
 
   get systemName() { return this.#systemName; }
 
-  async scan(options = {outputFile: undefined}) {
+  async scan(options = {}) {
 
     // Ignore if already scanning
     if (this.scanning) {
@@ -82,7 +84,7 @@ export class Scanner extends EventEmitter {
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.getScanCommandArgs(config, {outputFile: options.outputFile}),
+      this.getScanCommandArgs(config, options),
       {
         detached: false,
         shell: false,
@@ -115,7 +117,9 @@ export class Scanner extends EventEmitter {
     args.push('--depth=8');
 
     // Scanning resolution
-    args.push('--resolution=' + config.devices.resolution);
+    if (Scanner.RESOLUTIONS.includes(config.resolution)) {
+      args.push('--resolution=' + config.resolution);
+    }
 
     // Brightness (-100...100)
     args.push('--brightness=' + config.devices.brightness);

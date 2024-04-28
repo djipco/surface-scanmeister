@@ -7,12 +7,12 @@ import express from 'express';
 import {logError, logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import Client from "./Client.js";
+import {Scanner} from "./Scanner.js";
 
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
   static COMMANDS = ["scan"];
-  static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -49,7 +49,7 @@ export class Server extends EventEmitter {
 
     // Parse query string for valid resolution
     const resolution = parseInt(url.searchParams.get('resolution'));
-    if (Server.RESOLUTIONS.includes(resolution)) parsed.resolution = resolution;
+    if (Scanner.RESOLUTIONS.includes(resolution)) parsed.resolution = resolution;
 
     return parsed;
 
@@ -67,7 +67,6 @@ export class Server extends EventEmitter {
     let parsed;
     try {
       parsed = this.#parseHttpRequest(request);
-      console.log(parsed);
     } catch (err) {
       logInfo(
         `Invalid request from ${request.socket.remoteAddress}:${request.socket.remotePort}: ` +
@@ -79,7 +78,7 @@ export class Server extends EventEmitter {
       return;
     }
 
-    // Retrieve scanner matching channel and check if it'is already in use.
+    // Retrieve scanner matching channel and check if it's already in use.
     const scanner = this.getScannerByChannel(parsed.channel);
     if (!scanner) {
       logWarn(
@@ -109,7 +108,6 @@ export class Server extends EventEmitter {
 
     // Quickly send answer in the form of a proper HTTP header (there's no official MIME type for
     // PNM format).
-    // response.setHeader('Connection', 'close');
     response.writeHead(200, {'Content-Type': 'application/octet-stream'});
 
     // Retrieve scanner and set up callbacks
