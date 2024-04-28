@@ -102,7 +102,7 @@ export class Scanner extends EventEmitter {
 
   }
 
-  getScanCommandArgs(config) {
+  getScanCommandArgs(config, options = {}) {
 
     const args = [];
 
@@ -119,8 +119,8 @@ export class Scanner extends EventEmitter {
     args.push('--depth=8');
 
     // Scanning resolution
-    if (Scanner.RESOLUTIONS.includes(config.resolution)) {
-      args.push('--resolution=' + config.resolution);
+    if (Scanner.RESOLUTIONS.includes(options.resolution)) {
+      args.push('--resolution=' + options.resolution);
     }
 
     // Brightness (-100...100)

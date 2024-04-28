@@ -32,7 +32,6 @@ export const Configuration = {
     // mapping: "Pi4",
     mapping: null,                // Name of the mapping to use or null
 
-    resolution: 150,              // Scanning resolution (75, 100, 150, 300, 600, 1200, 2400, 4800)
     brightness: 25,               // Scanning brightness (-100...100)
     contrast: 25,                 // Scanning contrast (-100...100)
     lampOffScan: false,           // Whether to shut off lamp while scanning
