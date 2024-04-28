@@ -146,10 +146,10 @@ export class Scanner extends EventEmitter {
     args.push('--buffer-size=32');
 
     // Geometry
-    args.push('-l ' + config.devices.x);
-    args.push('-t ' + config.devices.y);
-    args.push('-x ' + config.devices.width);
-    args.push('-y ' + config.devices.height);
+    // args.push('-l ' + config.devices.x);
+    // args.push('-t ' + config.devices.y);
+    // args.push('-x ' + config.devices.width);
+    // args.push('-y ' + config.devices.height);
 
     return args;
 
