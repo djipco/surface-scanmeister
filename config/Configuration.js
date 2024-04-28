@@ -36,10 +36,10 @@ export const Configuration = {
     contrast: 25,                 // Scanning contrast (-100...100)
     lampOffScan: false,           // Whether to shut off lamp while scanning
     lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
-    x: 0,                         // Horizontal position to start the scan at (0...216.7mm)
-    y: 0,                         // Vertical position to start the scan at (0...297.5mm)
-    width: 216.07,                // Width of scan area (0...216.7mm)
-    height: 297.5,                // Height of scan area (0...297.5mm)
+    // x: 0,                         // Horizontal position to start the scan at (0...216.7mm)
+    // y: 0,                         // Vertical position to start the scan at (0...297.5mm)
+    // width: 216.07,                // Width of scan area (0...216.7mm)
+    // height: 297.5,                // Height of scan area (0...297.5mm)
 
   },
 

@@ -8,7 +8,9 @@ import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
-  static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
+  // Above 600dpi, it's too big. At 1200dpi, it yields a 240MB pnm file (10224x14173).
+  static RESOLUTIONS = [75, 100, 150, 300, 600];
+  // static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
 
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
@@ -143,7 +145,15 @@ export class Scanner extends EventEmitter {
     args.push('--expiration-time=-1');
 
     // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-    args.push('--buffer-size=32');
+
+    // We make the buffer proportional to the resolution so the data is sent as fast as it's coming
+    // from the scanner but not faster.
+    if (Scanner.RESOLUTIONS.includes(options.resolution)) {
+      const res = parseInt(options.resolution / 75) * 16;
+      args.push(`--buffer-size=${res}`);
+    } else {
+      args.push('--buffer-size=16');
+    }
 
     // Geometry
     // args.push('-l ' + config.devices.x);
