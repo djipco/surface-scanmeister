@@ -10,6 +10,13 @@ export class App {
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
+    this.ui = {};
+
+    this.reset();
+    this.setUpUi();
+  }
+
+  reset() {
     this.response = undefined;
     this.reader = undefined;
     this.imageData = new Uint8Array();
@@ -17,8 +24,8 @@ export class App {
     this.header = '';
     this.buffer = new Uint8Array();
     this.position = 0;
-    this.ui = {};
-    this.setUpUi();
+    this.width = undefined;
+    this.height = undefined;
   }
 
   get channel() {
@@ -54,6 +61,7 @@ export class App {
   }
 
   async getImage() {
+    this.reset();
     this.state = App.STATE_REQUEST_SENT;
     this.ui.scanButton.disabled = true;
     this.ui.channelInput.disabled = true;
@@ -152,7 +160,6 @@ export class App {
       this.ui.channelInput.disabled = false;
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
-      console.log(this.channel, ch);
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
