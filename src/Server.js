@@ -49,7 +49,7 @@ export class Server extends EventEmitter {
     parsed.channel = parseInt(segments[1]) || 1;
 
     // Parse query string for parameters
-    const queryString = qs.parse(url.search);
+    const queryString = qs.parse(url.query);
     console.log(queryString);
 
     // Valdiate resolution
