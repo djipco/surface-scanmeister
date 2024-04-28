@@ -30,6 +30,15 @@ export class App {
     }
   }
 
+  get resolution() {
+    const resolution = parseInt(this.ui.resolution.value);
+    if (isNaN(resolution)) {
+      return undefined;
+    } else {
+      return resolution;
+    }
+  }
+
   setUpUi() {
 
     this.ui.scanButton = document.getElementById("scan");
@@ -40,13 +49,17 @@ export class App {
     this.ui.fullscreenButton = document.getElementById('fs-toggle')
     this.ui.fullscreenButton.addEventListener('click', () => this.toggleFullScreen());
 
+    this.ui.resolution = document.getElementById("resolution");
+
   }
 
   async getImage() {
     this.state = App.STATE_REQUEST_SENT;
     this.ui.scanButton.disabled = true;
     this.ui.channelInput.disabled = true;
-    this.response = await fetch(App.URL + "/scan/" + this.channel);
+    this.response = await fetch(
+      App.URL + "/scan/" + this.channel + "?resolution=" + this.resolution
+    );
     this.reader = this.response.body.getReader();
     this.#processChunk();
   }
