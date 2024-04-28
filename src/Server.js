@@ -2,7 +2,6 @@
 import {Configuration as config} from "../config/Configuration.js";
 import http from 'node:http';
 import express from 'express';
-import qs from 'qs';
 
 // Application imports
 import {logError, logInfo, logWarn} from "./Logger.js";
@@ -48,14 +47,9 @@ export class Server extends EventEmitter {
     parsed.command = segments[0];
     parsed.channel = parseInt(segments[1]) || 1;
 
-    // Parse query string for parameters
-    // const queryString = qs.parse(url.query);
-    console.log(url.searchParams.get('resolution'));
-
-    // Valdiate resolution
-    // if (Server.RESOLUTIONS.includes(parseInt(queryString.resolution))) {
-    //   parsed.resolution = parseInt(queryString.resolution);
-    // }
+    // Parse query string for valid resolution
+    const resolution = parseInt(url.searchParams.get('resolution'));
+    if (Server.RESOLUTIONS.includes(resolution)) parsed.resolution = resolution;
 
     return parsed;
 
