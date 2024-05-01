@@ -78,8 +78,6 @@ export class Server extends EventEmitter {
       return;
     }
 
-    console.log(parsed);
-
     // Retrieve scanner matching channel and check if it's already in use.
     const scanner = this.getScannerByChannel(parsed.channel);
     if (!scanner) {

@@ -84,8 +84,6 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
 
-    console.log(this.getScanCommandArgs(config, options));
-
     this.scanImageSpawner.execute(
       "scanimage",
       this.getScanCommandArgs(config, options),
