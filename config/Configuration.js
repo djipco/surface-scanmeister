@@ -1,25 +1,25 @@
 export const Configuration = {
 
   paths: {
-    logs: "./logs"                  // Directory where logfiles should be saved
+    logs: "./logs"              // Directory where logfiles should be saved
   },
 
   network: {
     api_server: {
-      address: "0.0.0.0",             // IP address the API server will listen on
-      port: 5678,                     // Port the API server will listen on (between 1024 and 65535)
+      address: "0.0.0.0",       // IP address the API server will listen on
+      port: 5678,               // Port the API server will listen on (between 1024 and 65535)
     },
     files_server: {
-      address: "0.0.0.0",             // IP address the server will listen on
-      port: 8080,                     // Port the server will listen on (between 1024 and 65535)
+      address: "0.0.0.0",       // IP address the server will listen on
+      port: 8080,               // Port the server will listen on (between 1024 and 65535)
     },
     osc_server: {
-      address: '0.0.0.0',             // Local IP address to bind to for OSC
-      port: 8000,                     // Local port to listen on for OSC
+      address: '0.0.0.0',       // Local IP address to bind to for OSC
+      port: 8000,               // Local port to listen on for OSC
     },
     osc_client: {
-      address: '10.0.0.200',          // Remote IP address to send OSC to
-      port: 10000                     // Remote port to send OSC on
+      address: '10.0.0.200',    // Remote IP address to send OSC to
+      port: 10000               // Remote port to send OSC on
     },
   },
 

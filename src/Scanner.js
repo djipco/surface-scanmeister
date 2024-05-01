@@ -9,8 +9,8 @@ import {Spawner} from "./Spawner.js";
 export class Scanner extends EventEmitter {
 
   // Above 600dpi, it's too big. At 1200dpi, it yields a 240MB pnm file (10224x14173).
-  static RESOLUTIONS = [75, 100, 150, 300, 600];
-  // static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
+  // static RESOLUTIONS = [75, 100, 150, 300, 600];
+  static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
 
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
