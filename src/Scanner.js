@@ -150,7 +150,7 @@ export class Scanner extends EventEmitter {
     // from the scanner but not faster.
     if (Scanner.RESOLUTIONS.includes(options.resolution)) {
       // const res = parseInt(options.resolution / 75) * 16;
-      const res = parseInt(options.resolution / 75) * 128;
+      const res = parseInt(options.resolution / 75) * 1024;
       args.push(`--buffer-size=${res}`);
     } else {
       args.push('--buffer-size=16');
