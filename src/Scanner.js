@@ -124,10 +124,14 @@ export class Scanner extends EventEmitter {
     }
 
     // Brightness (-100...100)
-    args.push('--brightness=' + config.devices.brightness);
+    if (options.brightness >= -100 && options.brightness <= 100) {
+      args.push('--brightness=' + options.brightness);
+    }
 
     // Contrast (-100...100)
-    args.push('--contrast=' + config.devices.contrast);
+    if (options.contrast >= -100 && options.contrast <= 100) {
+      args.push('--contrast=' + options.contrast);
+    }
 
     // Lamp off scan
     if (config.devices.lampOffScan) {
@@ -142,10 +146,8 @@ export class Scanner extends EventEmitter {
     // Prevent cached calibration from expiring (not sure what it does!)
     args.push('--expiration-time=-1');
 
-    // Go for smaller buffer (default is 32kB) to make the display of the scan more responsive
-
-    // We make the buffer proportional to the resolution so the data is sent as fast as it's coming
-    // from the scanner but not faster.
+    // We make the buffer proportional to the scanning resolution so the data is sent as fast as
+    // it's coming from the scanner but not faster.
     if (Scanner.RESOLUTIONS.includes(options.resolution)) {
       const multiplier = parseInt(options.resolution / 75);
       const res = multiplier * multiplier * 8;

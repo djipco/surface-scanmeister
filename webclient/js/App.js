@@ -46,6 +46,24 @@ export class App {
     }
   }
 
+  get brightness() {
+    const brightness = parseInt(this.ui.brightness.value);
+    if (isNaN(brightness)) {
+      return 0;
+    } else {
+      return brightness;
+    }
+  }
+
+  get contrast() {
+    const contrast = parseInt(this.ui.contrast.value);
+    if (isNaN(contrast)) {
+      return 0;
+    } else {
+      return contrast;
+    }
+  }
+
   setUpUi() {
 
     this.ui.scanButton = document.getElementById("scan");
@@ -57,6 +75,8 @@ export class App {
     this.ui.fullscreenButton.addEventListener('click', () => this.toggleFullScreen());
 
     this.ui.resolution = document.getElementById("resolution");
+    this.ui.brightness = document.getElementById("brightness");
+    this.ui.contrast = document.getElementById("contrast");
 
   }
 
@@ -66,7 +86,10 @@ export class App {
     this.ui.scanButton.disabled = true;
     this.ui.channelInput.disabled = true;
     this.response = await fetch(
-      App.URL + "/scan/" + this.channel + "?resolution=" + this.resolution
+      App.URL + "/scan/" + this.channel +
+      "?resolution=" + this.resolution +
+      "&brightness=" + this.brightness +
+      "&contrast=" + this.contrast
     );
     this.reader = this.response.body.getReader();
     this.#processChunk();

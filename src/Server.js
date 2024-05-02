@@ -51,6 +51,12 @@ export class Server extends EventEmitter {
     const resolution = parseInt(url.searchParams.get('resolution'));
     if (Scanner.RESOLUTIONS.includes(resolution)) parsed.resolution = resolution;
 
+    const brightness = parseInt(url.searchParams.get('brightness'));
+    if (brightness >= -100 && brightness <= 100) parsed.brightness = brightness;
+
+    const contrast = parseInt(url.searchParams.get('contrast'));
+    if (contrast >= -100 && contrast <= 100) parsed.contrast = contrast;
+
     return parsed;
 
   }
@@ -128,7 +134,12 @@ export class Server extends EventEmitter {
     });
 
     // Scan!
-    scanner.scan({pipe: response, resolution: parsed.resolution});
+    scanner.scan({
+      pipe: response,
+      resolution: parsed.resolution,
+      brightness: parsed.brightness,
+      contrast: parsed.contrast,
+    });
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.
     request.once('close', () => {
