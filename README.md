@@ -196,6 +196,10 @@ On startup and shutdown, the system sends this OSC message:
 
 * `/system/status i 0 (or 1)`
 
+The status of scanners is also broadcasted as:
+
+* `/scanner/x` i 0 (or 1)
+
 # Testing the scanning environment
 
 #### scanimage
