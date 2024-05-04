@@ -1,10 +1,10 @@
 # INITIAL CONFIGURATION
 
-### Operating System
+### Installing the Operating System
 
-These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bookworm").
+Install Raspberry Pi OS (Debian 12, "bookworm"):
 
-* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. During the
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium. During the
   process click on "Modify Settings":
   
   * Host: **scanmeister0x** (change "x" by integer)
@@ -25,21 +25,21 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
   sudo apt upgrade -y
   ```
 
-### Node.js
+### Installing Node.js
 
-Install Node.js. Step 1, add the source for Node's latest LTS version:
+First, add the source for Node's latest LTS version:
 
 ```sh
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-Step 2, install Node.js:
+Install Node.js:
 
 ```sh
 sudo apt install -y nodejs
 ```
 
-### Scanmeister
+### Installing ScanMeister
 
 #### Prerequisite
 
@@ -52,14 +52,14 @@ enabled on the Pi:
 
 #### Installation
 
-To install `scanmeister`, open a terminal, go to desktop and clone from repo:
+To install `scanmeister`, open a terminal, go to desktop and clone from GitHub repo:
 
 ```sh
 cd ~/Desktop
 git clone https://github.com/djipco/surface-scanmeister
 ```
 
-Once the repo is cloned, go inside folder and install all modules:
+Go inside folder and install all modules:
 
 ```sh
 cd surface-scanmeister
@@ -69,8 +69,8 @@ npm install
 #### Python
 
 Python libraries are used to talk to the distance sensors and send the info to the remote. To 
-install Python libraries in recent versions of the Raspberry Pi OS, you must first create a virtual 
-Python environment. 
+install Python libraries in recent versions of the Raspberry Pi OS, you must first create a 
+virtual Python environment. 
 
 Go to root of project, create virtual environment in `env` folder and activate it:
 
