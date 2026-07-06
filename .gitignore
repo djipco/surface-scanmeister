@@ -5,6 +5,9 @@
 # Node.js modules
 /node_modules/
 
+# JetBrains project settings
+/.idea/
+
 # Images directory
 /scans/*
 
