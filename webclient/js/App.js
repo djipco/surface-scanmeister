@@ -284,7 +284,9 @@ export class App {
       : Math.min(availableHeight, availableWidth / canvasRatio);
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
-    this.canvas.style.transform = shouldRotate ? "rotate(90deg)" : "";
+    this.canvas.style.transform = shouldRotate
+      ? "translate(-50%, -50%) rotate(90deg)"
+      : "translate(-50%, -50%)";
   }
 
   setUpPanelDrag(panel, handle) {

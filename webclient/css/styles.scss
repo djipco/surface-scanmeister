@@ -14,12 +14,16 @@ body {
 }
 
 #canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   border: #343a40 solid 1px;
   width: auto;
   height: min(calc(100vw - 32px), calc(100vh - 32px));
   display: block;
   background: #050607;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
 }
 
 .controls-panel {
