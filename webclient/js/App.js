@@ -233,18 +233,20 @@ export class App {
       const startX = event.clientX;
       const startValue = parseFloat(input.value) || 0;
       const dragScale = options.dragScale ?? 1;
+      const min = parseFloat(input.min);
+      const max = parseFloat(input.max);
+      let rawValue = this.clamp(startValue, min, max);
       input.classList.add("dragging");
 
       if (options.lockPointer && input.requestPointerLock) {
-        let currentValue = startValue;
-
         const onMouseMove = moveEvent => {
-          const nextValue = this.clampInputValue(
-            input,
-            currentValue + moveEvent.movementX * this.inputStep(input) * dragScale
+          rawValue = this.clamp(
+            rawValue + moveEvent.movementX * this.inputStep(input) * dragScale,
+            min,
+            max
           );
+          const nextValue = this.clampInputValue(input, rawValue);
           if (parseFloat(input.value) === nextValue) return;
-          currentValue = nextValue;
           input.value = nextValue;
           onChange();
         };
@@ -269,10 +271,17 @@ export class App {
       }
 
       input.setPointerCapture(event.pointerId);
+      let lastX = startX;
 
       const onPointerMove = moveEvent => {
-        const delta = moveEvent.clientX - startX;
-        const nextValue = this.clampInputValue(input, startValue + delta * this.inputStep(input) * dragScale);
+        const delta = moveEvent.clientX - lastX;
+        lastX = moveEvent.clientX;
+        rawValue = this.clamp(
+          rawValue + delta * this.inputStep(input) * dragScale,
+          min,
+          max
+        );
+        const nextValue = this.clampInputValue(input, rawValue);
         if (parseFloat(input.value) === nextValue) return;
         input.value = nextValue;
         onChange();
