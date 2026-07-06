@@ -8,6 +8,7 @@ export class App {
   static URL = "http://127.0.0.1:5678";
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
+  static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
 
@@ -90,6 +91,7 @@ export class App {
 
     this.ui.controlsPanel = document.getElementById("controls-panel");
     this.ui.controlsPanelHeader = document.getElementById("controls-panel-header");
+    this.restorePanelPosition(this.ui.controlsPanel);
     this.setUpPanelDrag(this.ui.controlsPanel, this.ui.controlsPanelHeader);
     this.ui.commandPanel = document.getElementById("command-panel");
     this.ui.commandToggle = document.getElementById("command-toggle");
@@ -174,14 +176,15 @@ export class App {
       handle.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
-        const left = this.clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - rect.width);
-        const top = this.clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - rect.height);
+        const left = this.clamp(moveEvent.clientX - offsetX, 0, Math.max(0, window.innerWidth - rect.width));
+        const top = this.clamp(moveEvent.clientY - offsetY, 0, Math.max(0, window.innerHeight - rect.height));
         panel.style.left = left + "px";
         panel.style.top = top + "px";
       };
 
       const onPointerUp = upEvent => {
         handle.releasePointerCapture(upEvent.pointerId);
+        this.savePanelPosition(panel);
         handle.removeEventListener("pointermove", onPointerMove);
         handle.removeEventListener("pointerup", onPointerUp);
         handle.removeEventListener("pointercancel", onPointerUp);
@@ -191,6 +194,37 @@ export class App {
       handle.addEventListener("pointerup", onPointerUp);
       handle.addEventListener("pointercancel", onPointerUp);
     });
+  }
+
+  restorePanelPosition(panel) {
+    try {
+      const position = JSON.parse(localStorage.getItem(App.STORAGE_PARAMETERS_POSITION));
+      if (!position) return;
+
+      requestAnimationFrame(() => {
+        const rect = panel.getBoundingClientRect();
+        const left = this.clamp(position.left, 0, Math.max(0, window.innerWidth - rect.width));
+        const top = this.clamp(position.top, 0, Math.max(0, window.innerHeight - rect.height));
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+        panel.style.left = left + "px";
+        panel.style.top = top + "px";
+      });
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  savePanelPosition(panel) {
+    try {
+      const rect = panel.getBoundingClientRect();
+      localStorage.setItem(App.STORAGE_PARAMETERS_POSITION, JSON.stringify({
+        left: Math.round(rect.left),
+        top: Math.round(rect.top)
+      }));
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
   }
 
   setUpDragInput(input, onChange, options = {}) {
