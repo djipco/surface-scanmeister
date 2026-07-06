@@ -53,6 +53,7 @@ export class App {
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
     this.ui = {};
+    this.channelOutOfBounds = false;
 
     this.reset();
     this.setUpUi();
@@ -221,7 +222,10 @@ export class App {
   }
 
   updateScanButtonState() {
-    this.ui.scanButton.disabled = !this.isChannelValid || this.state === App.STATE_REQUEST_SENT;
+    this.ui.scanButton.disabled =
+      !this.isChannelValid ||
+      this.channelOutOfBounds ||
+      this.state === App.STATE_REQUEST_SENT;
   }
 
   setUpPanelDrag(panel, handle) {
@@ -460,18 +464,30 @@ export class App {
 
   async updateCommandPreview() {
     if (!this.isChannelValid) {
+      this.channelOutOfBounds = true;
       this.setCommandPreviewText("Channel out of bounds", true);
+      this.updateScanButtonState();
       return;
     }
 
+    this.channelOutOfBounds = false;
     this.setCommandPreviewText("", false);
     try {
       const response = await fetch(
         App.URL + "/command/" + this.channel + "?" + this.getScanParams()
       );
-      this.setCommandPreviewText(await response.text(), false);
+      const commandPreview = await response.text();
+      const isChannelOutOfBounds = commandPreview.toLowerCase().includes("channel out of bounds");
+      this.channelOutOfBounds = isChannelOutOfBounds;
+      this.setCommandPreviewText(
+        isChannelOutOfBounds ? "Channel out of bounds" : commandPreview,
+        isChannelOutOfBounds
+      );
     } catch (err) {
+      this.channelOutOfBounds = false;
       this.setCommandPreviewText("unavailable", true);
+    } finally {
+      this.updateScanButtonState();
     }
   }
 
@@ -482,7 +498,7 @@ export class App {
   }
 
   async getImage() {
-    if (!this.isChannelValid) {
+    if (!this.isChannelValid || this.channelOutOfBounds) {
       this.updateCommandPreview();
       this.updateScanButtonState();
       return;
