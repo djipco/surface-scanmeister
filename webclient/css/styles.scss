@@ -62,14 +62,15 @@ body {
 
 .controls-panel h1 button {
   width: 22px;
-  min-height: 22px;
+  height: 22px;
+  min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: #9aa4ad;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 22px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -97,6 +98,7 @@ body {
   align-items: center;
   min-height: 38px;
   padding: 0 12px;
+  transform: translateY(2px);
   border-right: #343a40 solid 1px;
   background: #1b1f23;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -251,6 +253,7 @@ button:disabled {
   align-self: center;
   max-height: 32px;
   padding: 0 12px;
+  transform: translateY(2px);
   overflow: hidden;
   white-space: normal;
   word-break: break-all;
