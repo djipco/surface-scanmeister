@@ -143,6 +143,11 @@ export class Scanner extends EventEmitter {
       args.push('-y', options.width.toString());
     }
 
+    // Ignore cached calibration and recalibrate when requested.
+    if (options.forceCalibration === true) {
+      args.push('--force-calibration');
+    }
+
     // Lamp off scan
     if (config.devices.lampOffScan) {
       args.push('--lamp-off-scan=yes');

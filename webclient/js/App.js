@@ -13,6 +13,7 @@ export class App {
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static STORAGE_FULLSCREEN = "scanmeister.fullscreen";
+  static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
@@ -139,6 +140,10 @@ export class App {
     }
   }
 
+  get forceCalibration() {
+    return Boolean(this.ui.forceCalibration.checked);
+  }
+
   setUpUi() {
 
     this.ui.controlsPanel = document.getElementById("controls-panel");
@@ -177,6 +182,7 @@ export class App {
     this.ui.contrast = document.getElementById("contrast");
     this.ui.width = document.getElementById("width");
     this.ui.height = document.getElementById("height");
+    this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
 
@@ -187,6 +193,7 @@ export class App {
     this.restoreScanWidth();
     this.restoreScanHeight();
     this.restoreCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
+    this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
 
     this.ui.channelInput.addEventListener("change", () => {
@@ -198,6 +205,10 @@ export class App {
     this.ui.resolution.addEventListener("change", () => {
       this.saveControlValue(this.ui.resolution, App.STORAGE_RESOLUTION);
       this.updateExpectedImageSize();
+      this.updateCommandPreview();
+    });
+    this.ui.forceCalibration.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
     });
 
@@ -665,6 +676,7 @@ export class App {
     });
     if (this.scanWidth !== undefined) params.set("width", this.scanWidth);
     if (this.scanHeight !== undefined) params.set("height", this.scanHeight);
+    if (this.forceCalibration) params.set("forceCalibration", "true");
     return params;
   }
 

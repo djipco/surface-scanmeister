@@ -63,6 +63,8 @@ export class Server extends EventEmitter {
     const height = parseFloat(url.searchParams.get('height'));
     if (height >= 0 && height <= 215) parsed.height = height;
 
+    parsed.forceCalibration = url.searchParams.get('forceCalibration') === 'true';
+
     return parsed;
 
   }
@@ -161,6 +163,7 @@ export class Server extends EventEmitter {
       contrast: parsed.contrast,
       width: parsed.width,
       height: parsed.height,
+      forceCalibration: parsed.forceCalibration,
     });
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.
