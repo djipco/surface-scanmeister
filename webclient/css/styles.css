@@ -88,12 +88,12 @@ body {
 
 .control-row label,
 .control-row span:first-child,
-.command-panel > span {
+.command-label {
   color: #9aa4ad;
   font-weight: 600;
 }
 
-.command-panel span {
+.command-label {
   display: flex;
   align-items: center;
   min-height: 38px;
@@ -106,7 +106,7 @@ body {
   text-transform: uppercase;
 }
 
-.command-panel span span {
+.command-label-text {
   transform: translateY(2px);
 }
 

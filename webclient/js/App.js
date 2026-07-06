@@ -12,6 +12,43 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
 
+  static applyBoundedDragMovement(state) {
+    const {currentValue, carry, movement, step, dragScale, min, max} = state;
+    if ((currentValue <= min && movement < 0) || (currentValue >= max && movement > 0)) {
+      return {value: currentValue, carry: 0};
+    }
+
+    const scaledMovement = movement * step * dragScale + carry;
+    const steps = scaledMovement >= 0
+      ? Math.floor(scaledMovement / step)
+      : Math.ceil(scaledMovement / step);
+    const nextCarry = scaledMovement - steps * step;
+    if (steps === 0) return {value: currentValue, carry: nextCarry};
+
+    const candidate = currentValue + steps * step;
+    const value = App.roundSteppedValue(App.clampValue(candidate, min, max), step);
+    return {
+      value,
+      carry: value === candidate ? nextCarry : 0
+    };
+  }
+
+  static roundSteppedValue(value, step) {
+    const precision = App.stepPrecision(step);
+    return parseFloat((Math.round(value / step) * step).toFixed(precision));
+  }
+
+  static stepPrecision(step) {
+    const stepText = step.toString();
+    const decimalIndex = stepText.indexOf(".");
+    if (decimalIndex === -1) return 0;
+    return Math.min(stepText.length - decimalIndex - 1, 1);
+  }
+
+  static clampValue(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
@@ -260,20 +297,17 @@ export class App {
       input.classList.add("dragging");
 
       const applyDragMovement = movement => {
-        const scaledMovement = movement * step * dragScale + dragCarry;
-        const steps = scaledMovement >= 0
-          ? Math.floor(scaledMovement / step)
-          : Math.ceil(scaledMovement / step);
-
-        dragCarry = scaledMovement - steps * step;
-        if (steps === 0) return currentValue;
-
-        const candidate = currentValue + steps * step;
-        const nextValue = this.clampInputValue(input, candidate);
-        if ((nextValue === min && steps < 0) || (nextValue === max && steps > 0)) {
-          dragCarry = 0;
-        }
-        currentValue = nextValue;
+        const nextState = App.applyBoundedDragMovement({
+          currentValue,
+          carry: dragCarry,
+          movement,
+          step,
+          dragScale,
+          min,
+          max
+        });
+        currentValue = nextState.value;
+        dragCarry = nextState.carry;
         return currentValue;
       };
 
