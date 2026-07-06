@@ -65,6 +65,17 @@ body {
   font-weight: 600;
 }
 
+.command-panel span {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border-right: #343a40 solid 1px;
+  background: #1b1f23;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  line-height: 1;
+}
+
 input,
 select,
 button {
@@ -190,15 +201,15 @@ button:disabled {
   left: 16px;
   right: 16px;
   bottom: 16px;
-  min-height: 54px;
+  min-height: 38px;
   border: #343a40 solid 1px;
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 0;
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  background: #1b1f23;
+  align-items: stretch;
+  gap: 0;
+  background: #15181b;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
@@ -207,12 +218,18 @@ button:disabled {
 }
 
 #command {
-  display: block;
-  overflow-x: auto;
-  white-space: nowrap;
+  display: -webkit-box;
+  align-self: center;
+  max-height: 32px;
+  padding: 0 12px;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: #d7e7ff;
   font-family: "Cascadia Mono", Consolas, monospace;
-  line-height: 1.5;
+  line-height: 16px;
 }
 
 /*# sourceMappingURL=styles.css.map */
