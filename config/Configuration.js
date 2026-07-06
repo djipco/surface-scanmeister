@@ -1,7 +1,7 @@
 export const Configuration = {
 
   paths: {
-    logs: "./logs"              // Directory where logfiles should be saved
+    logs: "./logs"              // Directory where logfiles will be saved (in rotation)
   },
 
   network: {
@@ -19,27 +19,21 @@ export const Configuration = {
     },
     osc_client: {
       address: '10.0.0.200',    // Remote IP address to send OSC to
-      port: 10000               // Remote port to send OSC on
+      port: 10000               // Remote port to send OSC to
     },
   },
 
   devices: {
 
     // Whether to use a custom mapping for the channels assigned to each scanner. The value can be
-    // null or one of the mappings from the /config/ScannerMappings.js file
+    // 'null' or one of the mappings from the /config/ScannerMappings.js file
+    mapping: null,                // Name of the mapping to use or null
     // mapping: "Atolla16PortBus1Port1Dynex7PortBus3Port1",
     // mapping: "Atolla16PortBus1Port1",
     // mapping: "Pi4",
-    mapping: null,                // Name of the mapping to use or null
 
-    brightness: 25,               // Scanning brightness (-100...100)
-    contrast: 25,                 // Scanning contrast (-100...100)
     lampOffScan: false,           // Whether to shut off lamp while scanning
     lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
-    // x: 0,                         // Horizontal position to start the scan at (0...216.7mm)
-    // y: 0,                         // Vertical position to start the scan at (0...297.5mm)
-    // width: 216.07,                // Width of scan area (0...216.7mm)
-    // height: 297.5,                // Height of scan area (0...297.5mm)
 
   },
 
