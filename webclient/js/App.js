@@ -275,12 +275,16 @@ export class App {
     const availableWidth = Math.max(1, window.innerWidth - margin);
     const availableHeight = Math.max(1, window.innerHeight - margin);
     const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;
+    const isCanvasLandscape = canvasRatio >= 1;
+    const isViewportLandscape = availableWidth >= availableHeight;
+    const shouldRotate = isCanvasLandscape !== isViewportLandscape;
 
-    const cssHeight = Math.min(
-      availableHeight,
-      availableWidth / canvasRatio
-    );
+    const cssHeight = shouldRotate
+      ? Math.min(availableWidth, availableHeight / canvasRatio)
+      : Math.min(availableHeight, availableWidth / canvasRatio);
+
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
+    this.canvas.style.transform = shouldRotate ? "rotate(90deg)" : "";
   }
 
   setUpPanelDrag(panel, handle) {
