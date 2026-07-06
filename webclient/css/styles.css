@@ -43,6 +43,10 @@ body {
   padding: 10px 14px;
   border-bottom: #343a40 solid 1px;
   border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: #23292f;
   color: #f2f4f5;
   font-size: 12px;
@@ -50,6 +54,28 @@ body {
   letter-spacing: 0;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3C/svg%3E") 12 12, all-scroll;
   user-select: none;
+}
+
+.controls-panel.hidden {
+  display: none;
+}
+
+.controls-panel h1 button {
+  width: 22px;
+  min-height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9aa4ad;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.controls-panel h1 button:hover {
+  color: #f2f4f5;
+  background: #303841;
 }
 
 .control-row {
@@ -209,7 +235,7 @@ button:disabled {
   border-radius: 6px;
   padding: 0;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
   background: #15181b;

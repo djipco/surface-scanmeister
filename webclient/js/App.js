@@ -91,8 +91,18 @@ export class App {
 
     this.ui.controlsPanel = document.getElementById("controls-panel");
     this.ui.controlsPanelHeader = document.getElementById("controls-panel-header");
+    this.ui.controlsPanelClose = document.getElementById("controls-panel-close");
     this.restorePanelPosition(this.ui.controlsPanel);
     this.setUpPanelDrag(this.ui.controlsPanel, this.ui.controlsPanelHeader);
+    this.ui.controlsPanelClose.addEventListener("click", event => {
+      event.stopPropagation();
+      this.setParametersVisible(false);
+    });
+    document.addEventListener("keydown", event => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== "p") return;
+      event.preventDefault();
+      this.toggleParametersPanel();
+    });
     this.ui.commandPanel = document.getElementById("command-panel");
     this.ui.commandToggle = document.getElementById("command-toggle");
     this.ui.commandToggle.addEventListener("change", () => this.updateCommandPanelVisibility());
@@ -164,8 +174,17 @@ export class App {
     this.ui.commandPanel.classList.toggle("hidden", !this.ui.commandToggle.checked);
   }
 
+  toggleParametersPanel() {
+    this.setParametersVisible(this.ui.controlsPanel.classList.contains("hidden"));
+  }
+
+  setParametersVisible(isVisible) {
+    this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
+  }
+
   setUpPanelDrag(panel, handle) {
     handle.addEventListener("pointerdown", event => {
+      if (event.target.closest("button")) return;
       event.preventDefault();
       const rect = panel.getBoundingClientRect();
       const offsetX = event.clientX - rect.left;
