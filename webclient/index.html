@@ -15,40 +15,57 @@
 
   <body>
 
-    <section>
+    <section class="controls-panel">
 
-      <label for="channel">Channel: </label>
-      <input type="number" id="channel" name="channel" min="0" max="10" step="1" value="1">
+      <div class="control-row">
+        <label for="channel">Channel</label>
+        <input type="number" id="channel" name="channel" min="0" max="10" step="1" value="1">
+      </div>
 
-      <label for="resolution">Resolution: </label>
-      <select id="resolution">
-        <option value="75">75</option>
-        <option value="100">100</option>
-        <option value="150">150</option>
-        <option value="300">300</option>
-        <option value="600">600</option>
-      </select>
+      <div class="control-row">
+        <label for="resolution">Resolution</label>
+        <select id="resolution">
+          <option value="75">75</option>
+          <option value="100">100</option>
+          <option value="150">150</option>
+          <option value="300">300</option>
+          <option value="600">600</option>
+        </select>
+      </div>
 
-      <label for="brightness">Brightness: </label>
-      <input type="range" min="-100" max="100" value="25" id="brightness">
+      <div class="control-row">
+        <label for="brightness">Brightness</label>
+        <input type="range" min="-100" max="100" value="25" id="brightness">
+      </div>
 
-      <label for="contrast">Contrast: </label>
-      <input type="range" min="-100" max="100" value="30" id="contrast">
+      <div class="control-row">
+        <label for="contrast">Contrast</label>
+        <input type="range" min="-100" max="100" value="30" id="contrast">
+      </div>
 
-      <label for="width">Width (mm): </label>
-      <input type="number" id="width" name="width" min="1" max="5000" step="1">
+      <div class="control-row">
+        <label for="width">Width (mm)</label>
+        <input type="number" id="width" name="width" min="1" max="5000" step="1">
+      </div>
 
-      <button id="scan">Scan</button>
+      <div class="control-row">
+        <span>Size</span>
+        <span id="size">unknown</span>
+      </div>
 
-      <p>Size: <br><span id="size">unknown</span></p>
-
-      <p>Command: <br><code id="command">unknown</code></p>
-
-      <button id="fs-toggle">Fullscreen</button>
+      <div class="button-row">
+        <button id="scan">Scan</button>
+        <button id="fs-toggle">Fullscreen</button>
+      </div>
 
     </section>
 
     <canvas id="canvas" width="319" height="439"></canvas>
+
+    <section class="command-panel">
+      <span>Command</span>
+      <code id="command">unknown</code>
+    </section>
 
   </body>
 

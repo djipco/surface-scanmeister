@@ -6,6 +6,7 @@ export class App {
   static STATE_DATA_PARSED = 3;
 
   static URL = "http://127.0.0.1:5678";
+  static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -89,16 +90,43 @@ export class App {
     this.ui.width = document.getElementById("width");
     this.ui.command = document.getElementById("command");
 
+    this.restoreScanWidth();
+
     [
       this.ui.channelInput,
       this.ui.resolution,
       this.ui.brightness,
       this.ui.contrast,
-      this.ui.width
     ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
+
+    this.ui.width.addEventListener("input", () => {
+      this.saveScanWidth();
+      this.updateCommandPreview();
+    });
 
     this.updateCommandPreview();
 
+  }
+
+  restoreScanWidth() {
+    try {
+      const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH);
+      if (width !== null) this.ui.width.value = width;
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveScanWidth() {
+    try {
+      if (this.scanWidth === undefined) {
+        localStorage.removeItem(App.STORAGE_SCAN_WIDTH);
+      } else {
+        localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth);
+      }
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
   }
 
   getScanParams() {

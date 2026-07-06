@@ -2,40 +2,121 @@ html, body {
   margin: 0;
   overflow: hidden;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: black;
-  font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
-  font-size: 12px;
+  background: #111315;
+  color: #e6e8ea;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+
+body {
+  display: grid;
+  place-items: center;
 }
 
 #canvas {
-  border: #bbb4ab solid 1px;
+  border: #343a40 solid 1px;
   width: auto;
-  height: 95vh;
+  height: calc(100vh - 96px);
   display: block;
+  background: #050607;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
-section {
+.controls-panel {
   position: absolute;
-  top: 2vh;
-  left: 2vh;
-  border: #bbb4ab solid 1px;
-  padding: 10px;
-  display: flex;
+  top: 16px;
+  left: 16px;
+  width: 320px;
+  border: #343a40 solid 1px;
+  border-radius: 6px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  background: #1b1f23;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
   align-items: center;
-  flex-direction: column;
-  gap: 5px;
-  background-color: aliceblue;
+  gap: 14px;
+}
 
-  p {
-    margin: 0.5em 0 0 0;
-    text-align: center;
-  }
+.control-row label,
+.control-row span:first-child,
+.command-panel span {
+  color: #9aa4ad;
+  font-weight: 600;
+}
 
+input,
+select,
+button {
+  box-sizing: border-box;
+  min-height: 32px;
+  border: #3d454d solid 1px;
+  border-radius: 4px;
+  background: #252b31;
+  color: #f2f4f5;
+  font: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0 9px;
+}
+
+input[type=range] {
+  padding: 0;
+  accent-color: #7aa2d6;
 }
 
 button {
+  padding: 0 12px;
+  cursor: pointer;
+  background: #303841;
+}
+
+button:hover {
+  background: #3a4651;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.command-panel {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  min-height: 54px;
+  border: #343a40 solid 1px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  background: #1b1f23;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+#command {
   display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  color: #d7e7ff;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  line-height: 1.5;
 }
