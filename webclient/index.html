@@ -53,24 +53,18 @@
       </div>
 
       <div class="control-row">
+        <label for="width">Width (mm)</label>
+        <input type="number" id="width" name="width" min="0" max="5000" step="10" value="5000" class="drag-input">
+      </div>
+
+      <div class="control-row">
         <label for="brightness">Brightness</label>
-        <div class="range-control">
-          <input type="range" min="-100" max="100" value="25" id="brightness">
-          <span id="brightness-value" class="drag-value">25</span>
-        </div>
+        <input type="number" min="-100" max="100" step="1" value="25" id="brightness" class="drag-input">
       </div>
 
       <div class="control-row">
         <label for="contrast">Contrast</label>
-        <div class="range-control">
-          <input type="range" min="-100" max="100" value="30" id="contrast">
-          <span id="contrast-value" class="drag-value">30</span>
-        </div>
-      </div>
-
-      <div class="control-row">
-        <label for="width">Width (mm)</label>
-        <input type="number" id="width" name="width" min="1" max="5000" step="1" value="5000">
+        <input type="number" min="-100" max="100" step="1" value="30" id="contrast" class="drag-input">
       </div>
 
       <div class="control-row">

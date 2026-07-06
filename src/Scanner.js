@@ -134,7 +134,7 @@ export class Scanner extends EventEmitter {
     }
 
     // Scan width in the physical installation maps to SANE's y-axis.
-    if (options.width > 0 && options.width <= 5000) {
+    if (options.width >= 0 && options.width <= 5000) {
       args.push('-y', options.width.toString());
     }
 

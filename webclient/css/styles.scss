@@ -80,36 +80,14 @@ select {
   padding: 0 9px;
 }
 
-input[type=range] {
-  padding: 0;
-  accent-color: #7aa2d6;
-}
-
-.range-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
-  align-items: center;
-  gap: 8px;
-}
-
-.drag-value {
-  box-sizing: border-box;
-  min-height: 32px;
-  border: #3d454d solid 1px;
-  border-radius: 4px;
-  background: #252b31;
-  padding: 0 9px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  color: #d7e7ff;
-  font-family: "Cascadia Mono", Consolas, monospace;
+.drag-input {
   cursor: ew-resize;
-  user-select: none;
+  text-align: right;
 }
 
-.drag-value.dragging {
+.drag-input.dragging {
   color: #ffffff;
+  border-color: #7aa2d6;
 }
 
 .info-value {
@@ -119,6 +97,8 @@ input[type=range] {
   padding: 0 9px;
   display: flex;
   align-items: center;
+  border-radius: 4px;
+  background: #252b31;
   color: #f2f4f5;
 }
 

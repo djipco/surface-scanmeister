@@ -58,7 +58,7 @@ export class Server extends EventEmitter {
     if (contrast >= -100 && contrast <= 100) parsed.contrast = contrast;
 
     const width = parseFloat(url.searchParams.get('width'));
-    if (width > 0 && width <= 5000) parsed.width = width;
+    if (width >= 0 && width <= 5000) parsed.width = width;
 
     return parsed;
 

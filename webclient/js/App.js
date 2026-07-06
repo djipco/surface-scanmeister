@@ -87,9 +87,7 @@ export class App {
 
     this.ui.resolution = document.getElementById("resolution");
     this.ui.brightness = document.getElementById("brightness");
-    this.ui.brightnessValue = document.getElementById("brightness-value");
     this.ui.contrast = document.getElementById("contrast");
-    this.ui.contrastValue = document.getElementById("contrast-value");
     this.ui.width = document.getElementById("width");
     this.ui.command = document.getElementById("command");
 
@@ -100,8 +98,12 @@ export class App {
       this.ui.resolution,
     ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
 
-    this.setUpRangeControl(this.ui.brightness, this.ui.brightnessValue);
-    this.setUpRangeControl(this.ui.contrast, this.ui.contrastValue);
+    this.setUpDragInput(this.ui.brightness, () => this.updateCommandPreview());
+    this.setUpDragInput(this.ui.contrast, () => this.updateCommandPreview());
+    this.setUpDragInput(this.ui.width, () => {
+      this.saveScanWidth();
+      this.updateCommandPreview();
+    });
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -112,51 +114,45 @@ export class App {
 
   }
 
-  setUpRangeControl(input, value) {
-    this.updateRangeValue(input, value);
-
-    input.addEventListener("input", () => {
-      this.updateRangeValue(input, value);
-      this.updateCommandPreview();
-    });
-
-    value.addEventListener("pointerdown", event => {
+  setUpDragInput(input, onChange) {
+    input.addEventListener("pointerdown", event => {
       const startX = event.clientX;
-      const startValue = parseInt(input.value);
-      value.classList.add("dragging");
-      value.setPointerCapture(event.pointerId);
+      const startValue = parseFloat(input.value) || 0;
+      input.classList.add("dragging");
+      input.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
         const delta = moveEvent.clientX - startX;
-        const nextValue = this.clampRangeValue(input, startValue + delta);
-        if (parseInt(input.value) === nextValue) return;
+        const nextValue = this.clampInputValue(input, startValue + delta * this.inputStep(input));
+        if (parseFloat(input.value) === nextValue) return;
         input.value = nextValue;
-        this.updateRangeValue(input, value);
-        this.updateCommandPreview();
+        onChange();
       };
 
       const onPointerUp = upEvent => {
-        value.classList.remove("dragging");
-        value.releasePointerCapture(upEvent.pointerId);
-        value.removeEventListener("pointermove", onPointerMove);
-        value.removeEventListener("pointerup", onPointerUp);
-        value.removeEventListener("pointercancel", onPointerUp);
+        input.classList.remove("dragging");
+        input.releasePointerCapture(upEvent.pointerId);
+        input.removeEventListener("pointermove", onPointerMove);
+        input.removeEventListener("pointerup", onPointerUp);
+        input.removeEventListener("pointercancel", onPointerUp);
       };
 
-      value.addEventListener("pointermove", onPointerMove);
-      value.addEventListener("pointerup", onPointerUp);
-      value.addEventListener("pointercancel", onPointerUp);
+      input.addEventListener("pointermove", onPointerMove);
+      input.addEventListener("pointerup", onPointerUp);
+      input.addEventListener("pointercancel", onPointerUp);
     });
   }
 
-  updateRangeValue(input, value) {
-    value.innerText = input.value;
+  inputStep(input) {
+    return parseFloat(input.step) || 1;
   }
 
-  clampRangeValue(input, value) {
-    const min = parseInt(input.min);
-    const max = parseInt(input.max);
-    return Math.min(max, Math.max(min, value));
+  clampInputValue(input, value) {
+    const min = parseFloat(input.min);
+    const max = parseFloat(input.max);
+    const step = this.inputStep(input);
+    const steppedValue = Math.round(value / step) * step;
+    return Math.min(max, Math.max(min, steppedValue));
   }
 
   restoreScanWidth() {
