@@ -264,7 +264,7 @@ export class App {
     this.displayPixelHeight = nextHeight;
     if (this.canvas.width !== nextWidth) this.canvas.width = nextWidth;
     if (this.canvas.height !== nextHeight) this.canvas.height = nextHeight;
-    this.ui.size.innerText = `${nextWidth} × ${nextHeight}`;
+    this.ui.size.innerText = `${nextWidth} × ${nextHeight} px`;
     this.updateCanvasDisplaySize();
   }
 
@@ -282,11 +282,18 @@ export class App {
     const cssHeight = shouldRotate
       ? Math.min(availableWidth, availableHeight / canvasRatio)
       : Math.min(availableHeight, availableWidth / canvasRatio);
+    const cssWidth = cssHeight * canvasRatio;
+    const displayWidth = shouldRotate ? cssHeight : cssWidth;
+    const displayHeight = shouldRotate ? cssWidth : cssHeight;
+    const displayLeft = (window.innerWidth - displayWidth) / 2;
+    const displayTop = (window.innerHeight - displayHeight) / 2;
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = shouldRotate
       ? "translate(-50%, -50%) rotate(90deg)"
       : "translate(-50%, -50%)";
+    this.ui.size.style.left = displayLeft + "px";
+    this.ui.size.style.top = displayTop + "px";
   }
 
   setUpPanelDrag(panel, handle) {

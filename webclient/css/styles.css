@@ -224,11 +224,8 @@ button:disabled {
 
 .image-size-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
   padding: 8px 12px;
   border-radius: 4px;
-  transform: translate(-50%, -50%);
   background: rgba(17, 19, 21, 0.78);
   color: #f2f4f5;
   font-family: "Cascadia Mono", Consolas, monospace;
