@@ -9,7 +9,7 @@ export class App {
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static DEFAULT_SCAN_WIDTH = "5000";
-  static DEFAULT_SCAN_HEIGHT = "216.7";
+  static DEFAULT_SCAN_HEIGHT = "215";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -73,7 +73,7 @@ export class App {
     if (isNaN(width)) {
       return undefined;
     } else {
-      return width;
+      return this.roundInputValue(this.ui.width, width);
     }
   }
 
@@ -82,7 +82,7 @@ export class App {
     if (isNaN(height)) {
       return undefined;
     } else {
-      return height;
+      return this.roundInputValue(this.ui.height, height);
     }
   }
 
@@ -139,6 +139,16 @@ export class App {
       this.updateCommandPreview();
     });
     this.ui.height.addEventListener("input", () => {
+      this.saveScanHeight();
+      this.updateCommandPreview();
+    });
+    this.ui.width.addEventListener("change", () => {
+      this.ui.width.value = this.roundInputValue(this.ui.width, this.scanWidth || 0);
+      this.saveScanWidth();
+      this.updateCommandPreview();
+    });
+    this.ui.height.addEventListener("change", () => {
+      this.ui.height.value = this.roundInputValue(this.ui.height, this.scanHeight || 0);
       this.saveScanHeight();
       this.updateCommandPreview();
     });
@@ -256,11 +266,24 @@ export class App {
     const max = parseFloat(input.max);
     const step = this.inputStep(input);
     const steppedValue = Math.round(value / step) * step;
-    return this.clamp(steppedValue, min, max);
+    return parseFloat(this.clamp(steppedValue, min, max).toFixed(this.inputPrecision(input)));
+  }
+
+  roundInputValue(input, value) {
+    const min = parseFloat(input.min);
+    const max = parseFloat(input.max);
+    return parseFloat(this.clamp(value, min, max).toFixed(this.inputPrecision(input)));
   }
 
   clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  inputPrecision(input) {
+    const step = input.step || "1";
+    const decimalIndex = step.indexOf(".");
+    if (decimalIndex === -1) return 0;
+    return Math.min(step.length - decimalIndex - 1, 1);
   }
 
   restoreScanWidth() {
@@ -278,7 +301,7 @@ export class App {
 
   saveScanWidth() {
     try {
-      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth || App.DEFAULT_SCAN_WIDTH);
+      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth ?? App.DEFAULT_SCAN_WIDTH);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -299,7 +322,7 @@ export class App {
 
   saveScanHeight() {
     try {
-      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.scanHeight || App.DEFAULT_SCAN_HEIGHT);
+      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.scanHeight ?? App.DEFAULT_SCAN_HEIGHT);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
