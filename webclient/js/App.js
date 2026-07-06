@@ -9,7 +9,7 @@ export class App {
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static DEFAULT_SCAN_WIDTH = "5000";
-  static DEFAULT_SCAN_HEIGHT = "210";
+  static DEFAULT_SCAN_HEIGHT = "216.7";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -88,6 +88,13 @@ export class App {
 
   setUpUi() {
 
+    this.ui.controlsPanel = document.getElementById("controls-panel");
+    this.ui.controlsPanelHeader = document.getElementById("controls-panel-header");
+    this.setUpPanelDrag(this.ui.controlsPanel, this.ui.controlsPanelHeader);
+    this.ui.commandPanel = document.getElementById("command-panel");
+    this.ui.commandToggle = document.getElementById("command-toggle");
+    this.ui.commandToggle.addEventListener("change", () => this.updateCommandPanelVisibility());
+
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => this.getImage());
 
@@ -121,11 +128,11 @@ export class App {
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
       this.updateCommandPreview();
-    });
+    }, {lockPointer: true});
     this.setUpDragInput(this.ui.height, () => {
       this.saveScanHeight();
       this.updateCommandPreview();
-    });
+    }, {lockPointer: true});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -137,14 +144,85 @@ export class App {
     });
 
     this.updateCommandPreview();
+    this.updateCommandPanelVisibility();
 
   }
 
-  setUpDragInput(input, onChange) {
+  updateCommandPanelVisibility() {
+    this.ui.commandPanel.classList.toggle("hidden", !this.ui.commandToggle.checked);
+  }
+
+  setUpPanelDrag(panel, handle) {
+    handle.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      const rect = panel.getBoundingClientRect();
+      const offsetX = event.clientX - rect.left;
+      const offsetY = event.clientY - rect.top;
+
+      panel.style.right = "auto";
+      panel.style.bottom = "auto";
+      handle.setPointerCapture(event.pointerId);
+
+      const onPointerMove = moveEvent => {
+        const left = this.clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - rect.width);
+        const top = this.clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - rect.height);
+        panel.style.left = left + "px";
+        panel.style.top = top + "px";
+      };
+
+      const onPointerUp = upEvent => {
+        handle.releasePointerCapture(upEvent.pointerId);
+        handle.removeEventListener("pointermove", onPointerMove);
+        handle.removeEventListener("pointerup", onPointerUp);
+        handle.removeEventListener("pointercancel", onPointerUp);
+      };
+
+      handle.addEventListener("pointermove", onPointerMove);
+      handle.addEventListener("pointerup", onPointerUp);
+      handle.addEventListener("pointercancel", onPointerUp);
+    });
+  }
+
+  setUpDragInput(input, onChange, options = {}) {
     input.addEventListener("pointerdown", event => {
+      event.preventDefault();
       const startX = event.clientX;
       const startValue = parseFloat(input.value) || 0;
       input.classList.add("dragging");
+
+      if (options.lockPointer && input.requestPointerLock) {
+        let currentValue = startValue;
+
+        const onMouseMove = moveEvent => {
+          const nextValue = this.clampInputValue(
+            input,
+            currentValue + moveEvent.movementX * this.inputStep(input)
+          );
+          if (parseFloat(input.value) === nextValue) return;
+          currentValue = nextValue;
+          input.value = nextValue;
+          onChange();
+        };
+
+        const onMouseUp = () => {
+          input.classList.remove("dragging");
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+          document.removeEventListener("pointerlockchange", onPointerLockChange);
+          if (document.pointerLockElement === input) document.exitPointerLock();
+        };
+
+        const onPointerLockChange = () => {
+          if (document.pointerLockElement !== input) onMouseUp();
+        };
+
+        input.requestPointerLock();
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+        document.addEventListener("pointerlockchange", onPointerLockChange);
+        return;
+      }
+
       input.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
@@ -178,7 +256,11 @@ export class App {
     const max = parseFloat(input.max);
     const step = this.inputStep(input);
     const steppedValue = Math.round(value / step) * step;
-    return Math.min(max, Math.max(min, steppedValue));
+    return this.clamp(steppedValue, min, max);
+  }
+
+  clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
   }
 
   restoreScanWidth() {
@@ -186,8 +268,8 @@ export class App {
       const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH) ||
         this.ui.width.value ||
         App.DEFAULT_SCAN_WIDTH;
-      this.ui.width.value = width;
-      localStorage.setItem(App.STORAGE_SCAN_WIDTH, width);
+      this.ui.width.value = this.clampInputValue(this.ui.width, parseFloat(width));
+      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.ui.width.value);
     } catch (err) {
       if (!this.ui.width.value) this.ui.width.value = App.DEFAULT_SCAN_WIDTH;
       // Keep the interface usable if localStorage is unavailable.
@@ -207,8 +289,8 @@ export class App {
       const height = localStorage.getItem(App.STORAGE_SCAN_HEIGHT) ||
         this.ui.height.value ||
         App.DEFAULT_SCAN_HEIGHT;
-      this.ui.height.value = height;
-      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, height);
+      this.ui.height.value = this.clampInputValue(this.ui.height, parseFloat(height));
+      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.ui.height.value);
     } catch (err) {
       if (!this.ui.height.value) this.ui.height.value = App.DEFAULT_SCAN_HEIGHT;
       // Keep the interface usable if localStorage is unavailable.

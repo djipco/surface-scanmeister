@@ -61,7 +61,7 @@ export class Server extends EventEmitter {
     if (width >= 0 && width <= 5000) parsed.width = width;
 
     const height = parseFloat(url.searchParams.get('height'));
-    if (height >= 0 && height <= 5000) parsed.height = height;
+    if (height >= 0 && height <= 216.7) parsed.height = height;
 
     return parsed;
 

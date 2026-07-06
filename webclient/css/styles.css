@@ -47,6 +47,8 @@ body {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
+  cursor: move;
+  user-select: none;
 }
 
 .control-row {
@@ -145,18 +147,6 @@ select {
   border-color: #7aa2d6;
 }
 
-.info-value {
-  box-sizing: border-box;
-  min-height: 32px;
-  width: 100%;
-  padding: 0 9px;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-  background: #252b31;
-  color: #f2f4f5;
-}
-
 button {
   padding: 0 12px;
   cursor: pointer;
@@ -179,6 +169,22 @@ button:disabled {
   margin-top: 2px;
 }
 
+.image-size-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+  background: rgba(17, 19, 21, 0.78);
+  color: #f2f4f5;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .command-panel {
   position: absolute;
   left: 16px;
@@ -190,10 +196,14 @@ button:disabled {
   padding: 10px 12px;
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
-  align-items: start;
+  align-items: center;
   gap: 12px;
   background: #1b1f23;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.command-panel.hidden {
+  display: none;
 }
 
 #command {
