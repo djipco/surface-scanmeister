@@ -235,17 +235,32 @@ export class App {
       const dragScale = options.dragScale ?? 1;
       const min = parseFloat(input.min);
       const max = parseFloat(input.max);
-      let rawValue = this.clamp(startValue, min, max);
+      const step = this.inputStep(input);
+      let currentValue = this.clampInputValue(input, startValue);
+      let dragCarry = 0;
       input.classList.add("dragging");
+
+      const applyDragMovement = movement => {
+        const scaledMovement = movement * step * dragScale + dragCarry;
+        const steps = scaledMovement >= 0
+          ? Math.floor(scaledMovement / step)
+          : Math.ceil(scaledMovement / step);
+
+        dragCarry = scaledMovement - steps * step;
+        if (steps === 0) return currentValue;
+
+        const candidate = currentValue + steps * step;
+        const nextValue = this.clampInputValue(input, candidate);
+        if ((nextValue === min && steps < 0) || (nextValue === max && steps > 0)) {
+          dragCarry = 0;
+        }
+        currentValue = nextValue;
+        return currentValue;
+      };
 
       if (options.lockPointer && input.requestPointerLock) {
         const onMouseMove = moveEvent => {
-          rawValue = this.clamp(
-            rawValue + moveEvent.movementX * this.inputStep(input) * dragScale,
-            min,
-            max
-          );
-          const nextValue = this.clampInputValue(input, rawValue);
+          const nextValue = applyDragMovement(moveEvent.movementX);
           if (parseFloat(input.value) === nextValue) return;
           input.value = nextValue;
           onChange();
@@ -276,12 +291,7 @@ export class App {
       const onPointerMove = moveEvent => {
         const delta = moveEvent.clientX - lastX;
         lastX = moveEvent.clientX;
-        rawValue = this.clamp(
-          rawValue + delta * this.inputStep(input) * dragScale,
-          min,
-          max
-        );
-        const nextValue = this.clampInputValue(input, rawValue);
+        const nextValue = applyDragMovement(delta);
         if (parseFloat(input.value) === nextValue) return;
         input.value = nextValue;
         onChange();

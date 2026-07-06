@@ -67,8 +67,10 @@ body {
 }
 
 .command-panel span {
+  display: flex;
+  align-items: center;
   min-height: 38px;
-  padding: 11px 12px 0 12px;
+  padding: 0 12px;
   border-right: #343a40 solid 1px;
   background: #1b1f23;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -220,8 +222,9 @@ button:disabled {
 
 #command {
   display: -webkit-box;
+  align-self: center;
   max-height: 32px;
-  padding: 11px 12px 0 12px;
+  padding: 0 12px;
   overflow: hidden;
   white-space: normal;
   word-break: break-all;
