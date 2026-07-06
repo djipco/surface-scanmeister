@@ -16,10 +16,11 @@ body {
 #canvas {
   border: #343a40 solid 1px;
   width: auto;
-  height: calc(100vh - 96px);
+  height: min(calc(100vw - 32px), calc(100vh - 96px));
   display: block;
   background: #050607;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transform: rotate(90deg);
 }
 
 .controls-panel {
@@ -80,9 +81,27 @@ select {
   padding: 0 9px;
 }
 
+input[type=checkbox].toggle-input {
+  width: 32px;
+  min-height: 32px;
+  margin: 0;
+  justify-self: start;
+  accent-color: #7aa2d6;
+  cursor: pointer;
+}
+
 .drag-input {
   cursor: ew-resize;
   text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.drag-input::-webkit-inner-spin-button,
+.drag-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .drag-input.dragging {
@@ -119,7 +138,7 @@ button:disabled {
 
 .button-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 2px;
 }

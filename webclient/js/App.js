@@ -83,7 +83,12 @@ export class App {
     this.ui.channelInput = document.getElementById('channel');
 
     this.ui.fullscreenButton = document.getElementById('fs-toggle')
-    this.ui.fullscreenButton.addEventListener('click', () => this.toggleFullScreen());
+    this.ui.fullscreenButton.addEventListener('change', () => this.setFullScreen(
+      this.ui.fullscreenButton.checked
+    ));
+    document.addEventListener('fullscreenchange', () => {
+      this.ui.fullscreenButton.checked = Boolean(document.fullscreenElement);
+    });
 
     this.ui.resolution = document.getElementById("resolution");
     this.ui.brightness = document.getElementById("brightness");
@@ -341,13 +346,14 @@ export class App {
 
   }
 
-  toggleFullScreen() {
+  setFullScreen(enabled) {
 
-    if (!document.fullscreenElement) {
+    if (enabled && !document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
+        this.ui.fullscreenButton.checked = false;
         alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
       });
-    } else {
+    } else if (!enabled && document.fullscreenElement) {
       if (document.exitFullscreen) document.exitFullscreen();
     }
 
