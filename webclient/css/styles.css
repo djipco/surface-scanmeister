@@ -36,6 +36,14 @@ body {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
+.controls-panel h1 {
+  margin: 0 0 4px 0;
+  color: #f2f4f5;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .control-row {
   display: grid;
   grid-template-columns: 110px minmax(0, 1fr);
@@ -71,6 +79,38 @@ select {
 input[type=range] {
   padding: 0;
   accent-color: #7aa2d6;
+}
+
+.range-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.drag-value {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: #d7e7ff;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.drag-value.dragging {
+  color: #ffffff;
+}
+
+.info-value {
+  box-sizing: border-box;
+  min-height: 32px;
+  width: 100%;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  color: #f2f4f5;
 }
 
 button {

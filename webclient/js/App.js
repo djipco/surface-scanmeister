@@ -7,6 +7,7 @@ export class App {
 
   static URL = "http://127.0.0.1:5678";
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
+  static DEFAULT_SCAN_WIDTH = "5000";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -86,7 +87,9 @@ export class App {
 
     this.ui.resolution = document.getElementById("resolution");
     this.ui.brightness = document.getElementById("brightness");
+    this.ui.brightnessValue = document.getElementById("brightness-value");
     this.ui.contrast = document.getElementById("contrast");
+    this.ui.contrastValue = document.getElementById("contrast-value");
     this.ui.width = document.getElementById("width");
     this.ui.command = document.getElementById("command");
 
@@ -95,9 +98,10 @@ export class App {
     [
       this.ui.channelInput,
       this.ui.resolution,
-      this.ui.brightness,
-      this.ui.contrast,
     ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
+
+    this.setUpRangeControl(this.ui.brightness, this.ui.brightnessValue);
+    this.setUpRangeControl(this.ui.contrast, this.ui.contrastValue);
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -108,22 +112,69 @@ export class App {
 
   }
 
+  setUpRangeControl(input, value) {
+    this.updateRangeValue(input, value);
+
+    input.addEventListener("input", () => {
+      this.updateRangeValue(input, value);
+      this.updateCommandPreview();
+    });
+
+    value.addEventListener("pointerdown", event => {
+      const startX = event.clientX;
+      const startValue = parseInt(input.value);
+      value.classList.add("dragging");
+      value.setPointerCapture(event.pointerId);
+
+      const onPointerMove = moveEvent => {
+        const delta = moveEvent.clientX - startX;
+        const nextValue = this.clampRangeValue(input, startValue + delta);
+        if (parseInt(input.value) === nextValue) return;
+        input.value = nextValue;
+        this.updateRangeValue(input, value);
+        this.updateCommandPreview();
+      };
+
+      const onPointerUp = upEvent => {
+        value.classList.remove("dragging");
+        value.releasePointerCapture(upEvent.pointerId);
+        value.removeEventListener("pointermove", onPointerMove);
+        value.removeEventListener("pointerup", onPointerUp);
+        value.removeEventListener("pointercancel", onPointerUp);
+      };
+
+      value.addEventListener("pointermove", onPointerMove);
+      value.addEventListener("pointerup", onPointerUp);
+      value.addEventListener("pointercancel", onPointerUp);
+    });
+  }
+
+  updateRangeValue(input, value) {
+    value.innerText = input.value;
+  }
+
+  clampRangeValue(input, value) {
+    const min = parseInt(input.min);
+    const max = parseInt(input.max);
+    return Math.min(max, Math.max(min, value));
+  }
+
   restoreScanWidth() {
     try {
-      const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH);
-      if (width !== null) this.ui.width.value = width;
+      const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH) ||
+        this.ui.width.value ||
+        App.DEFAULT_SCAN_WIDTH;
+      this.ui.width.value = width;
+      localStorage.setItem(App.STORAGE_SCAN_WIDTH, width);
     } catch (err) {
+      if (!this.ui.width.value) this.ui.width.value = App.DEFAULT_SCAN_WIDTH;
       // Keep the interface usable if localStorage is unavailable.
     }
   }
 
   saveScanWidth() {
     try {
-      if (this.scanWidth === undefined) {
-        localStorage.removeItem(App.STORAGE_SCAN_WIDTH);
-      } else {
-        localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth);
-      }
+      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth || App.DEFAULT_SCAN_WIDTH);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
