@@ -57,6 +57,9 @@ export class Server extends EventEmitter {
     const contrast = parseInt(url.searchParams.get('contrast'));
     if (contrast >= -100 && contrast <= 100) parsed.contrast = contrast;
 
+    const width = parseFloat(url.searchParams.get('width'));
+    if (width > 0 && width <= 5000) parsed.width = width;
+
     return parsed;
 
   }
@@ -139,6 +142,7 @@ export class Server extends EventEmitter {
       resolution: parsed.resolution,
       brightness: parsed.brightness,
       contrast: parsed.contrast,
+      width: parsed.width,
     });
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.

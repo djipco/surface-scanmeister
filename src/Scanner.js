@@ -133,6 +133,11 @@ export class Scanner extends EventEmitter {
       args.push('--contrast=' + options.contrast);
     }
 
+    // Scan width in the physical installation maps to SANE's y-axis.
+    if (options.width > 0 && options.width <= 5000) {
+      args.push('-y', options.width.toString());
+    }
+
     // Lamp off scan
     if (config.devices.lampOffScan) {
       args.push('--lamp-off-scan=yes');

@@ -64,6 +64,15 @@ export class App {
     }
   }
 
+  get scanWidth() {
+    const width = parseFloat(this.ui.width.value);
+    if (isNaN(width)) {
+      return undefined;
+    } else {
+      return width;
+    }
+  }
+
   setUpUi() {
 
     this.ui.scanButton = document.getElementById("scan");
@@ -77,6 +86,7 @@ export class App {
     this.ui.resolution = document.getElementById("resolution");
     this.ui.brightness = document.getElementById("brightness");
     this.ui.contrast = document.getElementById("contrast");
+    this.ui.width = document.getElementById("width");
 
   }
 
@@ -85,11 +95,14 @@ export class App {
     this.state = App.STATE_REQUEST_SENT;
     this.ui.scanButton.disabled = true;
     this.ui.channelInput.disabled = true;
+    const params = new URLSearchParams({
+      resolution: this.resolution,
+      brightness: this.brightness,
+      contrast: this.contrast
+    });
+    if (this.scanWidth !== undefined) params.set("width", this.scanWidth);
     this.response = await fetch(
-      App.URL + "/scan/" + this.channel +
-      "?resolution=" + this.resolution +
-      "&brightness=" + this.brightness +
-      "&contrast=" + this.contrast
+      App.URL + "/scan/" + this.channel + "?" + params
     );
     this.reader = this.response.body.getReader();
     this.#processChunk();
