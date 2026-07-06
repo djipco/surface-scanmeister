@@ -16,7 +16,7 @@ body {
 #canvas {
   border: #343a40 solid 1px;
   width: auto;
-  height: min(100vw - 32px, 100vh - 96px);
+  height: min(100vw - 32px, 100vh - 32px);
   display: block;
   background: #050607;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
@@ -58,6 +58,10 @@ body {
 
 .controls-panel.hidden {
   display: none;
+}
+
+.controls-panel .shortcut {
+  font-weight: 400;
 }
 
 .controls-panel h1 button {

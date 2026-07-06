@@ -54,9 +54,12 @@ export class App {
     this.context = this.canvas.getContext('2d');
     this.ui = {};
     this.channelOutOfBounds = false;
+    this.displayPixelWidth = this.canvas.width;
+    this.displayPixelHeight = this.canvas.height;
 
     this.reset();
     this.setUpUi();
+    window.addEventListener("resize", () => this.updateCanvasDisplaySize());
   }
 
   reset() {
@@ -250,7 +253,29 @@ export class App {
 
     const pixelWidth = Math.round(width / 25.4 * resolution);
     const pixelHeight = Math.round(height / 25.4 * resolution);
+    this.setImageSizeOverlay(pixelWidth, pixelHeight);
+  }
+
+  setImageSizeOverlay(pixelWidth, pixelHeight) {
+    this.displayPixelWidth = pixelWidth;
+    this.displayPixelHeight = pixelHeight;
     this.ui.size.innerText = `${pixelWidth} × ${pixelHeight}`;
+    this.updateCanvasDisplaySize();
+  }
+
+  updateCanvasDisplaySize() {
+    if (!this.displayPixelWidth || !this.displayPixelHeight) return;
+
+    const margin = 32;
+    const availableWidth = Math.max(1, window.innerWidth - margin);
+    const availableHeight = Math.max(1, window.innerHeight - margin);
+    const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;
+
+    const cssHeight = Math.min(
+      availableWidth,
+      availableHeight / canvasRatio
+    );
+    this.canvas.style.height = Math.max(1, cssHeight) + "px";
   }
 
   setUpPanelDrag(panel, handle) {
@@ -569,7 +594,7 @@ export class App {
           this.height = parseInt(tokens[2]);
           console.log(this.width, this.height);
 
-          this.ui.size.innerText = `${this.width} × ${this.height}`;
+          this.setImageSizeOverlay(this.width, this.height);
 
           if (this.format !== 'P6') {
             console.error('Unsupported PNM format:', this.format);
