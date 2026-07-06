@@ -133,6 +133,11 @@ export class Scanner extends EventEmitter {
       args.push('--contrast=' + options.contrast);
     }
 
+    // Scan height in the physical installation maps to SANE's x-axis.
+    if (options.height >= 0 && options.height <= 5000) {
+      args.push('-x', options.height.toString());
+    }
+
     // Scan width in the physical installation maps to SANE's y-axis.
     if (options.width >= 0 && options.width <= 5000) {
       args.push('-y', options.width.toString());

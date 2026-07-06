@@ -60,6 +60,9 @@ export class Server extends EventEmitter {
     const width = parseFloat(url.searchParams.get('width'));
     if (width >= 0 && width <= 5000) parsed.width = width;
 
+    const height = parseFloat(url.searchParams.get('height'));
+    if (height >= 0 && height <= 5000) parsed.height = height;
+
     return parsed;
 
   }
@@ -157,6 +160,7 @@ export class Server extends EventEmitter {
       brightness: parsed.brightness,
       contrast: parsed.contrast,
       width: parsed.width,
+      height: parsed.height,
     });
 
     // Watch if the client unexpectedly closes the request, in which case we must clean up.

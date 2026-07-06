@@ -81,13 +81,49 @@ select {
   padding: 0 9px;
 }
 
-input[type=checkbox].toggle-input {
-  width: 32px;
-  min-height: 32px;
-  margin: 0;
+.toggle-switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
   justify-self: start;
-  accent-color: #7aa2d6;
+}
+
+.toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+}
+
+.toggle-switch span {
+  position: absolute;
+  inset: 0;
+  border: #3d454d solid 1px;
+  border-radius: 999px;
+  background: #252b31;
   cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.toggle-switch span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #9aa4ad;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.toggle-switch input:checked + span {
+  border-color: #7aa2d6;
+  background: #28415f;
+}
+
+.toggle-switch input:checked + span::after {
+  transform: translateX(22px);
+  background: #d7e7ff;
 }
 
 .drag-input {

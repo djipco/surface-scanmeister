@@ -7,7 +7,9 @@ export class App {
 
   static URL = "http://127.0.0.1:5678";
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
+  static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static DEFAULT_SCAN_WIDTH = "5000";
+  static DEFAULT_SCAN_HEIGHT = "210";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -75,6 +77,15 @@ export class App {
     }
   }
 
+  get scanHeight() {
+    const height = parseFloat(this.ui.height.value);
+    if (isNaN(height)) {
+      return undefined;
+    } else {
+      return height;
+    }
+  }
+
   setUpUi() {
 
     this.ui.scanButton = document.getElementById("scan");
@@ -94,9 +105,11 @@ export class App {
     this.ui.brightness = document.getElementById("brightness");
     this.ui.contrast = document.getElementById("contrast");
     this.ui.width = document.getElementById("width");
+    this.ui.height = document.getElementById("height");
     this.ui.command = document.getElementById("command");
 
     this.restoreScanWidth();
+    this.restoreScanHeight();
 
     [
       this.ui.channelInput,
@@ -109,9 +122,17 @@ export class App {
       this.saveScanWidth();
       this.updateCommandPreview();
     });
+    this.setUpDragInput(this.ui.height, () => {
+      this.saveScanHeight();
+      this.updateCommandPreview();
+    });
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
+      this.updateCommandPreview();
+    });
+    this.ui.height.addEventListener("input", () => {
+      this.saveScanHeight();
       this.updateCommandPreview();
     });
 
@@ -181,6 +202,27 @@ export class App {
     }
   }
 
+  restoreScanHeight() {
+    try {
+      const height = localStorage.getItem(App.STORAGE_SCAN_HEIGHT) ||
+        this.ui.height.value ||
+        App.DEFAULT_SCAN_HEIGHT;
+      this.ui.height.value = height;
+      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, height);
+    } catch (err) {
+      if (!this.ui.height.value) this.ui.height.value = App.DEFAULT_SCAN_HEIGHT;
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveScanHeight() {
+    try {
+      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.scanHeight || App.DEFAULT_SCAN_HEIGHT);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
   getScanParams() {
     const params = new URLSearchParams({
       resolution: this.resolution,
@@ -188,6 +230,7 @@ export class App {
       contrast: this.contrast
     });
     if (this.scanWidth !== undefined) params.set("width", this.scanWidth);
+    if (this.scanHeight !== undefined) params.set("height", this.scanHeight);
     return params;
   }
 
