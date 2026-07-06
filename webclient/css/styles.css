@@ -74,7 +74,8 @@ body {
   border-right: #343a40 solid 1px;
   background: #1b1f23;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  line-height: 1;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 input,
@@ -230,6 +231,7 @@ button:disabled {
   -webkit-line-clamp: 2;
   color: #d7e7ff;
   font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
   line-height: 16px;
 }
 

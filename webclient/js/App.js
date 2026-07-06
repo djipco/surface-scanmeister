@@ -130,11 +130,11 @@ export class App {
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
       this.updateCommandPreview();
-    }, {lockPointer: true});
+    }, {lockPointer: true, dragScale: 0.2});
     this.setUpDragInput(this.ui.height, () => {
       this.saveScanHeight();
       this.updateCommandPreview();
-    }, {lockPointer: true});
+    }, {lockPointer: true, dragScale: 0.2});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -232,6 +232,7 @@ export class App {
       event.preventDefault();
       const startX = event.clientX;
       const startValue = parseFloat(input.value) || 0;
+      const dragScale = options.dragScale ?? 1;
       input.classList.add("dragging");
 
       if (options.lockPointer && input.requestPointerLock) {
@@ -240,7 +241,7 @@ export class App {
         const onMouseMove = moveEvent => {
           const nextValue = this.clampInputValue(
             input,
-            currentValue + moveEvent.movementX * this.inputStep(input)
+            currentValue + moveEvent.movementX * this.inputStep(input) * dragScale
           );
           if (parseFloat(input.value) === nextValue) return;
           currentValue = nextValue;
@@ -271,7 +272,7 @@ export class App {
 
       const onPointerMove = moveEvent => {
         const delta = moveEvent.clientX - startX;
-        const nextValue = this.clampInputValue(input, startValue + delta * this.inputStep(input));
+        const nextValue = this.clampInputValue(input, startValue + delta * this.inputStep(input) * dragScale);
         if (parseFloat(input.value) === nextValue) return;
         input.value = nextValue;
         onChange();
