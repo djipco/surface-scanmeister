@@ -204,21 +204,21 @@ export class App {
     this.setUpDragInput(this.ui.brightness, () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
       this.updateCommandPreview();
-    });
+    }, {dragScale: 0.05});
     this.setUpDragInput(this.ui.contrast, () => {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
       this.updateCommandPreview();
-    });
+    }, {dragScale: 0.05});
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
-    }, {lockPointer: true, dragScale: 0.2});
+    }, {lockPointer: true, dragScale: 0.05});
     this.setUpDragInput(this.ui.height, () => {
       this.saveScanHeight();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
-    }, {lockPointer: true, dragScale: 0.2});
+    }, {lockPointer: true, dragScale: 0.05});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
