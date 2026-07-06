@@ -6,8 +6,14 @@ export class App {
   static STATE_DATA_PARSED = 3;
 
   static URL = "http://127.0.0.1:5678";
+  static STORAGE_CHANNEL = "scanmeister.channel";
+  static STORAGE_RESOLUTION = "scanmeister.resolution";
+  static STORAGE_BRIGHTNESS = "scanmeister.brightness";
+  static STORAGE_CONTRAST = "scanmeister.contrast";
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
+  static STORAGE_FULLSCREEN = "scanmeister.fullscreen";
+  static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
@@ -157,11 +163,13 @@ export class App {
     this.ui.channelInput = document.getElementById('channel');
 
     this.ui.fullscreenButton = document.getElementById('fs-toggle')
-    this.ui.fullscreenButton.addEventListener('change', () => this.setFullScreen(
-      this.ui.fullscreenButton.checked
-    ));
+    this.ui.fullscreenButton.addEventListener('change', () => {
+      this.saveCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
+      this.setFullScreen(this.ui.fullscreenButton.checked);
+    });
     document.addEventListener('fullscreenchange', () => {
       this.ui.fullscreenButton.checked = Boolean(document.fullscreenElement);
+      this.saveCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
     });
 
     this.ui.resolution = document.getElementById("resolution");
@@ -172,20 +180,35 @@ export class App {
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
 
+    this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
+    this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
+    this.restoreNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
+    this.restoreNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
     this.restoreScanWidth();
     this.restoreScanHeight();
+    this.restoreCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
+    this.restoreUiOverlayVisibility();
 
-    [
-      this.ui.channelInput,
-      this.ui.resolution,
-    ].forEach(input => input.addEventListener("input", () => {
+    this.ui.channelInput.addEventListener("change", () => {
+      this.saveControlValue(this.ui.channelInput, App.STORAGE_CHANNEL);
       this.updateExpectedImageSize();
       this.updateCommandPreview();
-    }));
-    this.ui.channelInput.addEventListener("input", () => this.updateScanButtonState());
+      this.updateScanButtonState();
+    });
+    this.ui.resolution.addEventListener("change", () => {
+      this.saveControlValue(this.ui.resolution, App.STORAGE_RESOLUTION);
+      this.updateExpectedImageSize();
+      this.updateCommandPreview();
+    });
 
-    this.setUpDragInput(this.ui.brightness, () => this.updateCommandPreview());
-    this.setUpDragInput(this.ui.contrast, () => this.updateCommandPreview());
+    this.setUpDragInput(this.ui.brightness, () => {
+      this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
+      this.updateCommandPreview();
+    });
+    this.setUpDragInput(this.ui.contrast, () => {
+      this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
+      this.updateCommandPreview();
+    });
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
       this.updateExpectedImageSize();
@@ -207,6 +230,14 @@ export class App {
       this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
+    this.ui.brightness.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
+      this.updateCommandPreview();
+    });
+    this.ui.contrast.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
+      this.updateCommandPreview();
+    });
     this.ui.width.addEventListener("change", () => {
       this.ui.width.value = this.roundInputValue(this.ui.width, this.scanWidth || 0);
       this.saveScanWidth();
@@ -217,6 +248,16 @@ export class App {
       this.ui.height.value = this.roundInputValue(this.ui.height, this.scanHeight || 0);
       this.saveScanHeight();
       this.updateExpectedImageSize();
+      this.updateCommandPreview();
+    });
+    this.ui.brightness.addEventListener("change", () => {
+      this.ui.brightness.value = this.clampInputValue(this.ui.brightness, this.brightness);
+      this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS, {normalize: true});
+      this.updateCommandPreview();
+    });
+    this.ui.contrast.addEventListener("change", () => {
+      this.ui.contrast.value = this.clampInputValue(this.ui.contrast, this.contrast);
+      this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST, {normalize: true});
       this.updateCommandPreview();
     });
 
@@ -233,6 +274,11 @@ export class App {
   setUiOverlayVisible(isVisible) {
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
     this.ui.commandPanel.classList.toggle("hidden", !isVisible);
+    try {
+      localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
   }
 
   updateScanButtonState() {
@@ -285,8 +331,9 @@ export class App {
     const cssWidth = cssHeight * canvasRatio;
     const displayWidth = shouldRotate ? cssHeight : cssWidth;
     const displayHeight = shouldRotate ? cssWidth : cssHeight;
-    const displayLeft = (window.innerWidth - displayWidth) / 2;
-    const displayTop = (window.innerHeight - displayHeight) / 2;
+    const overlayInset = 12;
+    const displayLeft = (window.innerWidth - displayWidth) / 2 + overlayInset;
+    const displayTop = (window.innerHeight - displayHeight) / 2 + overlayInset;
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = shouldRotate
@@ -491,6 +538,81 @@ export class App {
     const decimalIndex = step.indexOf(".");
     if (decimalIndex === -1) return 0;
     return Math.min(step.length - decimalIndex - 1, 1);
+  }
+
+  restoreSelectValue(select, storageKey) {
+    try {
+      const value = localStorage.getItem(storageKey);
+      if (!value) return;
+
+      const hasOption = Array.from(select.options).some(option => option.value === value);
+      if (hasOption) select.value = value;
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreNumericValue(input, storageKey) {
+    try {
+      const value = localStorage.getItem(storageKey);
+      if (value === null) return;
+
+      const parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) return;
+
+      input.value = this.clampInputValue(input, parsedValue);
+      localStorage.setItem(storageKey, input.value);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveControlValue(input, storageKey) {
+    try {
+      localStorage.setItem(storageKey, input.value);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveNumericValue(input, storageKey, options = {}) {
+    try {
+      const value = parseFloat(input.value);
+      if (isNaN(value)) return;
+
+      const storedValue = options.normalize
+        ? this.clampInputValue(input, value)
+        : this.roundInputValue(input, value);
+      if (options.normalize) input.value = storedValue;
+      localStorage.setItem(storageKey, storedValue);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreCheckboxValue(input, storageKey) {
+    try {
+      input.checked = localStorage.getItem(storageKey) === "true";
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveCheckboxValue(input, storageKey) {
+    try {
+      localStorage.setItem(storageKey, input.checked ? "true" : "false");
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreUiOverlayVisibility() {
+    try {
+      const storedValue = localStorage.getItem(App.STORAGE_UI_OVERLAY_VISIBLE);
+      if (storedValue !== null) this.setUiOverlayVisible(storedValue === "true");
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
   }
 
   restoreScanWidth() {
