@@ -289,7 +289,14 @@ export class App {
   }
 
   setUpDragInput(input, onChange, options = {}) {
+    input.addEventListener("dblclick", event => {
+      event.preventDefault();
+      input.focus();
+      input.select();
+    });
+
     input.addEventListener("pointerdown", event => {
+      if (event.detail > 1) return;
       event.preventDefault();
       const startX = event.clientX;
       const startValue = parseFloat(input.value) || 0;
@@ -453,21 +460,25 @@ export class App {
 
   async updateCommandPreview() {
     if (!this.isChannelValid) {
-      this.ui.command.innerText = "Channel out of bounds";
-      this.ui.command.classList.add("error");
+      this.setCommandPreviewText("Channel out of bounds", true);
       return;
     }
 
-    this.ui.command.classList.remove("error");
+    this.setCommandPreviewText("", false);
     try {
       const response = await fetch(
         App.URL + "/command/" + this.channel + "?" + this.getScanParams()
       );
-      this.ui.command.innerText = await response.text();
+      this.setCommandPreviewText(await response.text(), false);
     } catch (err) {
-      this.ui.command.innerText = "unavailable";
-      this.ui.command.classList.add("error");
+      this.setCommandPreviewText("unavailable", true);
     }
+  }
+
+  setCommandPreviewText(text, isError) {
+    this.ui.command.innerText = text;
+    this.ui.command.classList.toggle("error", isError);
+    this.ui.command.style.color = isError ? "#ff6b6b" : "";
   }
 
   async getImage() {
