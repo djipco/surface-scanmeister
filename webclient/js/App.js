@@ -79,6 +79,11 @@ export class App {
     }
   }
 
+  get isChannelValid() {
+    const ch = parseInt(this.ui.channelInput.value);
+    return ch >= 1 && ch <= 16;
+  }
+
   get resolution() {
     const resolution = parseInt(this.ui.resolution.value);
     if (isNaN(resolution)) {
@@ -133,16 +138,14 @@ export class App {
     this.setUpPanelDrag(this.ui.controlsPanel, this.ui.controlsPanelHeader);
     this.ui.controlsPanelClose.addEventListener("click", event => {
       event.stopPropagation();
-      this.setParametersVisible(false);
+      this.setUiOverlayVisible(false);
     });
     document.addEventListener("keydown", event => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== "p") return;
       event.preventDefault();
-      this.toggleParametersPanel();
+      this.toggleUiOverlay();
     });
     this.ui.commandPanel = document.getElementById("command-panel");
-    this.ui.commandToggle = document.getElementById("command-toggle");
-    this.ui.commandToggle.addEventListener("change", () => this.updateCommandPanelVisibility());
 
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => this.getImage());
@@ -171,6 +174,7 @@ export class App {
       this.ui.channelInput,
       this.ui.resolution,
     ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
+    this.ui.channelInput.addEventListener("input", () => this.updateScanButtonState());
 
     this.setUpDragInput(this.ui.brightness, () => this.updateCommandPreview());
     this.setUpDragInput(this.ui.contrast, () => this.updateCommandPreview());
@@ -203,20 +207,21 @@ export class App {
     });
 
     this.updateCommandPreview();
-    this.updateCommandPanelVisibility();
+    this.updateScanButtonState();
 
   }
 
-  updateCommandPanelVisibility() {
-    this.ui.commandPanel.classList.toggle("hidden", !this.ui.commandToggle.checked);
+  toggleUiOverlay() {
+    this.setUiOverlayVisible(this.ui.controlsPanel.classList.contains("hidden"));
   }
 
-  toggleParametersPanel() {
-    this.setParametersVisible(this.ui.controlsPanel.classList.contains("hidden"));
-  }
-
-  setParametersVisible(isVisible) {
+  setUiOverlayVisible(isVisible) {
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
+    this.ui.commandPanel.classList.toggle("hidden", !isVisible);
+  }
+
+  updateScanButtonState() {
+    this.ui.scanButton.disabled = !this.isChannelValid || this.state === App.STATE_REQUEST_SENT;
   }
 
   setUpPanelDrag(panel, handle) {
@@ -447,6 +452,13 @@ export class App {
   }
 
   async updateCommandPreview() {
+    if (!this.isChannelValid) {
+      this.ui.command.innerText = "Channel out of bounds";
+      this.ui.command.classList.add("error");
+      return;
+    }
+
+    this.ui.command.classList.remove("error");
     try {
       const response = await fetch(
         App.URL + "/command/" + this.channel + "?" + this.getScanParams()
@@ -454,13 +466,20 @@ export class App {
       this.ui.command.innerText = await response.text();
     } catch (err) {
       this.ui.command.innerText = "unavailable";
+      this.ui.command.classList.add("error");
     }
   }
 
   async getImage() {
+    if (!this.isChannelValid) {
+      this.updateCommandPreview();
+      this.updateScanButtonState();
+      return;
+    }
+
     this.reset();
     this.state = App.STATE_REQUEST_SENT;
-    this.ui.scanButton.disabled = true;
+    this.updateScanButtonState();
     this.ui.channelInput.disabled = true;
     this.response = await fetch(
       App.URL + "/scan/" + this.channel + "?" + this.getScanParams()
@@ -553,8 +572,8 @@ export class App {
     if (done) {
       this.position = 0;
       this.state = App.STATE_DATA_PARSED;
-      this.ui.scanButton.disabled = false;
       this.ui.channelInput.disabled = false;
+      this.updateScanButtonState();
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);

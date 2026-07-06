@@ -99,6 +99,7 @@ body {
   min-height: 38px;
   padding: 0 12px;
   border-right: #343a40 solid 1px;
+  border-radius: 6px 0 0 6px;
   background: #1b1f23;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 12px;
@@ -266,6 +267,10 @@ button:disabled {
   font-family: "Cascadia Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 16px;
+}
+
+#command.error {
+  color: #ff9a9a;
 }
 
 /*# sourceMappingURL=styles.css.map */
