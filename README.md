@@ -1,10 +1,10 @@
 # INITIAL CONFIGURATION
 
-### Operating System
+### Installing the Operating System
 
-These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bookworm").
+Install Raspberry Pi OS (Debian 12, "bookworm"):
 
-* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium for the Raspberry Pi. During the
+* Use **Raspberry Pi Imager.app** to create brand new SDHC boot medium. During the
   process click on "Modify Settings":
   
   * Host: **scanmeister0x** (change "x" by integer)
@@ -25,21 +25,21 @@ These instructions apply to the Raspberry Pi OS version targeting Debian 12 ("bo
   sudo apt upgrade -y
   ```
 
-### Node.js
+### Installing Node.js
 
-Install Node.js. Step 1, add the source for Node's latest LTS version:
+First, add the source for Node's latest LTS version:
 
 ```sh
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-Step 2, install Node.js:
+Install Node.js:
 
 ```sh
 sudo apt install -y nodejs
 ```
 
-### Scanmeister
+### Installing ScanMeister
 
 #### Prerequisite
 
@@ -52,14 +52,14 @@ enabled on the Pi:
 
 #### Installation
 
-To install `scanmeister`, open a terminal, go to desktop and clone from repo:
+To install `scanmeister`, open a terminal, go to desktop and clone from GitHub repo:
 
 ```sh
 cd ~/Desktop
 git clone https://github.com/djipco/surface-scanmeister
 ```
 
-Once the repo is cloned, go inside folder and install all modules:
+Go inside folder and install all modules:
 
 ```sh
 cd surface-scanmeister
@@ -69,8 +69,8 @@ npm install
 #### Python
 
 Python libraries are used to talk to the distance sensors and send the info to the remote. To 
-install Python libraries in recent versions of the Raspberry Pi OS, you must first create a virtual 
-Python environment. 
+install Python libraries in recent versions of the Raspberry Pi OS, you must first create a 
+virtual Python environment. 
 
 Go to root of project, create virtual environment in `env` folder and activate it:
 
@@ -82,7 +82,7 @@ source env/bin/activate
 
 Then we need to install [Blinka]([url](https://learn.adafruit.com/circuitpython-on-raspberrypi-linux/installing-circuitpython-on-raspberry-pi)).
 It is is a framework created by Adafruit and is used by the sensor library. This script does 
-eve=rything automatically:
+everything automatically:
 
 ```
 pip3 install --upgrade adafruit-python-shell
@@ -146,30 +146,42 @@ sudo systemctl status scanmeister.service
 
 #### Configuration
 
-Open `surface-scanmeister/config/config.js` in the Geany editor (Main Menu -> Programming) to 
-set some options:
+By default, the **HTTP API** of ScanMeister listens on port **`5678`**, the **HTTP file** server
+listens on port **`8080`** and the **OSC server** listens on port **`8000`**. 
 
-* Set the IP address and port of the computer that will receive the files over TCP (**only
-  needed in 'tcp' mode**).
+To change the IP address and port of the machine OSC messages are sent to, you can modify the 
+configuration file:
 
-* Set the directory where scans will be saved by modifying the `scansDir` option (**only needed
-  in 'file' mode**). The directory must be created if it does not exist.
+  ```surface-scanmeister/config/config.js```
 
-* Set the address and port of the computer receiving OSC updates must be set.
+This same file can be modified to specify which port the OSC server listens on (by default, 
+`8000`). The IP address of the machine OSC messages are sent to should be changed.
 
-#### Launch
+The configuration file can also be used to specify the mapping to use for various hubs and
+scanner configuration. The `devices.mapping` parameter is used for that and points to one 
+of the configuration from the `surface-scanmeister/config/ScannerMappings.js` file.
 
-To start `scanmeister`, you can simply double-click on the `ScanMeister` icon found in the project
-folder.
+To reload the configuration file, simply stop and start the `scanmeister` service:
+
+```sh
+sudo systemctl stop scanmeister.service
+sudo systemctl start scanmeister.service
+```
+
+#### Manual Launch
+
+Typically, `scanmeister` is started at boot by `systemctl`. You can also start it manually by 
+double-clicking on the `ScanMeister` icon found in the project folder.
 
     You can deactivate the annoying "Execute File" prompt by opening the File Manager and going to 
     Edit -> Preferences -> General and checking the option that says "Don't ask options on launch 
     executable file".
 
-You can also issue the following command in a Terminal from inside the `surface-scanmeister` directory:
+You can also issue the following command in a Terminal from inside the `surface-scanmeister` 
+directory:
 
 ```sh
-node index.js
+node ScanMeister.js
 ```
 
 # Remote Access
@@ -180,15 +192,13 @@ node index.js
 
 # OSC Schema
 
-Trigger a scan on scanner connected to channel 12:
-
-* `/scan/12`
-
-On startup and shutdown, the system broadcasts this message:
+On startup and shutdown, the system sends this OSC message:
 
 * `/system/status i 0 (or 1)`
 
+The status of scanners is also broadcasted as:
 
+* `/scanner/x` i 0 (or 1)
 
 # Testing the scanning environment
 
