@@ -87,7 +87,39 @@ export class App {
     this.ui.brightness = document.getElementById("brightness");
     this.ui.contrast = document.getElementById("contrast");
     this.ui.width = document.getElementById("width");
+    this.ui.command = document.getElementById("command");
 
+    [
+      this.ui.channelInput,
+      this.ui.resolution,
+      this.ui.brightness,
+      this.ui.contrast,
+      this.ui.width
+    ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
+
+    this.updateCommandPreview();
+
+  }
+
+  getScanParams() {
+    const params = new URLSearchParams({
+      resolution: this.resolution,
+      brightness: this.brightness,
+      contrast: this.contrast
+    });
+    if (this.scanWidth !== undefined) params.set("width", this.scanWidth);
+    return params;
+  }
+
+  async updateCommandPreview() {
+    try {
+      const response = await fetch(
+        App.URL + "/command/" + this.channel + "?" + this.getScanParams()
+      );
+      this.ui.command.innerText = await response.text();
+    } catch (err) {
+      this.ui.command.innerText = "unavailable";
+    }
   }
 
   async getImage() {
@@ -95,14 +127,8 @@ export class App {
     this.state = App.STATE_REQUEST_SENT;
     this.ui.scanButton.disabled = true;
     this.ui.channelInput.disabled = true;
-    const params = new URLSearchParams({
-      resolution: this.resolution,
-      brightness: this.brightness,
-      contrast: this.contrast
-    });
-    if (this.scanWidth !== undefined) params.set("width", this.scanWidth);
     this.response = await fetch(
-      App.URL + "/scan/" + this.channel + "?" + params
+      App.URL + "/scan/" + this.channel + "?" + this.getScanParams()
     );
     this.reader = this.response.body.getReader();
     this.#processChunk();

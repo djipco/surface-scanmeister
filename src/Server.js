@@ -12,7 +12,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan"];
+  static COMMANDS = ["scan", "command"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -64,6 +64,13 @@ export class Server extends EventEmitter {
 
   }
 
+  #formatShellCommand(command, args) {
+    return [command, ...args].map(arg => {
+      if (/^[A-Za-z0-9_./:=+-]+$/.test(arg)) return arg;
+      return "'" + arg.replaceAll("'", "'\\''") + "'";
+    }).join(" ");
+  }
+
   async #onHttpRequest(request, response)  {
 
     // Set headers for CORS
@@ -104,6 +111,13 @@ export class Server extends EventEmitter {
       );
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('Channel already in use.');
+      return;
+    }
+
+    if (parsed.command === "command") {
+      const args = scanner.getScanCommandArgs(config, parsed);
+      response.writeHead(200, {'Content-Type': 'text/plain'});
+      response.end(this.#formatShellCommand("scanimage", args));
       return;
     }
 
