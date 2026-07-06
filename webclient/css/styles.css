@@ -199,7 +199,7 @@ button {
   background: #303841;
 }
 
-button:hover {
+button:enabled:hover {
   background: #3a4651;
 }
 

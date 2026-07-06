@@ -167,6 +167,7 @@ export class App {
     this.ui.width = document.getElementById("width");
     this.ui.height = document.getElementById("height");
     this.ui.command = document.getElementById("command");
+    this.ui.size = document.getElementById("size");
 
     this.restoreScanWidth();
     this.restoreScanHeight();
@@ -174,39 +175,49 @@ export class App {
     [
       this.ui.channelInput,
       this.ui.resolution,
-    ].forEach(input => input.addEventListener("input", () => this.updateCommandPreview()));
+    ].forEach(input => input.addEventListener("input", () => {
+      this.updateExpectedImageSize();
+      this.updateCommandPreview();
+    }));
     this.ui.channelInput.addEventListener("input", () => this.updateScanButtonState());
 
     this.setUpDragInput(this.ui.brightness, () => this.updateCommandPreview());
     this.setUpDragInput(this.ui.contrast, () => this.updateCommandPreview());
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     }, {lockPointer: true, dragScale: 0.2});
     this.setUpDragInput(this.ui.height, () => {
       this.saveScanHeight();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     }, {lockPointer: true, dragScale: 0.2});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
     this.ui.height.addEventListener("input", () => {
       this.saveScanHeight();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
     this.ui.width.addEventListener("change", () => {
       this.ui.width.value = this.roundInputValue(this.ui.width, this.scanWidth || 0);
       this.saveScanWidth();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
     this.ui.height.addEventListener("change", () => {
       this.ui.height.value = this.roundInputValue(this.ui.height, this.scanHeight || 0);
       this.saveScanHeight();
+      this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
 
+    this.updateExpectedImageSize();
     this.updateCommandPreview();
     this.updateScanButtonState();
 
@@ -226,6 +237,20 @@ export class App {
       !this.isChannelValid ||
       this.channelOutOfBounds ||
       this.state === App.STATE_REQUEST_SENT;
+  }
+
+  updateExpectedImageSize() {
+    const resolution = this.resolution;
+    const width = this.scanWidth;
+    const height = this.scanHeight;
+    if (!resolution || width === undefined || height === undefined) {
+      this.ui.size.innerText = "unknown";
+      return;
+    }
+
+    const pixelWidth = Math.round(width / 25.4 * resolution);
+    const pixelHeight = Math.round(height / 25.4 * resolution);
+    this.ui.size.innerText = `${pixelWidth} × ${pixelHeight}`;
   }
 
   setUpPanelDrag(panel, handle) {
@@ -544,7 +569,7 @@ export class App {
           this.height = parseInt(tokens[2]);
           console.log(this.width, this.height);
 
-          document.getElementById("size").innerText = `${this.width} × ${this.height}`;
+          this.ui.size.innerText = `${this.width} × ${this.height}`;
 
           if (this.format !== 'P6') {
             console.error('Unsupported PNM format:', this.format);
