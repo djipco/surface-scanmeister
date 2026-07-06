@@ -251,8 +251,8 @@ export class App {
       return;
     }
 
-    const pixelWidth = Math.round(width / 25.4 * resolution);
-    const pixelHeight = Math.round(height / 25.4 * resolution);
+    const pixelWidth = Math.round(height / 25.4 * resolution);
+    const pixelHeight = Math.round(width / 25.4 * resolution);
     this.setImageSizeOverlay(pixelWidth, pixelHeight);
   }
 
@@ -277,8 +277,8 @@ export class App {
     const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;
 
     const cssHeight = Math.min(
-      availableWidth,
-      availableHeight / canvasRatio
+      availableHeight,
+      availableWidth / canvasRatio
     );
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
   }
