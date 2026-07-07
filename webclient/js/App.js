@@ -44,7 +44,7 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
-    this.parserWorker = new Worker("/js/pnm-parser-worker.js");
+    this.parserWorker = new Worker(new URL("./pnm-parser-worker.js", import.meta.url));
     this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
     this.parserWorker.addEventListener("error", event => {
       console.error("PNM parser worker error:", {
@@ -1340,6 +1340,10 @@ export class App {
   }
 
   async updateCommandPreview() {
+    if (this.state === App.STATE_REQUEST_SENT || this.state === App.STATE_HEADER_PARSED) {
+      return;
+    }
+
     if (!this.isChannelValid) {
       this.channelOutOfBounds = true;
       this.setCommandPreviewText("Channel out of bounds", true);
@@ -1388,6 +1392,14 @@ export class App {
     this.response = await fetch(
       App.URL + "/scan/" + this.channel + "?" + this.getScanParams()
     );
+    if (!this.response.ok) {
+      const errorText = await this.response.text();
+      this.state = App.STATE_STANDBY;
+      this.ui.channelInput.disabled = false;
+      this.setCommandPreviewText(errorText || "Scan request failed", true);
+      this.updateScanButtonState();
+      return;
+    }
     this.reader = this.response.body.getReader();
     this.#processChunk();
   }
