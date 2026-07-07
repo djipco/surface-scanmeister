@@ -37,6 +37,10 @@ html:fullscreen #canvas {
   box-shadow: none;
 }
 
+html:fullscreen .image-size-overlay {
+  display: none;
+}
+
 .controls-panel {
   position: absolute;
   top: 16px;
