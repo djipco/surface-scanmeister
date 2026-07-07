@@ -24,7 +24,7 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
-  static BUFFER_GRAPH_DURATION = 12000;
+  static BUFFER_GRAPH_DURATION = 10000;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -281,9 +281,9 @@ export class App {
     const maxValue = Math.max(1, ...history.map(point => point.value));
     const plot = {
       left: 36,
-      top: 14,
+      top: 18,
       right: width - 20,
-      bottom: height - 20
+      bottom: height - 28
     };
     const plotWidth = plot.right - plot.left;
     const plotHeight = plot.bottom - plot.top;
@@ -322,7 +322,7 @@ export class App {
       context.fillStyle = "#6f7982";
       context.textAlign = "center";
       context.textBaseline = "top";
-      context.fillText(`${seconds}s`, x, plot.bottom + 5);
+      context.fillText(`${seconds}s`, x, plot.bottom + 8);
     }
 
     context.strokeStyle = "rgba(154, 164, 173, 0.45)";
