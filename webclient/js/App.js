@@ -14,6 +14,7 @@ export class App {
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
+  static STORAGE_RENDER_MODE = "scanmeister.renderMode";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
@@ -44,6 +45,7 @@ export class App {
     this.buffer = new Uint8Array();
     this.position = 0;
     this.paintedRows = 0;
+    this.renderStartTime = undefined;
     this.width = undefined;
     this.height = undefined;
   }
@@ -54,6 +56,7 @@ export class App {
     this.paintRequest = requestAnimationFrame(() => {
       this.paintRequest = undefined;
       this.paintCanvasRows();
+      if (this.shouldContinueCanvasPaint()) this.scheduleCanvasPaint();
     });
   }
 
@@ -65,15 +68,19 @@ export class App {
     this.paintCanvasRows({includePartialRow: true});
   }
 
+  shouldContinueCanvasPaint() {
+    if (this.state !== App.STATE_HEADER_PARSED) return false;
+    return this.paintedRows < this.getAvailablePaintRows();
+  }
+
   paintCanvasRows(options = {}) {
     if (!this.imageData || !this.imageData.data) return;
     if (!this.canvas.width || !this.canvas.height) return;
 
-    const pixelPosition = Math.floor(this.position / 4);
-    const completedRows = options.includePartialRow
-      ? Math.ceil(pixelPosition / this.canvas.width)
-      : Math.floor(pixelPosition / this.canvas.width);
-    const nextPaintedRows = this.clamp(completedRows, 0, this.canvas.height);
+    const availableRows = this.getAvailablePaintRows(options);
+    const nextPaintedRows = this.renderMode === "smooth" && !options.includePartialRow
+      ? this.getSmoothPaintRows(availableRows)
+      : availableRows;
     if (nextPaintedRows <= this.paintedRows) return;
 
     const rowCount = nextPaintedRows - this.paintedRows;
@@ -87,6 +94,29 @@ export class App {
       rowCount
     );
     this.paintedRows = nextPaintedRows;
+  }
+
+  getAvailablePaintRows(options = {}) {
+    const pixelPosition = Math.floor(this.position / 4);
+    const completedRows = options.includePartialRow
+      ? Math.ceil(pixelPosition / this.canvas.width)
+      : Math.floor(pixelPosition / this.canvas.width);
+    return this.clamp(completedRows, 0, this.canvas.height);
+  }
+
+  getSmoothPaintRows(availableRows) {
+    if (this.renderStartTime === undefined) return this.paintedRows;
+
+    const elapsed = Math.max(1, performance.now() - this.renderStartTime);
+    const rowsPerMs = availableRows / elapsed;
+    const pacedRows = Math.floor(Math.max(0, elapsed - this.getSmoothRenderDelay()) * rowsPerMs);
+    return this.clamp(pacedRows, this.paintedRows, availableRows);
+  }
+
+  getSmoothRenderDelay() {
+    const resolution = this.resolution || 75;
+    const scale = Math.log2(Math.max(1, resolution / 75));
+    return this.clamp(100 + scale * 60, 100, 320);
   }
 
   get channel() {
@@ -152,6 +182,10 @@ export class App {
     return Boolean(this.ui.forceCalibration.checked);
   }
 
+  get renderMode() {
+    return this.ui.renderMode.value === "smooth" ? "smooth" : "live";
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -185,6 +219,7 @@ export class App {
     this.ui.width = document.getElementById("width");
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
+    this.ui.renderMode = document.getElementById("render-mode");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
@@ -197,6 +232,7 @@ export class App {
     this.restoreScanWidth();
     this.restoreScanHeight();
     this.restoreDrawMode();
+    this.restoreSelectValue(this.ui.renderMode, App.STORAGE_RENDER_MODE);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
 
@@ -217,6 +253,9 @@ export class App {
     });
     this.ui.drawMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
+    });
+    this.ui.renderMode.addEventListener("change", () => {
+      this.saveControlValue(this.ui.renderMode, App.STORAGE_RENDER_MODE);
     });
     this.ui.fullscreenButton.addEventListener("click", () => {
       this.setFullScreen(!document.fullscreenElement);
@@ -816,6 +855,7 @@ export class App {
             this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
           }
           this.paintedRows = 0;
+          this.renderStartTime = performance.now();
 
           // Keep unparsed binary data for later parsing
           value = value.slice(i + 1);
