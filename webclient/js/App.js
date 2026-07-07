@@ -626,6 +626,7 @@ export class App {
       this.toggleUiOverlay();
     });
     document.addEventListener("mousemove", () => this.handleMouseActivity());
+    this.ui.topInfoPanel = document.getElementById("top-info-panel");
     this.ui.commandPanel = document.getElementById("command-panel");
 
     this.ui.scanButton = document.getElementById("scan");
@@ -887,6 +888,7 @@ export class App {
   setUiOverlayVisible(isVisible) {
     document.documentElement.classList.toggle("ui-overlay-hidden", !isVisible);
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
+    this.ui.topInfoPanel.classList.toggle("hidden", !isVisible);
     if (isVisible) {
       this.scheduleUiAutoHide();
     } else {

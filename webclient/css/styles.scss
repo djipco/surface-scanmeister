@@ -154,7 +154,7 @@ html.kiosk-mode .image-size-overlay {
   transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
-.hidden:not(.controls-panel):not(.command-panel):not(.render-stats) {
+.hidden:not(.controls-panel):not(.command-panel):not(.render-stats):not(.top-info-panel) {
   display: none !important;
 }
 
@@ -182,27 +182,9 @@ html.kiosk-mode .image-size-overlay {
   cursor: pointer;
 }
 
-.controls-panel h1 .quit-kiosk-button {
-  width: auto;
-  min-width: 44px;
-  padding: 0 8px;
-  border: 1px solid rgba(255, 107, 107, 0.35);
-  border-radius: 4px;
-  color: #ffb1b1;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .controls-panel h1 button:hover {
   color: #f2f4f5;
   background: #303841;
-}
-
-.controls-panel h1 .quit-kiosk-button:hover {
-  border-color: rgba(255, 107, 107, 0.65);
-  background: rgba(255, 107, 107, 0.14);
-  color: #ffd2d2;
 }
 
 .control-group {
@@ -405,6 +387,64 @@ button:disabled {
   line-height: 1;
   pointer-events: none;
   z-index: 1;
+}
+
+.top-info-panel {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 16px;
+  min-height: 38px;
+  border: 1px solid #343a40;
+  border-radius: 6px;
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 12px;
+  background: rgba(21, 24, 27, 0.9);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  color: #9aa4ad;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 0s;
+  z-index: 9;
+}
+
+.top-info-panel.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.top-info-copyright {
+  justify-self: center;
+  text-align: center;
+}
+
+.quit-kiosk-button {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  border-radius: 4px;
+  background: transparent;
+  color: #ffb1b1;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quit-kiosk-button:hover {
+  border-color: rgba(255, 107, 107, 0.65);
+  background: rgba(255, 107, 107, 0.14);
+  color: #ffd2d2;
 }
 
 .command-panel {

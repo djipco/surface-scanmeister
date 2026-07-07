@@ -3,7 +3,7 @@
   "title": "ScanMeister",
   "version": "1.0.0-alpha.4",
   "description": "ScanMeister lets you scan images and retrieve them by calling a simple HTTP API",
-  "author": "Jean-Philippe Côté <null@djip.co> (https://djip.co)",
+  "author": "Jean-Philippe Cô <null@djip.co> (https://djip.co)",
   "license": "UNLICENSED",
   "main": "ScanMeister.js",
   "type": "module",
@@ -13,7 +13,7 @@
   "dependencies": {
     "date-fns": "^2.30.0",
     "djipevents": "^2.0.7",
-    "express": "^4.19.2",
+    "express": "^4.22.2",
     "fs-extra": "^11.2.0",
     "osc": "^2.4.4",
     "samba-client": "^7.2.0",

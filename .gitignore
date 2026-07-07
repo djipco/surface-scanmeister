@@ -4,6 +4,7 @@
 
 # Node.js modules
 /node_modules/
+/.npm-cache/
 
 # JetBrains project settings
 /.idea/*
