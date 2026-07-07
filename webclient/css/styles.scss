@@ -294,3 +294,25 @@ button:disabled {
 #command.error {
   color: #ff9a9a;
 }
+
+.render-stats {
+  position: absolute;
+  right: 16px;
+  bottom: 70px;
+  z-index: 20;
+  min-width: 260px;
+  border: #343a40 solid 1px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: rgba(21, 24, 27, 0.92);
+  color: #d7e7ff;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.render-stats.hidden {
+  display: none;
+}

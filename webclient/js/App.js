@@ -30,6 +30,8 @@ export class App {
     this.displayPixelWidth = this.canvas.width;
     this.displayPixelHeight = this.canvas.height;
     this.paintRequest = undefined;
+    this.renderStatsVisible = false;
+    this.renderStats = {};
 
     this.reset();
     this.setUpUi();
@@ -47,10 +49,13 @@ export class App {
     this.position = 0;
     this.paintedRows = 0;
     this.paintCursor = 0;
+    this.previousPaintedRows = 0;
     this.lastPaintTime = undefined;
+    this.lastFrameTime = undefined;
     this.lastAvailableRows = 0;
     this.lastAvailableRowsTime = undefined;
     this.smoothedRowsPerMs = undefined;
+    this.renderStats = {};
     this.width = undefined;
     this.height = undefined;
   }
@@ -87,9 +92,11 @@ export class App {
     const nextPaintedRows = this.renderMode === "smooth" && !options.includePartialRow
       ? this.getSmoothPaintRows(availableRows)
       : availableRows;
+    this.updateRenderStats({availableRows});
     if (nextPaintedRows <= this.paintedRows) return;
 
     const rowCount = nextPaintedRows - this.paintedRows;
+    const paintStarted = performance.now();
     this.context.putImageData(
       this.imageData,
       0,
@@ -99,7 +106,21 @@ export class App {
       this.canvas.width,
       rowCount
     );
+    const paintEnded = performance.now();
+    const now = paintEnded;
+    const previousPaintedRows = this.previousPaintedRows;
+    const previousFrameTime = this.lastFrameTime;
     this.paintedRows = nextPaintedRows;
+    this.previousPaintedRows = this.paintedRows;
+    this.lastFrameTime = now;
+    this.updateRenderStats({
+      availableRows,
+      frameMs: previousFrameTime === undefined ? 0 : now - previousFrameTime,
+      paintMs: paintEnded - paintStarted,
+      paintedRowsPerSecond: previousFrameTime === undefined
+        ? 0
+        : (this.paintedRows - previousPaintedRows) / ((now - previousFrameTime) / 1000)
+    });
   }
 
   getAvailablePaintRows(options = {}) {
@@ -111,6 +132,8 @@ export class App {
   }
 
   getSmoothPaintRows(availableRows) {
+    if (availableRows >= this.canvas.height) return availableRows;
+
     const now = performance.now();
     this.updateSmoothRenderRate(availableRows, now);
     if (this.smoothedRowsPerMs === undefined) return this.paintedRows;
@@ -147,6 +170,10 @@ export class App {
         : this.smoothedRowsPerMs * 0.85 + measuredRowsPerMs * 0.15;
       this.lastAvailableRows = availableRows;
       this.lastAvailableRowsTime = now;
+      this.updateRenderStats({
+        availableRows,
+        arrivalRowsPerSecond: measuredRowsPerMs * 1000
+      });
     }
   }
 
@@ -162,6 +189,41 @@ export class App {
     const resolution = this.resolution || 75;
     const scale = Math.log2(Math.max(1, resolution / 75));
     return this.clamp(100 + scale * 60, 100, 320) * App.SMOOTH_RENDER_DELAY_MULTIPLIER;
+  }
+
+  updateRenderStats(nextStats = {}) {
+    this.renderStats = {
+      ...this.renderStats,
+      ...nextStats
+    };
+    if (!this.renderStatsVisible || !this.ui.renderStats) return;
+
+    const availableRows = this.renderStats.availableRows ?? this.getAvailablePaintRows();
+    const bufferedRows = Math.max(0, availableRows - this.paintedRows);
+    const arrivalRowsPerSecond = this.smoothedRowsPerMs === undefined
+      ? 0
+      : this.smoothedRowsPerMs * 1000;
+    const rawArrivalRowsPerSecond = this.renderStats.arrivalRowsPerSecond ?? 0;
+    const paintedRowsPerSecond = this.renderStats.paintedRowsPerSecond ?? 0;
+    const frameMs = this.renderStats.frameMs ?? 0;
+    const paintMs = this.renderStats.paintMs ?? 0;
+
+    this.ui.renderStats.innerText = [
+      `render: ${this.renderMode}`,
+      `delay:  ${Math.round(this.getSmoothRenderDelay())} ms`,
+      `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
+      `buffer: ${bufferedRows} rows`,
+      `arrive: ${Math.round(rawArrivalRowsPerSecond)} / ${Math.round(arrivalRowsPerSecond)} rows/s`,
+      `paint:  ${Math.round(paintedRowsPerSecond)} rows/s`,
+      `frame:  ${frameMs.toFixed(1)} ms`,
+      `put:    ${paintMs.toFixed(2)} ms`
+    ].join("\n");
+  }
+
+  toggleRenderStats() {
+    this.renderStatsVisible = !this.renderStatsVisible;
+    this.ui.renderStats.classList.toggle("hidden", !this.renderStatsVisible);
+    this.updateRenderStats();
   }
 
   get channel() {
@@ -247,7 +309,13 @@ export class App {
       this.setUiOverlayVisible(false);
     });
     document.addEventListener("keydown", event => {
-      if (event.altKey || event.ctrlKey || event.metaKey || event.key.toLowerCase() !== "p") return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        this.toggleRenderStats();
+        return;
+      }
+      if (event.key.toLowerCase() !== "p") return;
       event.preventDefault();
       this.toggleUiOverlay();
     });
@@ -269,6 +337,7 @@ export class App {
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
+    this.ui.renderStats = document.getElementById("render-stats");
 
     this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
