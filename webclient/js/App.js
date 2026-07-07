@@ -44,19 +44,24 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
-    this.parserWorker = new Worker(new URL("./pnm-parser-worker.js", import.meta.url), {type: "module"});
+    this.parserWorker = new Worker("/js/pnm-parser-worker.js");
+    this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
+    this.parserWorker.addEventListener("error", event => {
+      console.error("PNM parser worker error:", {
+        message: event.message || "(no message)",
+        filename: event.filename || "(no filename)",
+        lineno: event.lineno || 0,
+        colno: event.colno || 0
+      });
+    });
+    this.parserWorker.addEventListener("messageerror", event => {
+      console.error("PNM parser worker message error:", event);
+    });
     this.parserScanId = 0;
     this.panelResizeObservers = [];
 
     this.reset();
     this.setUpUi();
-    this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
-    this.parserWorker.addEventListener("error", event => {
-      console.error("PNM parser worker error:", event.message, event.filename, event.lineno);
-    });
-    this.parserWorker.addEventListener("messageerror", event => {
-      console.error("PNM parser worker message error:", event);
-    });
     window.addEventListener("resize", () => this.updateCanvasDisplaySize());
   }
 
