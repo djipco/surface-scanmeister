@@ -464,7 +464,8 @@ button:disabled {
 
 #arrive-graph,
 #speed-graph,
-#fps-graph,
+#paint-time-graph,
+#parse-time-graph,
 #display-fps-graph,
 #buffer-graph {
   display: block;
