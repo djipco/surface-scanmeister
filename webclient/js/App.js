@@ -256,11 +256,11 @@ export class App {
   }
 
   drawSpeedGraph() {
-    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt);
+    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt, {maxValue: 200});
   }
 
   drawFpsGraph() {
-    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt);
+    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt, {maxValue: 65});
   }
 
   drawBufferGraph() {
@@ -291,13 +291,13 @@ export class App {
     return {width, height};
   }
 
-  drawHistoryGraph(canvas, context, history, frozenAt = undefined) {
+  drawHistoryGraph(canvas, context, history, frozenAt = undefined, options = {}) {
     if (!canvas || !context) return;
 
     const {width, height} = this.prepareGraphCanvas(canvas, context);
     const now = frozenAt ?? performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
-    const maxValue = Math.max(1, ...history.map(point => point.value));
+    const maxValue = options.maxValue ?? Math.max(1, ...history.map(point => point.value));
     const plot = {
       left: 36,
       top: 18,
