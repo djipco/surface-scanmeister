@@ -20,6 +20,7 @@ export class App {
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
+  static SMOOTH_RENDER_DELAY_MULTIPLIER = 2;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -160,7 +161,7 @@ export class App {
   getSmoothRenderDelay() {
     const resolution = this.resolution || 75;
     const scale = Math.log2(Math.max(1, resolution / 75));
-    return this.clamp(100 + scale * 60, 100, 320);
+    return this.clamp(100 + scale * 60, 100, 320) * App.SMOOTH_RENDER_DELAY_MULTIPLIER;
   }
 
   get channel() {
