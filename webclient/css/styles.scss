@@ -151,6 +151,19 @@ select {
   padding: 0 9px;
 }
 
+input[type="number"] {
+  text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .toggle-switch {
   position: relative;
   width: 46px;
@@ -198,16 +211,6 @@ select {
 
 .drag-input {
   cursor: ew-resize;
-  text-align: right;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.drag-input::-webkit-inner-spin-button,
-.drag-input::-webkit-outer-spin-button {
-  margin: 0;
-  appearance: none;
-  -webkit-appearance: none;
 }
 
 .drag-input.dragging {
