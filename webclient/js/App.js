@@ -1875,26 +1875,23 @@ export class App {
   }
 
   updateKioskControls() {
-    const isKiosk = this.isKioskLikeDisplay();
+    const isKiosk = this.isKioskMode();
     document.documentElement.classList.toggle("kiosk-mode", isKiosk);
     this.ui.fullscreenButton.classList.toggle("hidden", isKiosk);
     this.ui.quitKioskButton.classList.toggle("hidden", !isKiosk);
   }
 
   isFullscreenPresentation() {
-    return Boolean(document.fullscreenElement || this.isKioskLikeDisplay());
+    return Boolean(document.fullscreenElement || this.isKioskMode());
   }
 
-  isKioskLikeDisplay() {
+  isKioskMode() {
     if (window.matchMedia("(display-mode: fullscreen)").matches) return true;
-    if (document.fullscreenElement) return false;
 
-    const screenWidth = screen.width || 0;
-    const screenHeight = screen.height || 0;
-    if (!screenWidth || !screenHeight) return false;
-
-    return Math.abs(window.outerWidth - screenWidth) <= 2 &&
-      Math.abs(window.outerHeight - screenHeight) <= 2;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("kiosk") === "1" ||
+      params.get("kiosk") === "true" ||
+      params.get("mode") === "kiosk";
   }
 
   quitKiosk() {

@@ -2,7 +2,7 @@
 Type=Application
 Name=ScanMeister Client
 Comment=Open ScanMeister in fullscreen
-Exec=chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:8080
+Exec=chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:8080?kiosk=1
 Icon=web-browser
 Terminal=false
 Categories=Utility;
