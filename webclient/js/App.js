@@ -348,8 +348,8 @@ export class App {
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = shouldRotate
-      ? "translate(-50%, -50%) rotate(90deg)"
-      : "translate(-50%, -50%)";
+      ? "translate(-50%, -50%) rotate(270deg)"
+      : "translate(-50%, -50%) rotate(180deg)";
     this.ui.size.style.left = displayLeft + "px";
     this.ui.size.style.top = displayTop + "px";
   }
