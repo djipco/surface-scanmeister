@@ -31,6 +31,7 @@ export class App {
   static DEFAULT_RENDER_SPEED = "100";
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
+  static CLEAR_CANVAS_FADE_MS = 120;
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
@@ -1587,8 +1588,6 @@ export class App {
           this.height = parseInt(tokens[2]);
           console.log(this.width, this.height);
 
-          this.setImageSizeOverlay(this.width, this.height);
-
           if (this.format !== 'P6') {
             console.error('Unsupported PNM format:', this.format);
             return;
@@ -1598,9 +1597,10 @@ export class App {
           this.state = App.STATE_HEADER_PARSED;
 
           if (this.clearCanvasBeforeScan) {
-            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            await this.fadeOutAndClearCanvas(this.width, this.height);
             this.imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
           } else {
+            this.setImageSizeOverlay(this.width, this.height);
             this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
           }
           this.paintedRows = 0;
@@ -1630,6 +1630,14 @@ export class App {
       setTimeout(this.#processChunk.bind(this), 2);
     }
 
+  }
+
+  async fadeOutAndClearCanvas(pixelWidth, pixelHeight) {
+    this.canvas.classList.add("canvas-clearing");
+    await new Promise(resolve => setTimeout(resolve, App.CLEAR_CANVAS_FADE_MS));
+    this.setImageSizeOverlay(pixelWidth, pixelHeight);
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    requestAnimationFrame(() => this.canvas.classList.remove("canvas-clearing"));
   }
 
   parseQueuedScanData() {

@@ -28,7 +28,12 @@ html.ui-overlay-hidden * {
   height: min(calc(100vw - 32px), calc(100vh - 32px));
   display: block;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transition: opacity 120ms ease;
   transform: translate(-50%, -50%);
+}
+
+#canvas.canvas-clearing {
+  opacity: 0;
 }
 
 html:fullscreen,
