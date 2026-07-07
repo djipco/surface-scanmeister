@@ -74,12 +74,41 @@ html.kiosk-mode body {
   flex-direction: column;
   gap: 0;
   overflow: hidden;
-  resize: both;
+  resize: none;
   background: rgba(27, 31, 35, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   opacity: 1;
   visibility: visible;
   transition: opacity 180ms ease, visibility 0s linear 0s;
+}
+
+.panel-resize-handle {
+  position: absolute;
+  z-index: 3;
+}
+
+.panel-resize-handle-left,
+.panel-resize-handle-right {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.panel-resize-handle-left {
+  left: 0;
+}
+
+.panel-resize-handle-right {
+  right: 0;
+}
+
+.panel-resize-handle-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
 }
 
 .controls-panel-content {
@@ -556,7 +585,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  resize: both;
+  resize: none;
   background: rgba(21, 24, 27, 0.92);
   color: #d7e7ff;
   font-family: "Cascadia Mono", Consolas, monospace;

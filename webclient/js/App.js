@@ -1177,6 +1177,8 @@ export class App {
   setUpPanelResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
     if (!window.ResizeObserver) return;
 
+    this.addPanelResizeHandles(panel, storageKey, onResize);
+
     let isRestoring = true;
     let saveTimeout = undefined;
     requestAnimationFrame(() => isRestoring = false);
@@ -1189,6 +1191,59 @@ export class App {
     });
     resizeObserver.observe(panel);
     this.panelResizeObservers.push(resizeObserver);
+  }
+
+  addPanelResizeHandles(panel, storageKey, onResize = undefined) {
+    ["left", "right", "bottom"].forEach(edge => {
+      const handle = document.createElement("span");
+      handle.className = `panel-resize-handle panel-resize-handle-${edge}`;
+      handle.setAttribute("aria-hidden", "true");
+      panel.appendChild(handle);
+
+      handle.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const startRect = panel.getBoundingClientRect();
+        const minWidth = 280;
+        const minHeight = 220;
+        const maxRight = window.innerWidth;
+        const maxBottom = window.innerHeight;
+
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+        handle.setPointerCapture(event.pointerId);
+
+        const onPointerMove = moveEvent => {
+          if (edge === "left") {
+            const fixedRight = startRect.right;
+            const left = this.clamp(moveEvent.clientX, 0, Math.max(0, fixedRight - minWidth));
+            panel.style.left = left + "px";
+            panel.style.width = Math.max(minWidth, fixedRight - left) + "px";
+          } else if (edge === "right") {
+            const width = this.clamp(moveEvent.clientX - startRect.left, minWidth, Math.max(minWidth, maxRight - startRect.left));
+            panel.style.width = width + "px";
+          } else if (edge === "bottom") {
+            const height = this.clamp(moveEvent.clientY - startRect.top, minHeight, Math.max(minHeight, maxBottom - startRect.top));
+            panel.style.height = height + "px";
+          }
+
+          if (onResize) onResize();
+        };
+
+        const onPointerUp = upEvent => {
+          handle.releasePointerCapture(upEvent.pointerId);
+          this.savePanelPosition(panel, storageKey);
+          handle.removeEventListener("pointermove", onPointerMove);
+          handle.removeEventListener("pointerup", onPointerUp);
+          handle.removeEventListener("pointercancel", onPointerUp);
+        };
+
+        handle.addEventListener("pointermove", onPointerMove);
+        handle.addEventListener("pointerup", onPointerUp);
+        handle.addEventListener("pointercancel", onPointerUp);
+      });
+    });
   }
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
