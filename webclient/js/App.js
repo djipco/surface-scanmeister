@@ -45,7 +45,11 @@ export class App {
     this.buffer = new Uint8Array();
     this.position = 0;
     this.paintedRows = 0;
-    this.renderStartTime = undefined;
+    this.paintCursor = 0;
+    this.lastPaintTime = undefined;
+    this.lastAvailableRows = 0;
+    this.lastAvailableRowsTime = undefined;
+    this.smoothedRowsPerMs = undefined;
     this.width = undefined;
     this.height = undefined;
   }
@@ -66,6 +70,7 @@ export class App {
       this.paintRequest = undefined;
     }
     this.paintCanvasRows({includePartialRow: true});
+    this.resetSmoothRenderState(this.getAvailablePaintRows({includePartialRow: true}));
   }
 
   shouldContinueCanvasPaint() {
@@ -105,12 +110,51 @@ export class App {
   }
 
   getSmoothPaintRows(availableRows) {
-    if (this.renderStartTime === undefined) return this.paintedRows;
+    const now = performance.now();
+    this.updateSmoothRenderRate(availableRows, now);
+    if (this.smoothedRowsPerMs === undefined) return this.paintedRows;
 
-    const elapsed = Math.max(1, performance.now() - this.renderStartTime);
-    const rowsPerMs = availableRows / elapsed;
-    const pacedRows = Math.floor(Math.max(0, elapsed - this.getSmoothRenderDelay()) * rowsPerMs);
-    return this.clamp(pacedRows, this.paintedRows, availableRows);
+    if (this.lastPaintTime === undefined) {
+      this.lastPaintTime = now;
+      return this.paintedRows;
+    }
+
+    const elapsed = Math.max(0, now - this.lastPaintTime);
+    this.lastPaintTime = now;
+
+    const delayRows = this.smoothedRowsPerMs * this.getSmoothRenderDelay();
+    const bufferedRows = Math.max(this.paintedRows, Math.floor(availableRows - delayRows));
+    this.paintCursor = Math.min(
+      bufferedRows,
+      this.paintCursor + this.smoothedRowsPerMs * elapsed
+    );
+    return this.clamp(Math.floor(this.paintCursor), this.paintedRows, bufferedRows);
+  }
+
+  updateSmoothRenderRate(availableRows, now) {
+    if (this.lastAvailableRowsTime === undefined) {
+      this.resetSmoothRenderState(availableRows, now);
+      return;
+    }
+
+    const rowsDelta = availableRows - this.lastAvailableRows;
+    const timeDelta = now - this.lastAvailableRowsTime;
+    if (rowsDelta > 0 && timeDelta > 0) {
+      const measuredRowsPerMs = rowsDelta / timeDelta;
+      this.smoothedRowsPerMs = this.smoothedRowsPerMs === undefined
+        ? measuredRowsPerMs
+        : this.smoothedRowsPerMs * 0.85 + measuredRowsPerMs * 0.15;
+      this.lastAvailableRows = availableRows;
+      this.lastAvailableRowsTime = now;
+    }
+  }
+
+  resetSmoothRenderState(availableRows = 0, now = performance.now()) {
+    this.paintCursor = this.paintedRows;
+    this.lastPaintTime = undefined;
+    this.lastAvailableRows = availableRows;
+    this.lastAvailableRowsTime = now;
+    this.smoothedRowsPerMs = undefined;
   }
 
   getSmoothRenderDelay() {
@@ -855,7 +899,7 @@ export class App {
             this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
           }
           this.paintedRows = 0;
-          this.renderStartTime = performance.now();
+          this.resetSmoothRenderState();
 
           // Keep unparsed binary data for later parsing
           value = value.slice(i + 1);
