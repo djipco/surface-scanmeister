@@ -252,7 +252,7 @@ export class App {
   }
 
   drawArrivalGraph() {
-    this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory, this.inputGraphFrozenAt);
+    this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory, this.statsGraphFrozenAt);
   }
 
   drawSpeedGraph() {
