@@ -441,6 +441,53 @@ button:disabled {
   font-weight: 400;
 }
 
+.top-info-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-icon-button {
+  width: 28px;
+  min-height: 26px;
+  padding: 0;
+  border: 1px solid rgba(154, 164, 173, 0.35);
+  border-radius: 4px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  color: #c7d0d8;
+}
+
+.top-icon-button:hover {
+  border-color: rgba(154, 164, 173, 0.65);
+  background: rgba(154, 164, 173, 0.12);
+  color: #f2f4f5;
+}
+
+.fullscreen-icon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.fullscreen-icon::before,
+.fullscreen-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(currentColor, currentColor) left top/6px 2px no-repeat, linear-gradient(currentColor, currentColor) left top/2px 6px no-repeat, linear-gradient(currentColor, currentColor) right top/6px 2px no-repeat, linear-gradient(currentColor, currentColor) right top/2px 6px no-repeat, linear-gradient(currentColor, currentColor) left bottom/6px 2px no-repeat, linear-gradient(currentColor, currentColor) left bottom/2px 6px no-repeat, linear-gradient(currentColor, currentColor) right bottom/6px 2px no-repeat, linear-gradient(currentColor, currentColor) right bottom/2px 6px no-repeat;
+}
+
+.fullscreen-button.is-fullscreen .fullscreen-icon {
+  transform: rotate(180deg);
+}
+
+.fullscreen-button.is-fullscreen .fullscreen-icon::before {
+  inset: 3px;
+}
+
 .quit-kiosk-button {
   min-height: 26px;
   padding: 0 10px;

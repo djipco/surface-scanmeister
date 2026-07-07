@@ -18,7 +18,12 @@
     <section class="top-info-panel" id="top-info-panel">
       <span class="top-info-title"><strong>ScanMeister Client</strong> <span>v1.0.0-alpha.4</span></span>
       <span></span>
-      <button type="button" id="quit-kiosk" class="quit-kiosk-button hidden">Quit</button>
+      <span class="top-info-actions">
+        <button type="button" id="fullscreen" class="top-icon-button fullscreen-button" aria-label="Enter fullscreen" title="Enter fullscreen">
+          <span class="fullscreen-icon" aria-hidden="true"></span>
+        </button>
+        <button type="button" id="quit-kiosk" class="quit-kiosk-button hidden">Quit</button>
+      </span>
     </section>
 
     <section class="controls-panel" id="controls-panel">
@@ -166,7 +171,6 @@
         </div>
 
         <div class="button-row">
-          <button type="button" id="fullscreen">Enter Fullscreen</button>
           <button id="scan">Scan</button>
         </div>
       </div>

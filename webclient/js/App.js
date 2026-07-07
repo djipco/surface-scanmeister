@@ -1867,9 +1867,11 @@ export class App {
   }
 
   updateFullscreenButtonLabel() {
-    this.ui.fullscreenButton.innerText = document.fullscreenElement
-      ? "Exit Fullscreen"
-      : "Enter Fullscreen";
+    const isFullscreen = Boolean(document.fullscreenElement);
+    const label = isFullscreen ? "Exit fullscreen" : "Enter fullscreen";
+    this.ui.fullscreenButton.classList.toggle("is-fullscreen", isFullscreen);
+    this.ui.fullscreenButton.setAttribute("aria-label", label);
+    this.ui.fullscreenButton.title = label;
   }
 
   updateKioskControls() {
