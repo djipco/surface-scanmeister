@@ -47,11 +47,17 @@ html:fullscreen .image-size-overlay {
   left: 16px;
   z-index: 10;
   width: 320px;
+  min-width: 280px;
+  min-height: 220px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
   border: #343a40 solid 1px;
   border-radius: 6px;
   padding: 0 14px 14px 14px;
   display: grid;
   gap: 10px;
+  overflow: auto;
+  resize: both;
   background: rgba(27, 31, 35, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
@@ -59,7 +65,7 @@ html:fullscreen .image-size-overlay {
 .controls-panel h1,
 .render-stats h1 {
   margin: 0 -14px 4px -14px;
-  padding: 10px 14px;
+  padding: 11px 14px 9px 14px;
   border-bottom: #343a40 solid 1px;
   border-radius: 6px 6px 0 0;
   display: flex;

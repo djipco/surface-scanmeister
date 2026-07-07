@@ -23,7 +23,7 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
-  static BUFFER_GRAPH_DURATION = 20000;
+  static BUFFER_GRAPH_DURATION = 12000;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -200,11 +200,10 @@ export class App {
 
     this.ui.renderStatsText.innerText = [
       `render: ${this.renderMode}`,
-      `target: ${Math.round(this.renderSpeed)} rows/s`,
+      `speed:  ${Math.round(paintedRowsPerSecond)} rows/s`,
       `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
       `buffer: ${bufferedRows} rows`,
       `arrive: ${Math.round(arrivalRowsPerSecond)} rows/s`,
-      `paint:  ${Math.round(paintedRowsPerSecond)} rows/s`,
       `frame:  ${frameMs.toFixed(1)} ms`,
       `put:    ${paintMs.toFixed(2)} ms`
     ].join("\n");
@@ -395,6 +394,7 @@ export class App {
     this.ui.controlsPanelClose = document.getElementById("controls-panel-close");
     this.restorePanelPosition(this.ui.controlsPanel);
     this.setUpPanelDrag(this.ui.controlsPanel, this.ui.controlsPanelHeader);
+    this.setUpPanelResize(this.ui.controlsPanel);
     this.ui.controlsPanelClose.addEventListener("click", event => {
       event.stopPropagation();
       this.setUiOverlayVisible(false);
@@ -721,6 +721,21 @@ export class App {
     });
   }
 
+  setUpPanelResize(panel) {
+    if (!window.ResizeObserver) return;
+
+    let isRestoring = true;
+    let saveTimeout = undefined;
+    requestAnimationFrame(() => isRestoring = false);
+
+    this.panelResizeObserver = new ResizeObserver(() => {
+      if (isRestoring) return;
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => this.savePanelPosition(panel), 150);
+    });
+    this.panelResizeObserver.observe(panel);
+  }
+
   restorePanelPosition(panel) {
     try {
       const position = JSON.parse(localStorage.getItem(App.STORAGE_PARAMETERS_POSITION));
@@ -728,8 +743,12 @@ export class App {
 
       requestAnimationFrame(() => {
         const rect = panel.getBoundingClientRect();
-        const left = this.clamp(position.left, 0, Math.max(0, window.innerWidth - rect.width));
-        const top = this.clamp(position.top, 0, Math.max(0, window.innerHeight - rect.height));
+        const width = this.clamp(position.width || rect.width, 280, Math.max(280, window.innerWidth - 16));
+        const height = this.clamp(position.height || rect.height, 220, Math.max(220, window.innerHeight - 16));
+        panel.style.width = width + "px";
+        panel.style.height = height + "px";
+        const left = this.clamp(position.left, 0, Math.max(0, window.innerWidth - width));
+        const top = this.clamp(position.top, 0, Math.max(0, window.innerHeight - height));
         panel.style.right = "auto";
         panel.style.bottom = "auto";
         panel.style.left = left + "px";
@@ -745,7 +764,9 @@ export class App {
       const rect = panel.getBoundingClientRect();
       localStorage.setItem(App.STORAGE_PARAMETERS_POSITION, JSON.stringify({
         left: Math.round(rect.left),
-        top: Math.round(rect.top)
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
       }));
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
