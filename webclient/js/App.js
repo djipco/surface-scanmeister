@@ -26,6 +26,7 @@ export class App {
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
   static BUFFER_GRAPH_DURATION = 10000;
+  static PARSE_FRAME_BUDGET_MS = 2;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -44,6 +45,7 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
+    this.parseRequest = undefined;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -53,6 +55,10 @@ export class App {
 
   reset() {
     this.flushCanvasPaint();
+    if (this.parseRequest !== undefined) {
+      cancelAnimationFrame(this.parseRequest);
+      this.parseRequest = undefined;
+    }
     this.response = undefined;
     this.reader = undefined;
     this.imageData = new Uint8Array();
@@ -80,6 +86,17 @@ export class App {
     this.width = undefined;
     this.height = undefined;
     this.rgbRemainder = new Uint8Array();
+    this.parseQueue = [];
+  }
+
+  scheduleScanParsing() {
+    if (this.parseRequest !== undefined) return;
+
+    this.parseRequest = requestAnimationFrame(() => {
+      this.parseRequest = undefined;
+      this.parseQueuedScanData();
+      if (this.parseQueue.length > 0) this.scheduleScanParsing();
+    });
   }
 
   scheduleCanvasPaint() {
@@ -1410,28 +1427,87 @@ export class App {
     }
 
     if (this.state == App.STATE_HEADER_PARSED && !done) {
-      const input = this.rgbRemainder.length > 0
-        ? this.combineRgbChunks(this.rgbRemainder, value)
-        : value;
-      const byteCount = Math.floor(input.length / 3) * 3;
-      const remainingPixels = Math.floor((this.imageData.data.length - this.position) / 4);
-      const pixelCount = Math.min(byteCount / 3, remainingPixels);
-      const parsedByteCount = pixelCount * 3;
-
-      for (let source = 0; source < parsedByteCount; source += 3) {
-        this.imageData.data[this.position++] = input[source];
-        this.imageData.data[this.position++] = input[source + 1];
-        this.imageData.data[this.position++] = input[source + 2];
-        this.imageData.data[this.position++] = 255;
-      }
-
-      this.rgbRemainder = input.slice(parsedByteCount);
-      this.updateArrivalStats(this.getAvailablePaintRows());
-      this.scheduleCanvasPaint();
+      this.parseQueue.push({data: value, offset: 0});
+      this.scheduleScanParsing();
     }
 
     if (done) {
       this.streamComplete = true;
+      this.scheduleScanParsing();
+    } else {
+      setTimeout(this.#processChunk.bind(this), 2);
+    }
+
+  }
+
+  parseQueuedScanData() {
+    if (!this.imageData || !this.imageData.data) return;
+
+    const deadline = performance.now() + App.PARSE_FRAME_BUDGET_MS;
+    let parsedRowsChanged = false;
+
+    while (this.parseQueue.length > 0 && performance.now() < deadline) {
+      const chunk = this.parseQueue[0];
+      let remainingPixels = Math.floor((this.imageData.data.length - this.position) / 4);
+      if (remainingPixels <= 0) {
+        this.parseQueue = [];
+        this.rgbRemainder = new Uint8Array();
+        break;
+      }
+
+      while (this.rgbRemainder.length > 0 && this.rgbRemainder.length < 3 && chunk.offset < chunk.data.length) {
+        const nextRemainder = new Uint8Array(this.rgbRemainder.length + 1);
+        nextRemainder.set(this.rgbRemainder);
+        nextRemainder[this.rgbRemainder.length] = chunk.data[chunk.offset++];
+        this.rgbRemainder = nextRemainder;
+      }
+
+      if (this.rgbRemainder.length > 0 && this.rgbRemainder.length < 3 && chunk.offset >= chunk.data.length) {
+        this.parseQueue.shift();
+        continue;
+      }
+
+      if (this.rgbRemainder.length === 3) {
+        this.imageData.data[this.position++] = this.rgbRemainder[0];
+        this.imageData.data[this.position++] = this.rgbRemainder[1];
+        this.imageData.data[this.position++] = this.rgbRemainder[2];
+        this.imageData.data[this.position++] = 255;
+        this.rgbRemainder = new Uint8Array();
+        remainingPixels -= 1;
+        parsedRowsChanged = true;
+      }
+
+      let parsedPixels = 0;
+      while (
+        remainingPixels > 0 &&
+        chunk.offset + 2 < chunk.data.length
+      ) {
+        this.imageData.data[this.position++] = chunk.data[chunk.offset++];
+        this.imageData.data[this.position++] = chunk.data[chunk.offset++];
+        this.imageData.data[this.position++] = chunk.data[chunk.offset++];
+        this.imageData.data[this.position++] = 255;
+        remainingPixels -= 1;
+        parsedPixels += 1;
+
+        if ((parsedPixels & 255) === 0 && performance.now() >= deadline) break;
+      }
+
+      parsedRowsChanged = parsedRowsChanged || parsedPixels > 0;
+
+      if (chunk.offset + 2 >= chunk.data.length) {
+        this.rgbRemainder = chunk.data.slice(chunk.offset);
+        this.parseQueue.shift();
+      } else if (performance.now() >= deadline) {
+        break;
+      }
+    }
+
+    if (parsedRowsChanged) {
+      this.updateArrivalStats(this.getAvailablePaintRows());
+      this.scheduleCanvasPaint();
+    }
+
+    if (this.streamComplete && this.parseQueue.length === 0) {
       this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
       if (this.renderMode === "speed") {
         this.scheduleCanvasPaint();
@@ -1442,17 +1518,7 @@ export class App {
         this.flushCanvasPaint();
         this.finalizeScan();
       }
-    } else {
-      setTimeout(this.#processChunk.bind(this), 2);
     }
-
-  }
-
-  combineRgbChunks(leftover, chunk) {
-    const input = new Uint8Array(leftover.length + chunk.length);
-    input.set(leftover);
-    input.set(chunk, leftover.length);
-    return input;
   }
 
   finalizeScan() {
