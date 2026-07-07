@@ -44,20 +44,6 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
-    this.parserWorker = new Worker(new URL("./pnm-parser-worker.js", import.meta.url));
-    this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
-    this.parserWorker.addEventListener("error", event => {
-      console.error("PNM parser worker error:", {
-        message: event.message || "(no message)",
-        filename: event.filename || "(no filename)",
-        lineno: event.lineno || 0,
-        colno: event.colno || 0
-      });
-    });
-    this.parserWorker.addEventListener("messageerror", event => {
-      console.error("PNM parser worker message error:", event);
-    });
-    this.parserScanId = 0;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -93,10 +79,7 @@ export class App {
     this.statsGraphFrozenAt = undefined;
     this.width = undefined;
     this.height = undefined;
-    this.parserScanId += 1;
-    if (this.parserWorker) {
-      this.parserWorker.postMessage({type: "reset", scanId: this.parserScanId});
-    }
+    this.rgbRemainder = new Uint8Array();
   }
 
   scheduleCanvasPaint() {
@@ -172,44 +155,6 @@ export class App {
       ? Math.ceil(pixelPosition / this.canvas.width)
       : Math.floor(pixelPosition / this.canvas.width);
     return this.clamp(completedRows, 0, this.canvas.height);
-  }
-
-  onParserMessage(message) {
-    if (message.scanId !== this.parserScanId) return;
-
-    if (message.type === "error") {
-      console.error("PNM parser worker failed:", message.message);
-      return;
-    }
-
-    if (message.type === "pixels") {
-      const rgba = new Uint8ClampedArray(message.buffer);
-      if (this.imageData && this.imageData.data) {
-        const remainingBytes = this.imageData.data.length - this.position;
-        const writeBytes = Math.min(rgba.length, remainingBytes);
-        if (writeBytes <= 0) return;
-
-        this.imageData.data.set(rgba.subarray(0, writeBytes), this.position);
-        this.position += writeBytes;
-        this.updateArrivalStats(this.getAvailablePaintRows());
-        this.scheduleCanvasPaint();
-      }
-      return;
-    }
-
-    if (message.type === "complete") {
-      this.streamComplete = true;
-      this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
-      if (this.renderMode === "speed") {
-        this.scheduleCanvasPaint();
-        if (this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
-          this.finalizeScan();
-        }
-      } else {
-        this.flushCanvasPaint();
-        this.finalizeScan();
-      }
-    }
   }
 
   getSpeedPaintRows(availableRows) {
@@ -1413,7 +1358,7 @@ export class App {
     let {done, value} = await this.reader.read();
 
     // Parse header (if not done already)
-    if (this.state == App.STATE_REQUEST_SENT) {
+    if (this.state == App.STATE_REQUEST_SENT && !done) {
 
       // Add one character at a time and check if the header is complete.
       for (let i = 0; i < value.length; i++) {
@@ -1465,22 +1410,49 @@ export class App {
     }
 
     if (this.state == App.STATE_HEADER_PARSED && !done) {
-      const buffer = value.byteOffset === 0 && value.byteLength === value.buffer.byteLength
-        ? value.buffer
-        : value.slice().buffer;
-      this.parserWorker.postMessage(
-        {type: "chunk", scanId: this.parserScanId, buffer},
-        [buffer]
-      );
+      const input = this.rgbRemainder.length > 0
+        ? this.combineRgbChunks(this.rgbRemainder, value)
+        : value;
+      const byteCount = Math.floor(input.length / 3) * 3;
+      const remainingPixels = Math.floor((this.imageData.data.length - this.position) / 4);
+      const pixelCount = Math.min(byteCount / 3, remainingPixels);
+      const parsedByteCount = pixelCount * 3;
 
+      for (let source = 0; source < parsedByteCount; source += 3) {
+        this.imageData.data[this.position++] = input[source];
+        this.imageData.data[this.position++] = input[source + 1];
+        this.imageData.data[this.position++] = input[source + 2];
+        this.imageData.data[this.position++] = 255;
+      }
+
+      this.rgbRemainder = input.slice(parsedByteCount);
+      this.updateArrivalStats(this.getAvailablePaintRows());
+      this.scheduleCanvasPaint();
     }
 
     if (done) {
-      this.parserWorker.postMessage({type: "complete", scanId: this.parserScanId});
+      this.streamComplete = true;
+      this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
+      if (this.renderMode === "speed") {
+        this.scheduleCanvasPaint();
+        if (this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
+          this.finalizeScan();
+        }
+      } else {
+        this.flushCanvasPaint();
+        this.finalizeScan();
+      }
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
     }
 
+  }
+
+  combineRgbChunks(leftover, chunk) {
+    const input = new Uint8Array(leftover.length + chunk.length);
+    input.set(leftover);
+    input.set(chunk, leftover.length);
+    return input;
   }
 
   finalizeScan() {
