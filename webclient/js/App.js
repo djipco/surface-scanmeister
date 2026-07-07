@@ -41,6 +41,9 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.fpsHistory = [];
+    this.displayFpsHistory = [];
+    this.displayFrameRequest = undefined;
+    this.previousDisplayFrameTime = undefined;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -71,6 +74,8 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.fpsHistory = [];
+    this.displayFpsHistory = [];
+    this.previousDisplayFrameTime = undefined;
     this.inputGraphFrozenAt = undefined;
     this.statsGraphFrozenAt = undefined;
     this.width = undefined;
@@ -226,6 +231,7 @@ export class App {
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawFpsGraph();
+    this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
   }
@@ -244,6 +250,10 @@ export class App {
 
   updateFpsHistory(framesPerSecond, now = performance.now()) {
     this.updateHistory(this.fpsHistory, framesPerSecond, now);
+  }
+
+  updateDisplayFpsHistory(framesPerSecond, now = performance.now()) {
+    this.updateHistory(this.displayFpsHistory, framesPerSecond, now);
   }
 
   updateHistory(history, value, now = performance.now()) {
@@ -265,6 +275,10 @@ export class App {
     this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt, {maxValue: 120});
   }
 
+  drawDisplayFpsGraph() {
+    this.drawHistoryGraph(this.ui.displayFpsGraph, this.ui.displayFpsGraphContext, this.displayFpsHistory, undefined, {maxValue: 120});
+  }
+
   drawBufferGraph() {
     this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory, this.statsGraphFrozenAt);
   }
@@ -275,13 +289,42 @@ export class App {
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawFpsGraph();
+    this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
+  }
+
+  scheduleDisplayFrameMonitor() {
+    if (this.displayFrameRequest !== undefined) return;
+
+    this.displayFrameRequest = requestAnimationFrame(now => {
+      this.displayFrameRequest = undefined;
+      this.updateDisplayFrameStats(now);
+      this.scheduleDisplayFrameMonitor();
+    });
+  }
+
+  updateDisplayFrameStats(now) {
+    if (!this.isStatsDisplayed()) {
+      this.previousDisplayFrameTime = undefined;
+      return;
+    }
+
+    if (this.previousDisplayFrameTime !== undefined) {
+      const elapsed = now - this.previousDisplayFrameTime;
+      if (elapsed > 0) {
+        this.updateDisplayFpsHistory(1000 / elapsed, now);
+        this.drawDisplayFpsGraph();
+        this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
+      }
+    }
+    this.previousDisplayFrameTime = now;
   }
 
   updateStatsAverageDisplays() {
     this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
     this.updateAverageDisplay(this.ui.fpsAverage, this.fpsHistory);
+    this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
   }
 
   updateAverageDisplay(element, history) {
@@ -569,6 +612,9 @@ export class App {
     this.ui.fpsGraph = document.getElementById("fps-graph");
     this.ui.fpsGraphContext = this.ui.fpsGraph.getContext("2d");
     this.ui.fpsAverage = document.getElementById("fps-average");
+    this.ui.displayFpsGraph = document.getElementById("display-fps-graph");
+    this.ui.displayFpsGraphContext = this.ui.displayFpsGraph.getContext("2d");
+    this.ui.displayFpsAverage = document.getElementById("display-fps-average");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
@@ -702,6 +748,7 @@ export class App {
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
+    this.scheduleDisplayFrameMonitor();
 
   }
 
