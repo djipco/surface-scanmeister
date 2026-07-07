@@ -20,7 +20,7 @@ export class App {
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
-  static SMOOTH_RENDER_DELAY_MULTIPLIER = 4;
+  static SMOOTH_RENDER_DELAY_MULTIPLIER = 8;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -132,8 +132,6 @@ export class App {
   }
 
   getSmoothPaintRows(availableRows) {
-    if (availableRows >= this.canvas.height) return availableRows;
-
     const now = performance.now();
     this.updateSmoothRenderRate(availableRows, now);
     if (this.smoothedRowsPerMs === undefined) return this.paintedRows;
