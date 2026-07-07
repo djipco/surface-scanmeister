@@ -41,7 +41,7 @@ export class App {
     this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
-    this.fpsHistory = [];
+    this.paintTimeHistory = [];
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
@@ -78,7 +78,7 @@ export class App {
     this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
-    this.fpsHistory = [];
+    this.paintTimeHistory = [];
     this.displayFpsHistory = [];
     this.previousDisplayFrameTime = undefined;
     this.inputGraphFrozenAt = undefined;
@@ -226,8 +226,7 @@ export class App {
     const bufferedRows = Math.max(0, availableRows - this.paintedRows);
     const arrivalRowsPerSecond = this.renderStats.arrivalRowsPerSecond ?? 0;
     const paintedRowsPerSecond = this.renderStats.paintedRowsPerSecond ?? 0;
-    const frameMs = this.renderStats.frameMs ?? 0;
-    const framesPerSecond = frameMs > 0 ? 1000 / frameMs : 0;
+    const paintMs = this.renderStats.paintMs ?? 0;
     const graphTime = performance.now();
     const hasFullInput = this.canvas.height > 0 && availableRows >= this.canvas.height;
     const hasFinishedDrawing = hasFullInput && this.paintedRows >= availableRows;
@@ -240,14 +239,14 @@ export class App {
     if (this.statsGraphFrozenAt === undefined) {
       this.updateBufferHistory(bufferedRows, graphTime);
       this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
-      this.updateFpsHistory(framesPerSecond, graphTime);
+      this.updatePaintTimeHistory(paintMs, graphTime);
       if (hasFinishedDrawing) this.statsGraphFrozenAt = graphTime;
     }
 
     this.ui.renderStatsText.innerText = "";
     this.drawArrivalGraph();
     this.drawSpeedGraph();
-    this.drawFpsGraph();
+    this.drawPaintTimeGraph();
     this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
@@ -265,8 +264,8 @@ export class App {
     this.updateHistory(this.speedHistory, rowsPerSecond, now);
   }
 
-  updateFpsHistory(framesPerSecond, now = performance.now()) {
-    this.updateHistory(this.fpsHistory, framesPerSecond, now);
+  updatePaintTimeHistory(paintMs, now = performance.now()) {
+    this.updateHistory(this.paintTimeHistory, paintMs, now);
   }
 
   updateDisplayFpsHistory(framesPerSecond, now = performance.now()) {
@@ -288,8 +287,8 @@ export class App {
     this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt, {maxValue: 200});
   }
 
-  drawFpsGraph() {
-    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt, {maxValue: 120});
+  drawPaintTimeGraph() {
+    this.drawHistoryGraph(this.ui.paintTimeGraph, this.ui.paintTimeGraphContext, this.paintTimeHistory, this.statsGraphFrozenAt);
   }
 
   drawDisplayFpsGraph() {
@@ -305,7 +304,7 @@ export class App {
 
     this.drawArrivalGraph();
     this.drawSpeedGraph();
-    this.drawFpsGraph();
+    this.drawPaintTimeGraph();
     this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
@@ -340,7 +339,7 @@ export class App {
 
   updateStatsAverageDisplays() {
     this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
-    this.updateAverageDisplay(this.ui.fpsAverage, this.fpsHistory);
+    this.updateAverageDisplay(this.ui.paintTimeAverage, this.paintTimeHistory);
     this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
   }
 
@@ -626,9 +625,9 @@ export class App {
     this.ui.speedGraph = document.getElementById("speed-graph");
     this.ui.speedGraphContext = this.ui.speedGraph.getContext("2d");
     this.ui.speedAverage = document.getElementById("speed-average");
-    this.ui.fpsGraph = document.getElementById("fps-graph");
-    this.ui.fpsGraphContext = this.ui.fpsGraph.getContext("2d");
-    this.ui.fpsAverage = document.getElementById("fps-average");
+    this.ui.paintTimeGraph = document.getElementById("paint-time-graph");
+    this.ui.paintTimeGraphContext = this.ui.paintTimeGraph.getContext("2d");
+    this.ui.paintTimeAverage = document.getElementById("paint-time-average");
     this.ui.displayFpsGraph = document.getElementById("display-fps-graph");
     this.ui.displayFpsGraphContext = this.ui.displayFpsGraph.getContext("2d");
     this.ui.displayFpsAverage = document.getElementById("display-fps-average");
