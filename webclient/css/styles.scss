@@ -80,7 +80,7 @@ html.kiosk-mode .image-size-overlay {
   padding: 14px;
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 12px;
   overflow: auto;
   scrollbar-color: #3d454d rgba(21, 24, 27, 0.6);
   scrollbar-width: thin;
@@ -198,6 +198,15 @@ html.kiosk-mode .image-size-overlay {
   border-color: rgba(255, 107, 107, 0.65);
   background: rgba(255, 107, 107, 0.14);
   color: #ffd2d2;
+}
+
+.control-group {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(61, 69, 77, 0.55);
+  border-radius: 5px;
+  background: rgba(21, 24, 27, 0.28);
 }
 
 .control-row {
