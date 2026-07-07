@@ -227,12 +227,12 @@ export class App {
   }
 
   capturePixelRevealBase(startRow, rowCount) {
-    if (this.revealMode !== "pixelate" || rowCount <= 0) return undefined;
+    if (this.revealMode !== "glitchy-pixelate" || rowCount <= 0) return undefined;
     return this.context.getImageData(0, startRow, this.canvas.width, rowCount);
   }
 
   addPixelRevealBand(startRow, rowCount, now = performance.now(), baseImageData = undefined) {
-    if (this.revealMode !== "pixelate" || rowCount <= 0) return;
+    if (!this.isPixelRevealMode() || rowCount <= 0) return;
 
     this.revealBands.push({
       startRow,
@@ -247,7 +247,7 @@ export class App {
   }
 
   drawPixelRevealBands(now = performance.now()) {
-    if (this.revealMode !== "pixelate" || this.revealBands.length === 0) {
+    if (!this.isPixelRevealMode() || this.revealBands.length === 0) {
       this.restorePixelRevealBands();
       this.revealBands = [];
       return;
@@ -263,11 +263,20 @@ export class App {
         return false;
       }
 
-      this.restorePixelRevealBase(band);
-      this.drawPixelatedBand(band, blockSize, age);
+      if (this.revealMode === "glitchy-pixelate") {
+        this.restorePixelRevealBase(band);
+        this.drawPixelatedBand(band, blockSize, age, {clumpy: true});
+      } else {
+        this.restorePixelRevealBand(band);
+        this.drawPixelatedBand(band, blockSize, age);
+      }
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
+  }
+
+  isPixelRevealMode() {
+    return this.revealMode === "pixelate" || this.revealMode === "glitchy-pixelate";
   }
 
   restorePixelRevealBands() {
@@ -307,7 +316,7 @@ export class App {
     return 1;
   }
 
-  drawPixelatedBand(band, blockSize, age) {
+  drawPixelatedBand(band, blockSize, age, options = {}) {
     const width = this.canvas.width;
     const startRow = band.startRow;
     const rowCount = band.rowCount;
@@ -332,7 +341,35 @@ export class App {
     this.revealPixelContext.imageSmoothingEnabled = false;
     this.revealPixelContext.clearRect(0, 0, smallWidth, smallHeight);
     this.revealPixelContext.drawImage(this.revealSourceCanvas, 0, 0, smallWidth, smallHeight);
-    this.drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age);
+    if (options.clumpy) {
+      this.drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age);
+    } else {
+      this.drawPixelBlocks(band, blockSize, smallWidth, smallHeight);
+    }
+  }
+
+  drawPixelBlocks(band, blockSize, smallWidth, smallHeight) {
+    for (let smallY = 0; smallY < smallHeight; smallY++) {
+      for (let smallX = 0; smallX < smallWidth; smallX++) {
+        const destX = smallX * blockSize;
+        const destY = band.startRow + smallY * blockSize;
+        const destWidth = Math.min(blockSize, this.canvas.width - destX);
+        const destHeight = Math.min(blockSize, band.startRow + band.rowCount - destY);
+        if (destWidth <= 0 || destHeight <= 0) continue;
+
+        this.context.drawImage(
+          this.revealPixelCanvas,
+          smallX,
+          smallY,
+          1,
+          1,
+          destX,
+          destY,
+          destWidth,
+          destHeight
+        );
+      }
+    }
   }
 
   drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age) {
@@ -765,7 +802,9 @@ export class App {
   }
 
   get revealMode() {
-    return this.ui.revealMode.value === "pixelate" ? "pixelate" : "immediate";
+    if (this.ui.revealMode.value === "pixelate") return "pixelate";
+    if (this.ui.revealMode.value === "glitchy-pixelate") return "glitchy-pixelate";
+    return "immediate";
   }
 
   get renderSpeed() {
@@ -1734,12 +1773,16 @@ export class App {
   restoreRevealMode() {
     try {
       const value = localStorage.getItem(App.STORAGE_REVEAL_MODE);
-      this.ui.revealMode.value = value === "pixelate" ? "pixelate" : "immediate";
+      this.ui.revealMode.value = this.isValidRevealMode(value) ? value : "immediate";
       localStorage.setItem(App.STORAGE_REVEAL_MODE, this.ui.revealMode.value);
     } catch (err) {
       this.ui.revealMode.value = "immediate";
       // Keep the interface usable if localStorage is unavailable.
     }
+  }
+
+  isValidRevealMode(value) {
+    return value === "immediate" || value === "pixelate" || value === "glitchy-pixelate";
   }
 
   saveCheckboxValue(input, storageKey) {
