@@ -584,8 +584,6 @@ export class App {
       event.stopPropagation();
       this.setUiOverlayVisible(false);
     });
-    this.ui.controlsPanel.addEventListener("focusin", () => this.cancelUiAutoHide());
-    this.ui.controlsPanel.addEventListener("focusout", () => this.scheduleUiAutoHide());
     document.addEventListener("keydown", event => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       if (this.isTypingInField(event.target)) return;
@@ -860,12 +858,6 @@ export class App {
     if (delay <= 0) return;
 
     this.autoHideTimer = setTimeout(() => {
-      const focusInside = this.ui.controlsPanel.contains(document.activeElement);
-      if (focusInside) {
-        this.scheduleUiAutoHide();
-        return;
-      }
-
       this.setUiOverlayVisible(false);
     }, delay);
   }
