@@ -17,7 +17,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  border: #343a40 solid 1px;
+  border: 1px solid #343a40;
   border-radius: 6px;
   width: auto;
   height: min(calc(100vw - 32px), calc(100vh - 32px));
@@ -51,16 +51,47 @@ html:fullscreen .image-size-overlay {
   min-height: 220px;
   max-width: calc(100vw - 16px);
   max-height: calc(100vh - 16px);
-  border: #343a40 solid 1px;
+  border: 1px solid #343a40;
   border-radius: 6px;
-  padding: 0 14px 14px 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  resize: both;
+  background: rgba(27, 31, 35, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.controls-panel-content {
+  min-height: 0;
+  padding: 14px;
   display: grid;
   align-content: start;
   gap: 10px;
   overflow: auto;
-  resize: both;
-  background: rgba(27, 31, 35, 0.92);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  scrollbar-color: #3d454d rgba(21, 24, 27, 0.6);
+  scrollbar-width: thin;
+}
+
+.controls-panel-content::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.controls-panel-content::-webkit-scrollbar-track {
+  background: rgba(21, 24, 27, 0.6);
+  border-left: 1px solid #343a40;
+}
+
+.controls-panel-content::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(21, 24, 27, 0.6);
+  border-radius: 999px;
+  background: #3d454d;
+}
+
+.controls-panel-content::-webkit-scrollbar-thumb:hover {
+  background: #54606a;
 }
 
 .controls-panel h1,
@@ -71,7 +102,7 @@ html:fullscreen .image-size-overlay {
   min-height: 36px;
   max-height: 36px;
   padding: 0 14px;
-  border-bottom: #343a40 solid 1px;
+  border-bottom: 1px solid #343a40;
   border-radius: 6px 6px 0 0;
   display: flex;
   align-items: center;
@@ -87,6 +118,11 @@ html:fullscreen .image-size-overlay {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3C/svg%3E") 12 12, all-scroll;
   overflow: hidden;
   user-select: none;
+}
+
+.controls-panel h1 {
+  margin: 0;
+  flex: 0 0 36px;
 }
 
 .render-stats h1 {
@@ -149,7 +185,7 @@ html:fullscreen .image-size-overlay {
   align-items: center;
   min-height: 38px;
   padding: 0 12px;
-  border-right: #343a40 solid 1px;
+  border-right: 1px solid #343a40;
   border-radius: 6px 0 0 6px;
   background: rgba(27, 31, 35, 0.92);
   font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -167,7 +203,7 @@ select,
 button {
   box-sizing: border-box;
   min-height: 32px;
-  border: #3d454d solid 1px;
+  border: 1px solid #3d454d;
   border-radius: 4px;
   background: #252b31;
   color: #f2f4f5;
@@ -217,7 +253,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .toggle-switch span {
   position: absolute;
   inset: 0;
-  border: #3d454d solid 1px;
+  border: 1px solid #3d454d;
   border-radius: 999px;
   background: #252b31;
   cursor: pointer;
@@ -296,7 +332,7 @@ button:disabled {
   right: 16px;
   bottom: 16px;
   min-height: 38px;
-  border: #343a40 solid 1px;
+  border: 1px solid #343a40;
   border-radius: 6px;
   padding: 0;
   display: grid;
@@ -338,7 +374,7 @@ button:disabled {
   bottom: 70px;
   z-index: 20;
   min-width: 280px;
-  border: #343a40 solid 1px;
+  border: 1px solid #343a40;
   border-radius: 6px;
   padding: 0 12px 12px 12px;
   background: rgba(21, 24, 27, 0.92);
@@ -361,7 +397,7 @@ button:disabled {
   width: 100%;
   height: 104px;
   margin-top: 8px;
-  border: #343a40 solid 1px;
+  border: 1px solid #343a40;
   border-radius: 4px;
 }
 
