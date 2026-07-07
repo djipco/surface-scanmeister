@@ -21,6 +21,8 @@ export class App {
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
   static STORAGE_AUTO_HIDE_ENABLED = "scanmeister.autoHideEnabled";
   static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
+  static STORAGE_AUTO_SCAN_ENABLED = "scanmeister.autoScanEnabled";
+  static STORAGE_AUTO_SCAN_SECONDS = "scanmeister.autoScanSeconds";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
@@ -28,6 +30,7 @@ export class App {
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
+  static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
@@ -51,6 +54,7 @@ export class App {
     this.lastStatsGraphDrawTime = 0;
     this.parseRequest = undefined;
     this.autoHideTimer = undefined;
+    this.autoScanTimer = undefined;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -569,6 +573,16 @@ export class App {
     return Boolean(this.ui.autoHideToggle.checked);
   }
 
+  get autoScanSeconds() {
+    const seconds = parseFloat(this.ui.autoScanSeconds.value);
+    if (isNaN(seconds)) return parseFloat(App.DEFAULT_AUTO_SCAN_SECONDS);
+    return this.roundInputValue(this.ui.autoScanSeconds, seconds);
+  }
+
+  get autoScanEnabled() {
+    return Boolean(this.ui.autoScanToggle.checked);
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -599,7 +613,7 @@ export class App {
       }
       if (event.key.toLowerCase() === "s") {
         event.preventDefault();
-        this.startScanFromShortcut();
+        this.startScanIfAvailable();
         return;
       }
       if (event.key.toLowerCase() !== "p") return;
@@ -628,6 +642,9 @@ export class App {
     this.ui.autoHideToggle = document.getElementById("auto-hide-ui");
     this.ui.autoHideSecondsRow = document.getElementById("auto-hide-seconds-row");
     this.ui.autoHideSeconds = document.getElementById("auto-hide-seconds");
+    this.ui.autoScanToggle = document.getElementById("auto-scan");
+    this.ui.autoScanSecondsRow = document.getElementById("auto-scan-seconds-row");
+    this.ui.autoScanSeconds = document.getElementById("auto-scan-seconds");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.quitKioskButton = document.getElementById("quit-kiosk");
@@ -669,6 +686,9 @@ export class App {
     this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, true);
     this.restoreNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
     if (!this.ui.autoHideSeconds.value) this.ui.autoHideSeconds.value = App.DEFAULT_AUTO_HIDE_SECONDS;
+    this.restoreCheckboxValue(this.ui.autoScanToggle, App.STORAGE_AUTO_SCAN_ENABLED, false);
+    this.restoreNumericValue(this.ui.autoScanSeconds, App.STORAGE_AUTO_SCAN_SECONDS);
+    if (!this.ui.autoScanSeconds.value) this.ui.autoScanSeconds.value = App.DEFAULT_AUTO_SCAN_SECONDS;
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
@@ -703,6 +723,19 @@ export class App {
       this.ui.autoHideSeconds.value = this.clampInputValue(this.ui.autoHideSeconds, this.autoHideSeconds);
       this.saveNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS, {normalize: true});
       this.scheduleUiAutoHide();
+    });
+    this.ui.autoScanToggle.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.autoScanToggle, App.STORAGE_AUTO_SCAN_ENABLED);
+      this.updateAutoScanState();
+    });
+    this.ui.autoScanSeconds.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.autoScanSeconds, App.STORAGE_AUTO_SCAN_SECONDS);
+      this.scheduleAutoScan();
+    });
+    this.ui.autoScanSeconds.addEventListener("change", () => {
+      this.ui.autoScanSeconds.value = this.clampInputValue(this.ui.autoScanSeconds, this.autoScanSeconds);
+      this.saveNumericValue(this.ui.autoScanSeconds, App.STORAGE_AUTO_SCAN_SECONDS, {normalize: true});
+      this.scheduleAutoScan();
     });
     this.ui.smoothGraphs.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
@@ -800,6 +833,7 @@ export class App {
     this.updateScanButtonState();
     this.updateRenderSpeedState();
     this.updateAutoHideState();
+    this.updateAutoScanState();
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
@@ -829,7 +863,7 @@ export class App {
       tagName === "textarea";
   }
 
-  startScanFromShortcut() {
+  startScanIfAvailable() {
     if (this.ui.scanButton.disabled) return;
     this.getImage();
   }
@@ -891,6 +925,36 @@ export class App {
       this.cancelUiAutoHide();
     } else {
       this.scheduleUiAutoHide();
+    }
+  }
+
+  scheduleAutoScan() {
+    this.cancelAutoScan();
+    if (!this.autoScanEnabled) return;
+
+    const delay = this.autoScanSeconds * 1000;
+    if (delay <= 0) return;
+
+    this.autoScanTimer = setTimeout(() => {
+      this.startScanIfAvailable();
+      this.scheduleAutoScan();
+    }, delay);
+  }
+
+  cancelAutoScan() {
+    if (this.autoScanTimer === undefined) return;
+    clearTimeout(this.autoScanTimer);
+    this.autoScanTimer = undefined;
+  }
+
+  updateAutoScanState() {
+    const isDisabled = !this.autoScanEnabled;
+    this.ui.autoScanSeconds.disabled = isDisabled;
+    this.ui.autoScanSecondsRow.classList.toggle("disabled", isDisabled);
+    if (isDisabled) {
+      this.cancelAutoScan();
+    } else {
+      this.scheduleAutoScan();
     }
   }
 
