@@ -953,7 +953,7 @@ export class App {
   updateCanvasDisplaySize() {
     if (!this.displayPixelWidth || !this.displayPixelHeight) return;
 
-    const margin = document.fullscreenElement ? 0 : 32;
+    const margin = this.isFullscreenPresentation() ? 0 : 32;
     const availableWidth = Math.max(1, window.innerWidth - margin);
     const availableHeight = Math.max(1, window.innerHeight - margin);
     const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;
@@ -1661,8 +1661,13 @@ export class App {
 
   updateKioskControls() {
     const isKiosk = this.isKioskLikeDisplay();
+    document.documentElement.classList.toggle("kiosk-mode", isKiosk);
     this.ui.fullscreenButton.classList.toggle("hidden", isKiosk);
     this.ui.quitKioskButton.classList.toggle("hidden", !isKiosk);
+  }
+
+  isFullscreenPresentation() {
+    return Boolean(document.fullscreenElement || this.isKioskLikeDisplay());
   }
 
   isKioskLikeDisplay() {

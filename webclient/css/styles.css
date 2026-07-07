@@ -27,17 +27,21 @@ body {
 }
 
 html:fullscreen,
-html:fullscreen body {
+html:fullscreen body,
+html.kiosk-mode,
+html.kiosk-mode body {
   background: #000;
 }
 
-html:fullscreen #canvas {
+html:fullscreen #canvas,
+html.kiosk-mode #canvas {
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-html:fullscreen .image-size-overlay {
+html:fullscreen .image-size-overlay,
+html.kiosk-mode .image-size-overlay {
   display: none;
 }
 
