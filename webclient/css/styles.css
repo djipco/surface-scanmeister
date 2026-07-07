@@ -66,13 +66,13 @@ html.kiosk-mode body {
 
 .calibration-grid-overlay::before {
   background-image: repeating-linear-gradient(to right, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing));
-  background-position: 50% 0;
+  background-position: calc(50% - var(--grid-spacing) / 2) 0;
   background-size: var(--grid-spacing) 100%;
 }
 
 .calibration-grid-overlay::after {
   background-image: repeating-linear-gradient(to bottom, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing));
-  background-position: 0 50%;
+  background-position: 0 calc(50% - var(--grid-spacing) / 2);
   background-size: 100% var(--grid-spacing);
 }
 
