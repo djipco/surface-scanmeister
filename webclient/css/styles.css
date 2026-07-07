@@ -151,6 +151,14 @@ select {
   padding: 0 9px;
 }
 
+input:disabled,
+select:disabled {
+  border-color: rgba(61, 69, 77, 0.5);
+  background: rgba(37, 43, 49, 0.45);
+  color: #6f7982;
+  cursor: not-allowed;
+}
+
 input[type=number] {
   text-align: right;
   appearance: textfield;

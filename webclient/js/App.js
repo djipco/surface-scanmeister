@@ -17,6 +17,8 @@ export class App {
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
+  static STORAGE_COMMAND_VISIBLE = "scanmeister.commandVisible";
+  static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
@@ -205,9 +207,9 @@ export class App {
   }
 
   toggleRenderStats() {
-    this.renderStatsVisible = !this.renderStatsVisible;
-    this.ui.renderStats.classList.toggle("hidden", !this.renderStatsVisible);
-    this.updateRenderStats();
+    this.ui.debugToggle.checked = !this.ui.debugToggle.checked;
+    this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
+    this.updateAuxiliaryOverlayVisibility();
   }
 
   get channel() {
@@ -325,6 +327,8 @@ export class App {
     this.ui.renderMode = document.getElementById("render-mode");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
+    this.ui.commandToggle = document.getElementById("show-command");
+    this.ui.debugToggle = document.getElementById("show-debug");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
@@ -340,6 +344,8 @@ export class App {
     this.restoreRenderMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
+    this.restoreCheckboxValue(this.ui.commandToggle, App.STORAGE_COMMAND_VISIBLE, true);
+    this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
     this.restoreUiOverlayVisibility();
 
     this.ui.channelInput.addEventListener("change", () => {
@@ -356,6 +362,14 @@ export class App {
     this.ui.forceCalibration.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
+    });
+    this.ui.commandToggle.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.commandToggle, App.STORAGE_COMMAND_VISIBLE);
+      this.updateAuxiliaryOverlayVisibility();
+    });
+    this.ui.debugToggle.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
+      this.updateAuxiliaryOverlayVisibility();
     });
     this.ui.drawMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
@@ -443,6 +457,7 @@ export class App {
     this.updateCommandPreview();
     this.updateScanButtonState();
     this.updateRenderSpeedState();
+    this.updateAuxiliaryOverlayVisibility();
 
   }
 
@@ -452,12 +467,23 @@ export class App {
 
   setUiOverlayVisible(isVisible) {
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
-    this.ui.commandPanel.classList.toggle("hidden", !isVisible);
     try {
       localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
+    this.updateAuxiliaryOverlayVisibility();
+  }
+
+  updateAuxiliaryOverlayVisibility() {
+    const isUiOverlayVisible = !this.ui.controlsPanel.classList.contains("hidden");
+    const isCommandVisible = isUiOverlayVisible && this.ui.commandToggle.checked;
+    const isDebugVisible = isUiOverlayVisible && this.ui.debugToggle.checked;
+
+    this.renderStatsVisible = isDebugVisible;
+    this.ui.commandPanel.classList.toggle("hidden", !isCommandVisible);
+    this.ui.renderStats.classList.toggle("hidden", !isDebugVisible);
+    if (isDebugVisible) this.updateRenderStats();
   }
 
   updateScanButtonState() {
