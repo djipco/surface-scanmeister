@@ -42,6 +42,7 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.paintTimeHistory = [];
+    this.parseTimeHistory = [];
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
@@ -79,6 +80,7 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.paintTimeHistory = [];
+    this.parseTimeHistory = [];
     this.displayFpsHistory = [];
     this.previousDisplayFrameTime = undefined;
     this.inputGraphFrozenAt = undefined;
@@ -227,6 +229,7 @@ export class App {
     const arrivalRowsPerSecond = this.renderStats.arrivalRowsPerSecond ?? 0;
     const paintedRowsPerSecond = this.renderStats.paintedRowsPerSecond ?? 0;
     const paintMs = this.renderStats.paintMs ?? 0;
+    const parseMs = this.renderStats.parseMs ?? 0;
     const graphTime = performance.now();
     const hasFullInput = this.canvas.height > 0 && availableRows >= this.canvas.height;
     const hasFinishedDrawing = hasFullInput && this.paintedRows >= availableRows;
@@ -240,6 +243,7 @@ export class App {
       this.updateBufferHistory(bufferedRows, graphTime);
       this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
       this.updatePaintTimeHistory(paintMs, graphTime);
+      this.updateParseTimeHistory(parseMs, graphTime);
       if (hasFinishedDrawing) this.statsGraphFrozenAt = graphTime;
     }
 
@@ -247,6 +251,7 @@ export class App {
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawPaintTimeGraph();
+    this.drawParseTimeGraph();
     this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
@@ -266,6 +271,10 @@ export class App {
 
   updatePaintTimeHistory(paintMs, now = performance.now()) {
     this.updateHistory(this.paintTimeHistory, paintMs, now);
+  }
+
+  updateParseTimeHistory(parseMs, now = performance.now()) {
+    this.updateHistory(this.parseTimeHistory, parseMs, now);
   }
 
   updateDisplayFpsHistory(framesPerSecond, now = performance.now()) {
@@ -291,6 +300,10 @@ export class App {
     this.drawHistoryGraph(this.ui.paintTimeGraph, this.ui.paintTimeGraphContext, this.paintTimeHistory, this.statsGraphFrozenAt);
   }
 
+  drawParseTimeGraph() {
+    this.drawHistoryGraph(this.ui.parseTimeGraph, this.ui.parseTimeGraphContext, this.parseTimeHistory, this.statsGraphFrozenAt);
+  }
+
   drawDisplayFpsGraph() {
     this.drawHistoryGraph(this.ui.displayFpsGraph, this.ui.displayFpsGraphContext, this.displayFpsHistory, undefined, {maxValue: 120});
   }
@@ -305,6 +318,7 @@ export class App {
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawPaintTimeGraph();
+    this.drawParseTimeGraph();
     this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
@@ -340,6 +354,7 @@ export class App {
   updateStatsAverageDisplays() {
     this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
     this.updateAverageDisplay(this.ui.paintTimeAverage, this.paintTimeHistory);
+    this.updateAverageDisplay(this.ui.parseTimeAverage, this.parseTimeHistory);
     this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
   }
 
@@ -628,6 +643,9 @@ export class App {
     this.ui.paintTimeGraph = document.getElementById("paint-time-graph");
     this.ui.paintTimeGraphContext = this.ui.paintTimeGraph.getContext("2d");
     this.ui.paintTimeAverage = document.getElementById("paint-time-average");
+    this.ui.parseTimeGraph = document.getElementById("parse-time-graph");
+    this.ui.parseTimeGraphContext = this.ui.parseTimeGraph.getContext("2d");
+    this.ui.parseTimeAverage = document.getElementById("parse-time-average");
     this.ui.displayFpsGraph = document.getElementById("display-fps-graph");
     this.ui.displayFpsGraphContext = this.ui.displayFpsGraph.getContext("2d");
     this.ui.displayFpsAverage = document.getElementById("display-fps-average");
@@ -1442,7 +1460,8 @@ export class App {
   parseQueuedScanData() {
     if (!this.imageData || !this.imageData.data) return;
 
-    const deadline = performance.now() + App.PARSE_FRAME_BUDGET_MS;
+    const parseStarted = performance.now();
+    const deadline = parseStarted + App.PARSE_FRAME_BUDGET_MS;
     let parsedRowsChanged = false;
 
     while (this.parseQueue.length > 0 && performance.now() < deadline) {
@@ -1500,6 +1519,9 @@ export class App {
         break;
       }
     }
+
+    const parseEnded = performance.now();
+    this.updateRenderStats({parseMs: parseEnded - parseStarted});
 
     if (parsedRowsChanged) {
       this.updateArrivalStats(this.getAvailablePaintRows());
