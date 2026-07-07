@@ -280,9 +280,9 @@ export class App {
     const startTime = now - App.BUFFER_GRAPH_DURATION;
     const maxValue = Math.max(1, ...history.map(point => point.value));
     const plot = {
-      left: 42,
-      top: 8,
-      right: width - 8,
+      left: 36,
+      top: 14,
+      right: width - 20,
       bottom: height - 20
     };
     const plotWidth = plot.right - plot.left;
