@@ -17,7 +17,6 @@ export class App {
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
-  static STORAGE_COMMAND_VISIBLE = "scanmeister.commandVisible";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
@@ -229,25 +228,74 @@ export class App {
     const now = performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
     const maxValue = Math.max(1, ...this.bufferHistory.map(point => point.value));
+    const plot = {
+      left: 42,
+      top: 20,
+      right: width - 8,
+      bottom: height - 20
+    };
+    const plotWidth = plot.right - plot.left;
+    const plotHeight = plot.bottom - plot.top;
 
     context.clearRect(0, 0, width, height);
     context.fillStyle = "rgba(27, 31, 35, 0.92)";
     context.fillRect(0, 0, width, height);
+
+    context.font = "11px Cascadia Mono, Consolas, monospace";
+    context.fillStyle = "#9aa4ad";
+    context.textBaseline = "top";
+    context.textAlign = "left";
+    context.fillText("Buffer", plot.left, 6);
+
     context.strokeStyle = "rgba(122, 162, 214, 0.18)";
     context.lineWidth = 1;
-    for (let x = 0; x <= width; x += width / 5) {
+    for (let index = 0; index <= 4; index++) {
+      const y = plot.top + plotHeight * index / 4;
+      const value = Math.round(maxValue * (1 - index / 4));
+
       context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, height);
+      context.moveTo(plot.left, y);
+      context.lineTo(plot.right, y);
       context.stroke();
+
+      context.fillStyle = "#6f7982";
+      context.textAlign = "right";
+      context.textBaseline = "middle";
+      context.fillText(value.toString(), plot.left - 6, y);
     }
+
+    for (let index = 0; index <= 2; index++) {
+      const x = plot.left + plotWidth * index / 2;
+      const seconds = -10 + index * 5;
+
+      context.beginPath();
+      context.moveTo(x, plot.top);
+      context.lineTo(x, plot.bottom);
+      context.stroke();
+
+      context.fillStyle = "#6f7982";
+      context.textAlign = "center";
+      context.textBaseline = "top";
+      context.fillText(`${seconds}s`, x, plot.bottom + 5);
+    }
+
+    context.strokeStyle = "rgba(154, 164, 173, 0.45)";
+    context.beginPath();
+    context.moveTo(plot.left, plot.top);
+    context.lineTo(plot.left, plot.bottom);
+    context.lineTo(plot.right, plot.bottom);
+    context.stroke();
 
     context.strokeStyle = "#7aa2d6";
     context.lineWidth = 2;
     context.beginPath();
     this.bufferHistory.forEach((point, index) => {
-      const x = this.clamp((point.time - startTime) / App.BUFFER_GRAPH_DURATION * width, 0, width);
-      const y = height - point.value / maxValue * (height - 4) - 2;
+      const x = plot.left + this.clamp(
+        (point.time - startTime) / App.BUFFER_GRAPH_DURATION * plotWidth,
+        0,
+        plotWidth
+      );
+      const y = plot.bottom - point.value / maxValue * plotHeight;
       if (index === 0) {
         context.moveTo(x, y);
       } else {
@@ -379,7 +427,6 @@ export class App {
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
-    this.ui.commandToggle = document.getElementById("show-command");
     this.ui.debugToggle = document.getElementById("show-debug");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
@@ -399,7 +446,6 @@ export class App {
     this.restoreRenderMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
-    this.restoreCheckboxValue(this.ui.commandToggle, App.STORAGE_COMMAND_VISIBLE, true);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
     this.restoreUiOverlayVisibility();
 
@@ -417,10 +463,6 @@ export class App {
     this.ui.forceCalibration.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
-    });
-    this.ui.commandToggle.addEventListener("change", () => {
-      this.saveCheckboxValue(this.ui.commandToggle, App.STORAGE_COMMAND_VISIBLE);
-      this.updateAuxiliaryOverlayVisibility();
     });
     this.ui.debugToggle.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
@@ -534,11 +576,10 @@ export class App {
 
   updateAuxiliaryOverlayVisibility() {
     const isUiOverlayVisible = !this.ui.controlsPanel.classList.contains("hidden");
-    const isCommandVisible = isUiOverlayVisible && this.ui.commandToggle.checked;
     const isDebugVisible = isUiOverlayVisible && this.ui.debugToggle.checked;
 
     this.renderStatsVisible = isDebugVisible;
-    this.ui.commandPanel.classList.toggle("hidden", !isCommandVisible);
+    this.ui.commandPanel.classList.toggle("hidden", !isDebugVisible);
     this.ui.renderStats.classList.toggle("hidden", !isDebugVisible);
     if (isDebugVisible) this.updateRenderStats();
   }
