@@ -43,6 +43,7 @@ export class App {
     this.header = '';
     this.buffer = new Uint8Array();
     this.position = 0;
+    this.paintedRows = 0;
     this.width = undefined;
     this.height = undefined;
   }
@@ -52,7 +53,7 @@ export class App {
 
     this.paintRequest = requestAnimationFrame(() => {
       this.paintRequest = undefined;
-      this.paintCanvasNow();
+      this.paintCanvasRows();
     });
   }
 
@@ -61,12 +62,31 @@ export class App {
       cancelAnimationFrame(this.paintRequest);
       this.paintRequest = undefined;
     }
-    this.paintCanvasNow();
+    this.paintCanvasRows({includePartialRow: true});
   }
 
-  paintCanvasNow() {
+  paintCanvasRows(options = {}) {
     if (!this.imageData || !this.imageData.data) return;
-    this.context.putImageData(this.imageData, 0, 0);
+    if (!this.canvas.width || !this.canvas.height) return;
+
+    const pixelPosition = Math.floor(this.position / 4);
+    const completedRows = options.includePartialRow
+      ? Math.ceil(pixelPosition / this.canvas.width)
+      : Math.floor(pixelPosition / this.canvas.width);
+    const nextPaintedRows = this.clamp(completedRows, 0, this.canvas.height);
+    if (nextPaintedRows <= this.paintedRows) return;
+
+    const rowCount = nextPaintedRows - this.paintedRows;
+    this.context.putImageData(
+      this.imageData,
+      0,
+      0,
+      0,
+      this.paintedRows,
+      this.canvas.width,
+      rowCount
+    );
+    this.paintedRows = nextPaintedRows;
   }
 
   get channel() {
@@ -795,6 +815,7 @@ export class App {
           } else {
             this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
           }
+          this.paintedRows = 0;
 
           // Keep unparsed binary data for later parsing
           value = value.slice(i + 1);
@@ -833,11 +854,11 @@ export class App {
     }
 
     if (done) {
+      this.flushCanvasPaint();
       this.position = 0;
       this.state = App.STATE_DATA_PARSED;
       this.ui.channelInput.disabled = false;
       this.updateScanButtonState();
-      this.flushCanvasPaint();
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
