@@ -19,12 +19,14 @@ export class App {
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
+  static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
+  static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
@@ -47,6 +49,8 @@ export class App {
     this.previousDisplayFrameTime = undefined;
     this.lastStatsGraphDrawTime = 0;
     this.parseRequest = undefined;
+    this.autoHideTimer = undefined;
+    this.controlsPanelPointerInside = false;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -555,6 +559,12 @@ export class App {
     return this.roundInputValue(this.ui.renderSpeed, speed);
   }
 
+  get autoHideSeconds() {
+    const seconds = parseFloat(this.ui.autoHideSeconds.value);
+    if (isNaN(seconds)) return parseFloat(App.DEFAULT_AUTO_HIDE_SECONDS);
+    return this.roundInputValue(this.ui.autoHideSeconds, seconds);
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -575,6 +585,16 @@ export class App {
       event.stopPropagation();
       this.setUiOverlayVisible(false);
     });
+    this.ui.controlsPanel.addEventListener("mouseenter", () => {
+      this.controlsPanelPointerInside = true;
+      this.cancelUiAutoHide();
+    });
+    this.ui.controlsPanel.addEventListener("mouseleave", () => {
+      this.controlsPanelPointerInside = false;
+      this.scheduleUiAutoHide();
+    });
+    this.ui.controlsPanel.addEventListener("focusin", () => this.cancelUiAutoHide());
+    this.ui.controlsPanel.addEventListener("focusout", () => this.scheduleUiAutoHide());
     document.addEventListener("keydown", event => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       if (event.key.toLowerCase() === "d") {
@@ -586,6 +606,7 @@ export class App {
       event.preventDefault();
       this.toggleUiOverlay();
     });
+    document.addEventListener("mousemove", () => this.handleMouseActivity());
     this.ui.commandPanel = document.getElementById("command-panel");
 
     this.ui.scanButton = document.getElementById("scan");
@@ -604,6 +625,7 @@ export class App {
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.debugToggle = document.getElementById("show-debug");
+    this.ui.autoHideSeconds = document.getElementById("auto-hide-seconds");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
@@ -641,6 +663,8 @@ export class App {
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
+    this.restoreNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
+    if (!this.ui.autoHideSeconds.value) this.ui.autoHideSeconds.value = App.DEFAULT_AUTO_HIDE_SECONDS;
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
@@ -662,6 +686,15 @@ export class App {
     this.ui.debugToggle.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
       this.updateAuxiliaryOverlayVisibility();
+    });
+    this.ui.autoHideSeconds.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
+      this.scheduleUiAutoHide();
+    });
+    this.ui.autoHideSeconds.addEventListener("change", () => {
+      this.ui.autoHideSeconds.value = this.clampInputValue(this.ui.autoHideSeconds, this.autoHideSeconds);
+      this.saveNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS, {normalize: true});
+      this.scheduleUiAutoHide();
     });
     this.ui.smoothGraphs.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
@@ -758,6 +791,7 @@ export class App {
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
     this.scheduleDisplayFrameMonitor();
+    this.scheduleUiAutoHide();
 
   }
 
@@ -779,12 +813,51 @@ export class App {
 
   setUiOverlayVisible(isVisible) {
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
+    if (isVisible) {
+      this.scheduleUiAutoHide();
+    } else {
+      this.cancelUiAutoHide();
+    }
     try {
       localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
     this.updateAuxiliaryOverlayVisibility();
+  }
+
+  handleMouseActivity() {
+    if (this.ui.controlsPanel.classList.contains("hidden")) {
+      this.setUiOverlayVisible(true);
+      return;
+    }
+
+    this.scheduleUiAutoHide();
+  }
+
+  scheduleUiAutoHide() {
+    this.cancelUiAutoHide();
+    if (!this.ui.controlsPanel || this.ui.controlsPanel.classList.contains("hidden")) return;
+    if (!this.ui.autoHideSeconds) return;
+
+    const delay = this.autoHideSeconds * 1000;
+    if (delay <= 0) return;
+
+    this.autoHideTimer = setTimeout(() => {
+      const focusInside = this.ui.controlsPanel.contains(document.activeElement);
+      if (this.controlsPanelPointerInside || focusInside) {
+        this.scheduleUiAutoHide();
+        return;
+      }
+
+      this.setUiOverlayVisible(false);
+    }, delay);
+  }
+
+  cancelUiAutoHide() {
+    if (this.autoHideTimer === undefined) return;
+    clearTimeout(this.autoHideTimer);
+    this.autoHideTimer = undefined;
   }
 
   updateAuxiliaryOverlayVisibility() {
