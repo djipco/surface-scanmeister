@@ -55,6 +55,8 @@ export class App {
     this.parseRequest = undefined;
     this.autoHideTimer = undefined;
     this.autoScanTimer = undefined;
+    this.autoScanCountdownTimer = undefined;
+    this.autoScanTargetTime = undefined;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -864,8 +866,15 @@ export class App {
   }
 
   startScanIfAvailable() {
-    if (this.ui.scanButton.disabled) return;
+    if (!this.canStartScan()) return;
     this.getImage();
+  }
+
+  canStartScan() {
+    return this.isChannelValid &&
+      !this.channelOutOfBounds &&
+      this.state !== App.STATE_REQUEST_SENT &&
+      this.state !== App.STATE_HEADER_PARSED;
   }
 
   toggleUiOverlay() {
@@ -935,6 +944,12 @@ export class App {
     const delay = this.autoScanSeconds * 1000;
     if (delay <= 0) return;
 
+    this.autoScanTargetTime = Date.now() + delay;
+    this.updateAutoScanCountdownDisplay();
+    this.autoScanCountdownTimer = setInterval(
+      () => this.updateAutoScanCountdownDisplay(),
+      250
+    );
     this.autoScanTimer = setTimeout(() => {
       this.startScanIfAvailable();
       this.scheduleAutoScan();
@@ -942,9 +957,11 @@ export class App {
   }
 
   cancelAutoScan() {
-    if (this.autoScanTimer === undefined) return;
-    clearTimeout(this.autoScanTimer);
+    if (this.autoScanTimer !== undefined) clearTimeout(this.autoScanTimer);
+    if (this.autoScanCountdownTimer !== undefined) clearInterval(this.autoScanCountdownTimer);
     this.autoScanTimer = undefined;
+    this.autoScanCountdownTimer = undefined;
+    this.autoScanTargetTime = undefined;
   }
 
   updateAutoScanState() {
@@ -956,6 +973,17 @@ export class App {
     } else {
       this.scheduleAutoScan();
     }
+    this.updateScanButtonState();
+  }
+
+  updateAutoScanCountdownDisplay() {
+    if (!this.autoScanEnabled || this.autoScanTargetTime === undefined) return;
+
+    const secondsRemaining = Math.max(
+      0,
+      Math.ceil((this.autoScanTargetTime - Date.now()) / 1000)
+    );
+    this.ui.scanButton.innerText = `Next scan: ${secondsRemaining}s`;
   }
 
   updateAuxiliaryOverlayVisibility() {
@@ -969,11 +997,12 @@ export class App {
   }
 
   updateScanButtonState() {
-    this.ui.scanButton.disabled =
-      !this.isChannelValid ||
-      this.channelOutOfBounds ||
-      this.state === App.STATE_REQUEST_SENT ||
-      this.state === App.STATE_HEADER_PARSED;
+    this.ui.scanButton.disabled = this.autoScanEnabled || !this.canStartScan();
+    if (this.autoScanEnabled) {
+      this.updateAutoScanCountdownDisplay();
+    } else {
+      this.ui.scanButton.innerText = "Scan";
+    }
   }
 
   async updateScannerAvailability() {
