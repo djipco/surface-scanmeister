@@ -19,6 +19,7 @@ export class App {
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
+  static STORAGE_THROTTLE_GRAPHS = "scanmeister.throttleGraphs";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
@@ -26,6 +27,7 @@ export class App {
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
   static BUFFER_GRAPH_DURATION = 10000;
+  static STATS_GRAPH_THROTTLE_MS = 200;
   static PARSE_FRAME_BUDGET_MS = 2;
 
   constructor() {
@@ -44,6 +46,7 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
+    this.lastStatsGraphDrawTime = 0;
     this.parseRequest = undefined;
     this.panelResizeObservers = [];
 
@@ -79,6 +82,7 @@ export class App {
     this.speedHistory = [];
     this.displayFpsHistory = [];
     this.previousDisplayFrameTime = undefined;
+    this.lastStatsGraphDrawTime = 0;
     this.inputGraphFrozenAt = undefined;
     this.statsGraphFrozenAt = undefined;
     this.width = undefined;
@@ -237,12 +241,7 @@ export class App {
       if (hasFinishedDrawing) this.statsGraphFrozenAt = graphTime;
     }
 
-    this.ui.renderStatsText.innerText = "";
-    this.drawArrivalGraph();
-    this.drawSpeedGraph();
-    this.drawDisplayFpsGraph();
-    this.drawBufferGraph();
-    this.updateStatsAverageDisplays();
+    this.drawStatsGraphs();
   }
 
   updateArrivalHistory(rowsPerSecond, now = performance.now()) {
@@ -285,8 +284,19 @@ export class App {
   }
 
   redrawStatsGraphs() {
+    this.drawStatsGraphs({force: true});
+  }
+
+  drawStatsGraphs(options = {}) {
     if (!this.isStatsDisplayed()) return;
 
+    const now = performance.now();
+    if (!options.force && this.throttleGraphs && now - this.lastStatsGraphDrawTime < App.STATS_GRAPH_THROTTLE_MS) {
+      return;
+    }
+
+    this.lastStatsGraphDrawTime = now;
+    this.ui.renderStatsText.innerText = "";
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawDisplayFpsGraph();
@@ -314,8 +324,7 @@ export class App {
       const elapsed = now - this.previousDisplayFrameTime;
       if (elapsed > 0) {
         this.updateDisplayFpsHistory(1000 / elapsed, now);
-        this.drawDisplayFpsGraph();
-        this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
+        this.drawStatsGraphs();
       }
     }
     this.previousDisplayFrameTime = now;
@@ -348,6 +357,10 @@ export class App {
       !this.ui.renderStats.classList.contains("hidden") &&
       this.ui.renderStats.getClientRects().length
     );
+  }
+
+  get throttleGraphs() {
+    return Boolean(this.ui.throttleGraphs && this.ui.throttleGraphs.checked);
   }
 
   prepareGraphCanvas(canvas, context) {
@@ -603,6 +616,7 @@ export class App {
     this.ui.renderStats = document.getElementById("render-stats");
     this.ui.renderStatsHeader = document.getElementById("render-stats-header");
     this.ui.renderStatsText = document.getElementById("render-stats-text");
+    this.ui.throttleGraphs = document.getElementById("throttle-graphs");
     this.ui.arriveGraph = document.getElementById("arrive-graph");
     this.ui.arriveGraphContext = this.ui.arriveGraph.getContext("2d");
     this.ui.speedGraph = document.getElementById("speed-graph");
@@ -629,6 +643,7 @@ export class App {
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
+    this.restoreCheckboxValue(this.ui.throttleGraphs, App.STORAGE_THROTTLE_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
     this.ui.channelInput.addEventListener("change", () => {
@@ -652,6 +667,10 @@ export class App {
     });
     this.ui.smoothGraphs.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
+      this.redrawStatsGraphs();
+    });
+    this.ui.throttleGraphs.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.throttleGraphs, App.STORAGE_THROTTLE_GRAPHS);
       this.redrawStatsGraphs();
     });
     this.ui.drawMode.addEventListener("change", () => {
