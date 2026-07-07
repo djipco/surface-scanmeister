@@ -28,7 +28,7 @@ html.ui-overlay-hidden * {
   height: min(100vw - 32px, 100vh - 32px);
   display: block;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-  transition: opacity 600ms ease;
+  transition: opacity 750ms ease;
   transform: translate(-50%, -50%);
 }
 
