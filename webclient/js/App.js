@@ -227,6 +227,7 @@ export class App {
     this.drawSpeedGraph();
     this.drawFpsGraph();
     this.drawBufferGraph();
+    this.updateStatsAverageDisplays();
   }
 
   updateArrivalHistory(rowsPerSecond, now = performance.now()) {
@@ -275,6 +276,28 @@ export class App {
     this.drawSpeedGraph();
     this.drawFpsGraph();
     this.drawBufferGraph();
+    this.updateStatsAverageDisplays();
+  }
+
+  updateStatsAverageDisplays() {
+    this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
+    this.updateAverageDisplay(this.ui.fpsAverage, this.fpsHistory);
+    this.updateAverageDisplay(this.ui.bufferAverage, this.bufferHistory);
+  }
+
+  updateAverageDisplay(element, history) {
+    if (!element) return;
+
+    const samples = history
+      .map(point => point.value)
+      .filter(value => value > 0);
+    if (samples.length === 0) {
+      element.innerText = "avg --";
+      return;
+    }
+
+    const average = samples.reduce((total, value) => total + value, 0) / samples.length;
+    element.innerText = `avg ${average.toFixed(1)}`;
   }
 
   isStatsDisplayed() {
@@ -543,10 +566,13 @@ export class App {
     this.ui.arriveGraphContext = this.ui.arriveGraph.getContext("2d");
     this.ui.speedGraph = document.getElementById("speed-graph");
     this.ui.speedGraphContext = this.ui.speedGraph.getContext("2d");
+    this.ui.speedAverage = document.getElementById("speed-average");
     this.ui.fpsGraph = document.getElementById("fps-graph");
     this.ui.fpsGraphContext = this.ui.fpsGraph.getContext("2d");
+    this.ui.fpsAverage = document.getElementById("fps-average");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
+    this.ui.bufferAverage = document.getElementById("buffer-average");
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());

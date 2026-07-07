@@ -144,11 +144,20 @@
         </div>
         <div class="stats-graph-title">Input <span class="label-unit">(rows/s)</span></div>
         <canvas id="arrive-graph" width="280" height="104"></canvas>
-        <div class="stats-graph-title">Drawing Speed <span class="label-unit">(rows/s)</span></div>
+        <div class="stats-graph-title">
+          <span>Drawing Speed <span class="label-unit">(rows/s)</span></span>
+          <span class="stats-graph-value" id="speed-average">avg --</span>
+        </div>
         <canvas id="speed-graph" width="280" height="104"></canvas>
-        <div class="stats-graph-title">Frame Rate <span class="label-unit">(frames/s)</span></div>
+        <div class="stats-graph-title">
+          <span>Frame Rate <span class="label-unit">(frames/s)</span></span>
+          <span class="stats-graph-value" id="fps-average">avg --</span>
+        </div>
         <canvas id="fps-graph" width="280" height="104"></canvas>
-        <div class="stats-graph-title">Buffer <span class="label-unit">(rows)</span></div>
+        <div class="stats-graph-title">
+          <span>Buffer <span class="label-unit">(rows)</span></span>
+          <span class="stats-graph-value" id="buffer-average">avg --</span>
+        </div>
         <canvas id="buffer-graph" width="280" height="104"></canvas>
       </div>
     </section>

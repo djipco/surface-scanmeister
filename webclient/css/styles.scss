@@ -445,11 +445,21 @@ button:disabled {
 
 .stats-graph-title {
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   color: #9aa4ad;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 12px;
   font-weight: 600;
   line-height: 14px;
+}
+
+.stats-graph-value {
+  color: #d7e7ff;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-weight: 400;
 }
 
 #arrive-graph,
