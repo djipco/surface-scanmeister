@@ -44,13 +44,19 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
-    this.parserWorker = new Worker("js/pnm-parser-worker.js");
+    this.parserWorker = new Worker(new URL("./pnm-parser-worker.js", import.meta.url), {type: "module"});
     this.parserScanId = 0;
     this.panelResizeObservers = [];
 
     this.reset();
     this.setUpUi();
     this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
+    this.parserWorker.addEventListener("error", event => {
+      console.error("PNM parser worker error:", event.message, event.filename, event.lineno);
+    });
+    this.parserWorker.addEventListener("messageerror", event => {
+      console.error("PNM parser worker message error:", event);
+    });
     window.addEventListener("resize", () => this.updateCanvasDisplaySize());
   }
 
@@ -166,11 +172,20 @@ export class App {
   onParserMessage(message) {
     if (message.scanId !== this.parserScanId) return;
 
+    if (message.type === "error") {
+      console.error("PNM parser worker failed:", message.message);
+      return;
+    }
+
     if (message.type === "pixels") {
       const rgba = new Uint8ClampedArray(message.buffer);
       if (this.imageData && this.imageData.data) {
-        this.imageData.data.set(rgba, this.position);
-        this.position += rgba.length;
+        const remainingBytes = this.imageData.data.length - this.position;
+        const writeBytes = Math.min(rgba.length, remainingBytes);
+        if (writeBytes <= 0) return;
+
+        this.imageData.data.set(rgba.subarray(0, writeBytes), this.position);
+        this.position += writeBytes;
         this.updateArrivalStats(this.getAvailablePaintRows());
         this.scheduleCanvasPaint();
       }
