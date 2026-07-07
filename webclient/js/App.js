@@ -169,6 +169,7 @@ export class App {
 
     const rowCount = nextPaintedRows - this.paintedRows;
     const firstPaintedRow = this.paintedRows;
+    const revealBase = this.capturePixelRevealBase(firstPaintedRow, rowCount);
     this.context.putImageData(
       this.imageData,
       0,
@@ -180,7 +181,7 @@ export class App {
     );
     const paintEnded = performance.now();
     const now = paintEnded;
-    this.addPixelRevealBand(firstPaintedRow, rowCount, now);
+    this.addPixelRevealBand(firstPaintedRow, rowCount, now, revealBase);
     this.drawPixelRevealBands(now);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
@@ -225,13 +226,19 @@ export class App {
     return this.clamp(Math.floor(this.paintCursor), this.paintedRows, availableRows);
   }
 
-  addPixelRevealBand(startRow, rowCount, now = performance.now()) {
+  capturePixelRevealBase(startRow, rowCount) {
+    if (this.revealMode !== "pixelate" || rowCount <= 0) return undefined;
+    return this.context.getImageData(0, startRow, this.canvas.width, rowCount);
+  }
+
+  addPixelRevealBand(startRow, rowCount, now = performance.now(), baseImageData = undefined) {
     if (this.revealMode !== "pixelate" || rowCount <= 0) return;
 
     this.revealBands.push({
       startRow,
       rowCount,
-      startedAt: now
+      startedAt: now,
+      baseImageData
     });
   }
 
@@ -251,19 +258,13 @@ export class App {
       const age = now - band.startedAt;
       const blockSize = this.getPixelRevealBlockSize(age);
 
-      this.context.putImageData(
-        this.imageData,
-        0,
-        0,
-        0,
-        band.startRow,
-        this.canvas.width,
-        band.rowCount
-      );
+      if (blockSize <= 1) {
+        this.restorePixelRevealBand(band);
+        return false;
+      }
 
-      if (blockSize <= 1) return false;
-
-      this.drawPixelatedBand(band, blockSize);
+      this.restorePixelRevealBase(band);
+      this.drawPixelatedBand(band, blockSize, age);
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
@@ -271,17 +272,29 @@ export class App {
 
   restorePixelRevealBands() {
     if (!this.imageData || !this.imageData.data) return;
-    this.revealBands.forEach(band => {
-      this.context.putImageData(
-        this.imageData,
-        0,
-        0,
-        0,
-        band.startRow,
-        this.canvas.width,
-        band.rowCount
-      );
-    });
+    this.revealBands.forEach(band => this.restorePixelRevealBand(band));
+  }
+
+  restorePixelRevealBand(band) {
+    if (!this.imageData || !this.imageData.data) return;
+    this.context.putImageData(
+      this.imageData,
+      0,
+      0,
+      0,
+      band.startRow,
+      this.canvas.width,
+      band.rowCount
+    );
+  }
+
+  restorePixelRevealBase(band) {
+    if (band.baseImageData) {
+      this.context.putImageData(band.baseImageData, 0, band.startRow);
+      return;
+    }
+
+    this.context.clearRect(0, band.startRow, this.canvas.width, band.rowCount);
   }
 
   getPixelRevealBlockSize(age) {
@@ -294,7 +307,7 @@ export class App {
     return 1;
   }
 
-  drawPixelatedBand(band, blockSize) {
+  drawPixelatedBand(band, blockSize, age) {
     const width = this.canvas.width;
     const startRow = band.startRow;
     const rowCount = band.rowCount;
@@ -319,30 +332,33 @@ export class App {
     this.revealPixelContext.imageSmoothingEnabled = false;
     this.revealPixelContext.clearRect(0, 0, smallWidth, smallHeight);
     this.revealPixelContext.drawImage(this.revealSourceCanvas, 0, 0, smallWidth, smallHeight);
-    this.drawJitteredPixelBlocks(band, blockSize, smallWidth, smallHeight);
+    this.drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age);
   }
 
-  drawJitteredPixelBlocks(band, blockSize, smallWidth, smallHeight) {
-    const age = performance.now() - band.startedAt;
+  drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age) {
     const progress = this.clamp(age / App.PIXEL_REVEAL_DURATION_MS, 0, 1);
-    const jitterRows = Math.max(0, Math.round(blockSize * (1 - progress) * 0.75));
+    const blockProgress = this.clamp((progress - 0.04) / 0.78, 0, 1);
+    const revealTravel = smallHeight + 5;
+    const frontier = blockProgress * revealTravel - 3;
 
     for (let smallY = 0; smallY < smallHeight; smallY++) {
       for (let smallX = 0; smallX < smallWidth; smallX++) {
-        const sourceX = smallX;
-        const sourceY = smallY;
+        const edgeDistance = frontier - smallY;
+        const clump = this.getPixelRevealClump(band, smallX, smallY);
+        const grain = this.getPixelRevealRandom(band, smallX, smallY);
+        const threshold = -2.2 + clump * 3.8 + grain * 1.4;
+        if (edgeDistance < threshold) continue;
+
         const destX = smallX * blockSize;
-        const baseY = band.startRow + smallY * blockSize;
-        const offsetY = this.getPixelRevealJitter(band, smallX, smallY, jitterRows);
-        const destY = this.clamp(baseY + offsetY, band.startRow, band.startRow + band.rowCount - 1);
+        const destY = band.startRow + smallY * blockSize;
         const destWidth = Math.min(blockSize, this.canvas.width - destX);
         const destHeight = Math.min(blockSize, band.startRow + band.rowCount - destY);
         if (destWidth <= 0 || destHeight <= 0) continue;
 
         this.context.drawImage(
           this.revealPixelCanvas,
-          sourceX,
-          sourceY,
+          smallX,
+          smallY,
           1,
           1,
           destX,
@@ -354,14 +370,20 @@ export class App {
     }
   }
 
-  getPixelRevealJitter(band, x, y, amplitude) {
-    if (amplitude <= 0) return 0;
-
+  getPixelRevealRandom(band, x, y) {
     const seed = ((x + 1) * 73856093) ^
       ((y + 1) * 19349663) ^
       ((band.startRow + 1) * 83492791);
-    const value = Math.abs(Math.sin(seed) * 43758.5453) % 1;
-    return Math.round((value * 2 - 1) * amplitude);
+    return Math.abs(Math.sin(seed) * 43758.5453) % 1;
+  }
+
+  getPixelRevealClump(band, x, y) {
+    const coarseX = Math.floor(x / 3);
+    const coarseY = Math.floor(y / 3);
+    const center = this.getPixelRevealRandom(band, coarseX, coarseY);
+    const right = this.getPixelRevealRandom(band, coarseX + 1, coarseY);
+    const below = this.getPixelRevealRandom(band, coarseX, coarseY + 1);
+    return ((center * 0.6 + right * 0.2 + below * 0.2) * 2) - 1;
   }
 
   updateArrivalStats(availableRows, now = performance.now()) {
