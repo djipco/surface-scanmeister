@@ -27,6 +27,7 @@ export class App {
     this.channelOutOfBounds = false;
     this.displayPixelWidth = this.canvas.width;
     this.displayPixelHeight = this.canvas.height;
+    this.paintRequest = undefined;
 
     this.reset();
     this.setUpUi();
@@ -34,6 +35,7 @@ export class App {
   }
 
   reset() {
+    this.flushCanvasPaint();
     this.response = undefined;
     this.reader = undefined;
     this.imageData = new Uint8Array();
@@ -43,6 +45,28 @@ export class App {
     this.position = 0;
     this.width = undefined;
     this.height = undefined;
+  }
+
+  scheduleCanvasPaint() {
+    if (this.paintRequest !== undefined) return;
+
+    this.paintRequest = requestAnimationFrame(() => {
+      this.paintRequest = undefined;
+      this.paintCanvasNow();
+    });
+  }
+
+  flushCanvasPaint() {
+    if (this.paintRequest !== undefined) {
+      cancelAnimationFrame(this.paintRequest);
+      this.paintRequest = undefined;
+    }
+    this.paintCanvasNow();
+  }
+
+  paintCanvasNow() {
+    if (!this.imageData || !this.imageData.data) return;
+    this.context.putImageData(this.imageData, 0, 0);
   }
 
   get channel() {
@@ -802,8 +826,7 @@ export class App {
         this.position += 4;
       }
 
-      //
-      this.context.putImageData(this.imageData, 0, 0);
+      this.scheduleCanvasPaint();
 
       this.buffer = this.buffer.slice(Math.floor(this.buffer.length / 3) * 3);
 
@@ -814,6 +837,7 @@ export class App {
       this.state = App.STATE_DATA_PARSED;
       this.ui.channelInput.disabled = false;
       this.updateScanButtonState();
+      this.flushCanvasPaint();
       const date = this.getFormattedDate(new Date());
       const ch = this.channel.toString().padStart(2, "0");
       this.saveCanvasToFile(`CH-${ch} ${date}.png`);
