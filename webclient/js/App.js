@@ -23,6 +23,8 @@ export class App {
   static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
   static STORAGE_AUTO_SCAN_ENABLED = "scanmeister.autoScanEnabled";
   static STORAGE_AUTO_SCAN_SECONDS = "scanmeister.autoScanSeconds";
+  static STORAGE_OVERLAY_GRID_ENABLED = "scanmeister.overlayGridEnabled";
+  static STORAGE_OVERLAY_GRID_SPACING = "scanmeister.overlayGridSpacing";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
@@ -31,6 +33,7 @@ export class App {
   static DEFAULT_RENDER_SPEED = "100";
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
+  static DEFAULT_OVERLAY_GRID_SPACING = "100";
   static CLEAR_CANVAS_FADE_MS = 750;
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
@@ -588,6 +591,16 @@ export class App {
     return Boolean(this.ui.autoScanToggle.checked);
   }
 
+  get overlayGridEnabled() {
+    return Boolean(this.ui.overlayGridToggle.checked);
+  }
+
+  get overlayGridSpacing() {
+    const spacing = parseFloat(this.ui.overlayGridSpacing.value);
+    if (isNaN(spacing)) return parseFloat(App.DEFAULT_OVERLAY_GRID_SPACING);
+    return this.roundInputValue(this.ui.overlayGridSpacing, spacing);
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -651,6 +664,10 @@ export class App {
     this.ui.autoScanToggle = document.getElementById("auto-scan");
     this.ui.autoScanSecondsRow = document.getElementById("auto-scan-seconds-row");
     this.ui.autoScanSeconds = document.getElementById("auto-scan-seconds");
+    this.ui.overlayGrid = document.getElementById("overlay-grid-display");
+    this.ui.overlayGridRow = document.getElementById("overlay-grid-row");
+    this.ui.overlayGridToggle = document.getElementById("overlay-grid");
+    this.ui.overlayGridSpacing = document.getElementById("overlay-grid-spacing");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.quitKioskButton = document.getElementById("quit-kiosk");
@@ -695,6 +712,9 @@ export class App {
     this.restoreCheckboxValue(this.ui.autoScanToggle, App.STORAGE_AUTO_SCAN_ENABLED, false);
     this.restoreNumericValue(this.ui.autoScanSeconds, App.STORAGE_AUTO_SCAN_SECONDS);
     if (!this.ui.autoScanSeconds.value) this.ui.autoScanSeconds.value = App.DEFAULT_AUTO_SCAN_SECONDS;
+    this.restoreCheckboxValue(this.ui.overlayGridToggle, App.STORAGE_OVERLAY_GRID_ENABLED, false);
+    this.restoreNumericValue(this.ui.overlayGridSpacing, App.STORAGE_OVERLAY_GRID_SPACING);
+    if (!this.ui.overlayGridSpacing.value) this.ui.overlayGridSpacing.value = App.DEFAULT_OVERLAY_GRID_SPACING;
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
@@ -742,6 +762,19 @@ export class App {
       this.ui.autoScanSeconds.value = this.clampInputValue(this.ui.autoScanSeconds, this.autoScanSeconds);
       this.saveNumericValue(this.ui.autoScanSeconds, App.STORAGE_AUTO_SCAN_SECONDS, {normalize: true});
       this.scheduleAutoScan();
+    });
+    this.ui.overlayGridToggle.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.overlayGridToggle, App.STORAGE_OVERLAY_GRID_ENABLED);
+      this.updateOverlayGridState();
+    });
+    this.ui.overlayGridSpacing.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.overlayGridSpacing, App.STORAGE_OVERLAY_GRID_SPACING);
+      this.updateOverlayGridState();
+    });
+    this.ui.overlayGridSpacing.addEventListener("change", () => {
+      this.ui.overlayGridSpacing.value = this.clampInputValue(this.ui.overlayGridSpacing, this.overlayGridSpacing);
+      this.saveNumericValue(this.ui.overlayGridSpacing, App.STORAGE_OVERLAY_GRID_SPACING, {normalize: true});
+      this.updateOverlayGridState();
     });
     this.ui.smoothGraphs.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
@@ -840,6 +873,7 @@ export class App {
     this.updateRenderSpeedState();
     this.updateAutoHideState();
     this.updateAutoScanState();
+    this.updateOverlayGridState();
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
@@ -1049,6 +1083,16 @@ export class App {
     const isDisabled = this.renderMode !== "speed";
     this.ui.renderSpeed.disabled = isDisabled;
     this.ui.renderSpeedRow.classList.toggle("disabled", isDisabled);
+  }
+
+  updateOverlayGridState() {
+    const isDisabled = !this.overlayGridEnabled;
+    const spacing = this.clampInputValue(this.ui.overlayGridSpacing, this.overlayGridSpacing);
+
+    this.ui.overlayGridSpacing.disabled = isDisabled;
+    this.ui.overlayGridRow.classList.toggle("disabled", isDisabled);
+    this.ui.overlayGrid.classList.toggle("hidden", isDisabled);
+    this.ui.overlayGrid.style.setProperty("--grid-spacing", `${spacing}px`);
   }
 
   updateExpectedImageSize() {

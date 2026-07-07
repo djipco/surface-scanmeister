@@ -55,6 +55,36 @@ html.kiosk-mode .image-size-overlay {
   display: none;
 }
 
+.calibration-grid-overlay {
+  --grid-spacing: 100px;
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border: 2px solid rgba(255, 193, 7, 0.82);
+  box-sizing: border-box;
+  background-image:
+    linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
+    linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
+    linear-gradient(rgba(130, 180, 255, 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(130, 180, 255, 0.28) 1px, transparent 1px);
+  background-position:
+    center center,
+    center center,
+    center center,
+    center center;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    repeat,
+    repeat;
+  background-size:
+    100% 2px,
+    2px 100%,
+    var(--grid-spacing) var(--grid-spacing),
+    var(--grid-spacing) var(--grid-spacing);
+}
+
 .controls-panel {
   position: absolute;
   top: 16px;
