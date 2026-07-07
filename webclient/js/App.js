@@ -17,6 +17,7 @@ export class App {
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
   static STORAGE_DIRECTION_MODE = "scanmeister.directionMode";
+  static STORAGE_REVEAL_MODE = "scanmeister.revealMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
@@ -38,6 +39,7 @@ export class App {
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static DEFAULT_OVERLAY_GRID_SPACING = "100";
+  static PIXEL_REVEAL_DURATION_MS = 520;
   static CLEAR_CANVAS_FADE_MS = 750;
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
@@ -68,6 +70,11 @@ export class App {
     this.clearCanvasFadePromise = undefined;
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
+    this.revealBands = [];
+    this.revealSourceCanvas = document.createElement("canvas");
+    this.revealSourceContext = this.revealSourceCanvas.getContext("2d");
+    this.revealPixelCanvas = document.createElement("canvas");
+    this.revealPixelContext = this.revealPixelCanvas.getContext("2d");
 
     this.reset();
     this.setUpUi();
@@ -108,6 +115,7 @@ export class App {
     this.height = undefined;
     this.rgbRemainder = new Uint8Array();
     this.parseQueue = [];
+    this.revealBands = [];
   }
 
   scheduleScanParsing() {
@@ -141,7 +149,8 @@ export class App {
 
   shouldContinueCanvasPaint() {
     if (this.state !== App.STATE_HEADER_PARSED) return false;
-    return this.paintedRows < this.getAvailablePaintRows({includePartialRow: this.streamComplete});
+    return this.paintedRows < this.getAvailablePaintRows({includePartialRow: this.streamComplete}) ||
+      this.hasActivePixelReveal();
   }
 
   paintCanvasRows(options = {}) {
@@ -153,9 +162,13 @@ export class App {
       ? this.getSpeedPaintRows(availableRows)
       : availableRows;
     this.updateRenderStats({availableRows});
-    if (nextPaintedRows <= this.paintedRows) return;
+    if (nextPaintedRows <= this.paintedRows) {
+      this.drawPixelRevealBands();
+      return;
+    }
 
     const rowCount = nextPaintedRows - this.paintedRows;
+    const firstPaintedRow = this.paintedRows;
     this.context.putImageData(
       this.imageData,
       0,
@@ -167,6 +180,8 @@ export class App {
     );
     const paintEnded = performance.now();
     const now = paintEnded;
+    this.addPixelRevealBand(firstPaintedRow, rowCount, now);
+    this.drawPixelRevealBands(now);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
     this.paintedRows = nextPaintedRows;
@@ -208,6 +223,101 @@ export class App {
       this.paintCursor + this.renderSpeed * elapsed / 1000
     );
     return this.clamp(Math.floor(this.paintCursor), this.paintedRows, availableRows);
+  }
+
+  addPixelRevealBand(startRow, rowCount, now = performance.now()) {
+    if (this.revealMode !== "pixelate" || rowCount <= 0) return;
+
+    this.revealBands.push({
+      startRow,
+      rowCount,
+      startedAt: now
+    });
+  }
+
+  hasActivePixelReveal(now = performance.now()) {
+    return this.revealBands.some(band => now - band.startedAt < App.PIXEL_REVEAL_DURATION_MS);
+  }
+
+  drawPixelRevealBands(now = performance.now()) {
+    if (this.revealMode !== "pixelate" || this.revealBands.length === 0) {
+      this.restorePixelRevealBands();
+      this.revealBands = [];
+      return;
+    }
+
+    this.context.imageSmoothingEnabled = false;
+    this.revealBands = this.revealBands.filter(band => {
+      const age = now - band.startedAt;
+      const blockSize = this.getPixelRevealBlockSize(age);
+
+      this.context.putImageData(
+        this.imageData,
+        0,
+        0,
+        0,
+        band.startRow,
+        this.canvas.width,
+        band.rowCount
+      );
+
+      if (blockSize <= 1) return false;
+
+      this.drawPixelatedBand(band.startRow, band.rowCount, blockSize);
+      return age < App.PIXEL_REVEAL_DURATION_MS;
+    });
+    this.context.imageSmoothingEnabled = true;
+  }
+
+  restorePixelRevealBands() {
+    if (!this.imageData || !this.imageData.data) return;
+    this.revealBands.forEach(band => {
+      this.context.putImageData(
+        this.imageData,
+        0,
+        0,
+        0,
+        band.startRow,
+        this.canvas.width,
+        band.rowCount
+      );
+    });
+  }
+
+  getPixelRevealBlockSize(age) {
+    const progress = this.clamp(age / App.PIXEL_REVEAL_DURATION_MS, 0, 1);
+    if (progress < 0.2) return 24;
+    if (progress < 0.4) return 16;
+    if (progress < 0.6) return 8;
+    if (progress < 0.8) return 4;
+    if (progress < 0.95) return 2;
+    return 1;
+  }
+
+  drawPixelatedBand(startRow, rowCount, blockSize) {
+    const width = this.canvas.width;
+    const sourceHeight = rowCount;
+    const smallWidth = Math.max(1, Math.ceil(width / blockSize));
+    const smallHeight = Math.max(1, Math.ceil(sourceHeight / blockSize));
+
+    if (this.revealSourceCanvas.width !== width) this.revealSourceCanvas.width = width;
+    if (this.revealSourceCanvas.height !== sourceHeight) this.revealSourceCanvas.height = sourceHeight;
+    if (this.revealPixelCanvas.width !== smallWidth) this.revealPixelCanvas.width = smallWidth;
+    if (this.revealPixelCanvas.height !== smallHeight) this.revealPixelCanvas.height = smallHeight;
+
+    this.revealSourceContext.putImageData(
+      this.imageData,
+      0,
+      -startRow,
+      0,
+      startRow,
+      width,
+      sourceHeight
+    );
+    this.revealPixelContext.imageSmoothingEnabled = false;
+    this.revealPixelContext.clearRect(0, 0, smallWidth, smallHeight);
+    this.revealPixelContext.drawImage(this.revealSourceCanvas, 0, 0, smallWidth, smallHeight);
+    this.context.drawImage(this.revealPixelCanvas, 0, startRow, width, sourceHeight);
   }
 
   updateArrivalStats(availableRows, now = performance.now()) {
@@ -588,6 +698,10 @@ export class App {
     return this.ui.directionMode.value === "rotated" ? "rotated" : "normal";
   }
 
+  get revealMode() {
+    return this.ui.revealMode.value === "pixelate" ? "pixelate" : "immediate";
+  }
+
   get renderSpeed() {
     const speed = parseFloat(this.ui.renderSpeed.value);
     if (isNaN(speed)) return parseFloat(App.DEFAULT_RENDER_SPEED);
@@ -680,6 +794,7 @@ export class App {
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
     this.ui.directionMode = document.getElementById("direction-mode");
+    this.ui.revealMode = document.getElementById("reveal-mode");
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
@@ -733,6 +848,7 @@ export class App {
     this.restoreDrawMode();
     this.restoreRenderMode();
     this.restoreDirectionMode();
+    this.restoreRevealMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
@@ -841,6 +957,10 @@ export class App {
     this.ui.directionMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.directionMode, App.STORAGE_DIRECTION_MODE);
       this.updateCanvasDisplaySize();
+    });
+    this.ui.revealMode.addEventListener("change", () => {
+      this.saveControlValue(this.ui.revealMode, App.STORAGE_REVEAL_MODE);
+      if (this.revealMode === "immediate") this.drawPixelRevealBands();
     });
     this.ui.renderSpeed.addEventListener("input", () => {
       this.saveNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
@@ -1541,6 +1661,17 @@ export class App {
       localStorage.setItem(App.STORAGE_DIRECTION_MODE, this.ui.directionMode.value);
     } catch (err) {
       this.ui.directionMode.value = "normal";
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreRevealMode() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_REVEAL_MODE);
+      this.ui.revealMode.value = value === "pixelate" ? "pixelate" : "immediate";
+      localStorage.setItem(App.STORAGE_REVEAL_MODE, this.ui.revealMode.value);
+    } catch (err) {
+      this.ui.revealMode.value = "immediate";
       // Keep the interface usable if localStorage is unavailable.
     }
   }
