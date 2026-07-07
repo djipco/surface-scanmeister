@@ -27,7 +27,7 @@ export class App {
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
   static BUFFER_GRAPH_DURATION = 10000;
-  static STATS_GRAPH_THROTTLE_MS = 200;
+  static STATS_GRAPH_THROTTLE_MS = 100;
   static PARSE_FRAME_BUDGET_MS = 2;
 
   constructor() {
