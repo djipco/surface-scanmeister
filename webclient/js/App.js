@@ -23,7 +23,7 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
-  static BUFFER_GRAPH_DURATION = 10000;
+  static BUFFER_GRAPH_DURATION = 20000;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -266,7 +266,7 @@ export class App {
 
     for (let index = 0; index <= 2; index++) {
       const x = plot.left + plotWidth * index / 2;
-      const seconds = -10 + index * 5;
+      const seconds = -Math.round(App.BUFFER_GRAPH_DURATION / 1000) + index * Math.round(App.BUFFER_GRAPH_DURATION / 2000);
 
       context.beginPath();
       context.moveTo(x, plot.top);

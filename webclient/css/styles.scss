@@ -56,7 +56,8 @@ html:fullscreen .image-size-overlay {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
-.controls-panel h1 {
+.controls-panel h1,
+.render-stats h1 {
   margin: 0 -14px 4px -14px;
   padding: 10px 14px;
   border-bottom: #343a40 solid 1px;
@@ -72,6 +73,11 @@ html:fullscreen .image-size-overlay {
   letter-spacing: 0;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3C/svg%3E") 12 12, all-scroll;
   user-select: none;
+}
+
+.render-stats h1 {
+  margin: 0 -12px 10px -12px;
+  cursor: default;
 }
 
 .controls-panel.hidden {
@@ -316,7 +322,7 @@ button:disabled {
   min-width: 280px;
   border: #343a40 solid 1px;
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 0 12px 12px 12px;
   background: rgba(21, 24, 27, 0.92);
   color: #d7e7ff;
   font-family: "Cascadia Mono", Consolas, monospace;
