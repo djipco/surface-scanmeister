@@ -12,7 +12,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command"];
+  static COMMANDS = ["scan", "command", "scanners"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -100,6 +100,19 @@ export class Server extends EventEmitter {
     }
 
     // Retrieve scanner matching channel and check if it's already in use.
+    if (parsed.command === "scanners") {
+      response.writeHead(200, {'Content-Type': 'application/json'});
+      response.end(JSON.stringify({
+        scanners: this.#scanners.map(scanner => ({
+          channel: scanner.channel,
+          name: scanner.name,
+          systemName: scanner.systemName,
+          scanning: scanner.scanning
+        }))
+      }));
+      return;
+    }
+
     const scanner = this.getScannerByChannel(parsed.channel);
     if (!scanner) {
       logWarn(

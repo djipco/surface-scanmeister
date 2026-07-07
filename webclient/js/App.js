@@ -23,7 +23,8 @@ export class App {
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
-  static DEFAULT_RENDER_SPEED = "500";
+  static DEFAULT_RENDER_SPEED = "100";
+  static BUFFER_GRAPH_DURATION = 10000;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -35,6 +36,7 @@ export class App {
     this.paintRequest = undefined;
     this.renderStatsVisible = false;
     this.renderStats = {};
+    this.bufferHistory = [];
 
     this.reset();
     this.setUpUi();
@@ -60,6 +62,7 @@ export class App {
     this.streamComplete = false;
     this.scanFinalized = false;
     this.renderStats = {};
+    this.bufferHistory = [];
     this.width = undefined;
     this.height = undefined;
   }
@@ -194,7 +197,9 @@ export class App {
     const frameMs = this.renderStats.frameMs ?? 0;
     const paintMs = this.renderStats.paintMs ?? 0;
 
-    this.ui.renderStats.innerText = [
+    this.updateBufferHistory(bufferedRows);
+
+    this.ui.renderStatsText.innerText = [
       `render: ${this.renderMode}`,
       `target: ${Math.round(this.renderSpeed)} rows/s`,
       `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
@@ -204,6 +209,52 @@ export class App {
       `frame:  ${frameMs.toFixed(1)} ms`,
       `put:    ${paintMs.toFixed(2)} ms`
     ].join("\n");
+    this.drawBufferGraph();
+  }
+
+  updateBufferHistory(bufferedRows) {
+    const now = performance.now();
+    const startTime = now - App.BUFFER_GRAPH_DURATION;
+    this.bufferHistory.push({time: now, value: bufferedRows});
+    this.bufferHistory = this.bufferHistory.filter(point => point.time >= startTime);
+  }
+
+  drawBufferGraph() {
+    const canvas = this.ui.bufferGraph;
+    const context = this.ui.bufferGraphContext;
+    if (!canvas || !context) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const now = performance.now();
+    const startTime = now - App.BUFFER_GRAPH_DURATION;
+    const maxValue = Math.max(1, ...this.bufferHistory.map(point => point.value));
+
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = "rgba(27, 31, 35, 0.92)";
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = "rgba(122, 162, 214, 0.18)";
+    context.lineWidth = 1;
+    for (let x = 0; x <= width; x += width / 5) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, height);
+      context.stroke();
+    }
+
+    context.strokeStyle = "#7aa2d6";
+    context.lineWidth = 2;
+    context.beginPath();
+    this.bufferHistory.forEach((point, index) => {
+      const x = this.clamp((point.time - startTime) / App.BUFFER_GRAPH_DURATION * width, 0, width);
+      const y = height - point.value / maxValue * (height - 4) - 2;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    });
+    context.stroke();
   }
 
   toggleRenderStats() {
@@ -325,6 +376,7 @@ export class App {
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
+    this.ui.renderSpeedRow = document.getElementById("render-speed-row");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.commandToggle = document.getElementById("show-command");
@@ -333,6 +385,9 @@ export class App {
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
     this.ui.renderStats = document.getElementById("render-stats");
+    this.ui.renderStatsText = document.getElementById("render-stats-text");
+    this.ui.bufferGraph = document.getElementById("buffer-graph");
+    this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
 
     this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
@@ -458,6 +513,8 @@ export class App {
     this.updateScanButtonState();
     this.updateRenderSpeedState();
     this.updateAuxiliaryOverlayVisibility();
+    this.updateScannerAvailability();
+    setInterval(() => this.updateScannerAvailability(), 5000);
 
   }
 
@@ -494,8 +551,39 @@ export class App {
       this.state === App.STATE_HEADER_PARSED;
   }
 
+  async updateScannerAvailability() {
+    try {
+      const response = await fetch(App.URL + "/scanners");
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const availableChannels = new Set(
+        (data.scanners || []).map(scanner => parseInt(scanner.channel))
+      );
+
+      Array.from(this.ui.channelInput.options).forEach(option => {
+        const channel = parseInt(option.value);
+        const isAvailable = availableChannels.has(channel);
+        option.disabled = !isAvailable;
+        option.label = isAvailable ? option.value : `${option.value} - unavailable`;
+      });
+
+      if (!availableChannels.has(this.channel)) {
+        this.channelOutOfBounds = true;
+        this.setCommandPreviewText("Channel out of bounds", true);
+        this.updateScanButtonState();
+      } else if (this.state !== App.STATE_REQUEST_SENT && this.state !== App.STATE_HEADER_PARSED) {
+        this.updateCommandPreview();
+      }
+    } catch (err) {
+      // Keep the current channel list if scanner status is temporarily unavailable.
+    }
+  }
+
   updateRenderSpeedState() {
-    this.ui.renderSpeed.disabled = this.renderMode !== "speed";
+    const isDisabled = this.renderMode !== "speed";
+    this.ui.renderSpeed.disabled = isDisabled;
+    this.ui.renderSpeedRow.classList.toggle("disabled", isDisabled);
   }
 
   updateExpectedImageSize() {
