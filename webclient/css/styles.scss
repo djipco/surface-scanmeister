@@ -71,8 +71,8 @@ html.kiosk-mode .image-size-overlay {
   background-position:
     center center,
     center center,
-    center center,
-    center center;
+    center calc(50% + var(--grid-spacing) / 2),
+    calc(50% + var(--grid-spacing) / 2) center;
   background-repeat:
     no-repeat,
     no-repeat,
