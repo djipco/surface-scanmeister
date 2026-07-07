@@ -622,8 +622,10 @@ export class App {
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
     this.ui.statsGraphRate = document.getElementById("stats-graph-rate");
-    this.ui.statsGraphRate.innerText =
-      `Graphs update ${Math.round(1000 / App.STATS_GRAPH_THROTTLE_MS)} times per second`;
+    if (this.ui.statsGraphRate) {
+      this.ui.statsGraphRate.innerText =
+        `Graphs update ${Math.round(1000 / App.STATS_GRAPH_THROTTLE_MS)} times per second`;
+    }
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
