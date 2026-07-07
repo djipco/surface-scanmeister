@@ -14,7 +14,6 @@ export class App {
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
-  static STORAGE_FULLSCREEN = "scanmeister.fullscreen";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
@@ -173,17 +172,6 @@ export class App {
 
     this.ui.channelInput = document.getElementById('channel');
 
-    this.ui.fullscreenButton = document.getElementById('fs-toggle')
-    this.ui.fullscreenButton.addEventListener('change', () => {
-      this.saveCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
-      this.setFullScreen(this.ui.fullscreenButton.checked);
-    });
-    document.addEventListener('fullscreenchange', () => {
-      this.ui.fullscreenButton.checked = Boolean(document.fullscreenElement);
-      this.saveCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
-      this.updateCanvasDisplaySize();
-    });
-
     this.ui.resolution = document.getElementById("resolution");
     this.ui.brightness = document.getElementById("brightness");
     this.ui.contrast = document.getElementById("contrast");
@@ -191,6 +179,7 @@ export class App {
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.forceCalibration = document.getElementById("force-calibration");
+    this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
 
@@ -201,7 +190,6 @@ export class App {
     this.restoreScanWidth();
     this.restoreScanHeight();
     this.restoreDrawMode();
-    this.restoreCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
 
@@ -223,6 +211,14 @@ export class App {
     this.ui.drawMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
     });
+    this.ui.fullscreenButton.addEventListener("click", () => {
+      this.setFullScreen(!document.fullscreenElement);
+    });
+    document.addEventListener("fullscreenchange", () => {
+      this.updateFullscreenButtonLabel();
+      this.updateCanvasDisplaySize();
+    });
+    this.updateFullscreenButtonLabel();
 
     this.setUpDragInput(this.ui.brightness, () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
@@ -901,13 +897,19 @@ export class App {
 
     if (enabled && !document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
-        this.ui.fullscreenButton.checked = false;
+        this.updateFullscreenButtonLabel();
         alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
       });
     } else if (!enabled && document.fullscreenElement) {
       if (document.exitFullscreen) document.exitFullscreen();
     }
 
+  }
+
+  updateFullscreenButtonLabel() {
+    this.ui.fullscreenButton.innerText = document.fullscreenElement
+      ? "Exit Fullscreen"
+      : "Enter Fullscreen";
   }
 
 }
