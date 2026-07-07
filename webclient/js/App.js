@@ -191,16 +191,6 @@ export class App {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
       this.updateCommandPreview();
     }, {pixelsPerStep: 20});
-    this.setUpDragInput(this.ui.width, () => {
-      this.saveScanWidth();
-      this.updateExpectedImageSize();
-      this.updateCommandPreview();
-    }, {lockPointer: true, pixelsPerStep: 20});
-    this.setUpDragInput(this.ui.height, () => {
-      this.saveScanHeight();
-      this.updateExpectedImageSize();
-      this.updateCommandPreview();
-    }, {lockPointer: true, pixelsPerStep: 20});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
