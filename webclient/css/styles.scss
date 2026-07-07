@@ -53,24 +53,49 @@ html.kiosk-mode body {
   box-sizing: border-box;
   background-image:
     linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
-    linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
-    linear-gradient(rgba(130, 180, 255, 0.28) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(130, 180, 255, 0.28) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68));
   background-position:
     center center,
-    center center,
-    center calc(50% + var(--grid-spacing) / 2),
-    calc(50% + var(--grid-spacing) / 2) center;
+    center center;
   background-repeat:
     no-repeat,
-    no-repeat,
-    repeat,
-    repeat;
+    no-repeat;
   background-size:
     100% 2px,
-    2px 100%,
-    var(--grid-spacing) var(--grid-spacing),
-    var(--grid-spacing) var(--grid-spacing);
+    2px 100%;
+}
+
+.calibration-grid-overlay::before,
+.calibration-grid-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.calibration-grid-overlay::before {
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      rgba(130, 180, 255, 0.28) 0,
+      rgba(130, 180, 255, 0.28) 1px,
+      transparent 1px,
+      transparent var(--grid-spacing)
+    );
+  background-position: 50% 0;
+  background-size: var(--grid-spacing) 100%;
+}
+
+.calibration-grid-overlay::after {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(130, 180, 255, 0.28) 0,
+      rgba(130, 180, 255, 0.28) 1px,
+      transparent 1px,
+      transparent var(--grid-spacing)
+    );
+  background-position: 0 50%;
+  background-size: 100% var(--grid-spacing);
 }
 
 .controls-panel {
