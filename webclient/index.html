@@ -132,12 +132,16 @@
     </section>
 
     <section class="render-stats hidden" id="render-stats">
-      <h1>STATS</h1>
-      <pre id="render-stats-text"></pre>
-      <div class="stats-graph-title">Speed</div>
-      <canvas id="speed-graph" width="280" height="104"></canvas>
-      <div class="stats-graph-title">Buffer</div>
-      <canvas id="buffer-graph" width="280" height="104"></canvas>
+      <h1 id="render-stats-header">STATS</h1>
+      <div class="render-stats-content">
+        <pre id="render-stats-text"></pre>
+        <div class="stats-graph-title">Arrive <span class="label-unit">(rows/s)</span></div>
+        <canvas id="arrive-graph" width="280" height="104"></canvas>
+        <div class="stats-graph-title">Drawing Speed <span class="label-unit">(rows/s)</span></div>
+        <canvas id="speed-graph" width="280" height="104"></canvas>
+        <div class="stats-graph-title">Buffer <span class="label-unit">(rows)</span></div>
+        <canvas id="buffer-graph" width="280" height="104"></canvas>
+      </div>
     </section>
 
   </body>

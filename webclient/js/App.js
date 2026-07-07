@@ -20,6 +20,7 @@ export class App {
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
+  static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
@@ -35,8 +36,10 @@ export class App {
     this.paintRequest = undefined;
     this.renderStatsVisible = false;
     this.renderStats = {};
+    this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
+    this.panelResizeObservers = [];
 
     this.reset();
     this.setUpUi();
@@ -62,6 +65,7 @@ export class App {
     this.streamComplete = false;
     this.scanFinalized = false;
     this.renderStats = {};
+    this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
     this.width = undefined;
@@ -198,18 +202,23 @@ export class App {
     const frameMs = this.renderStats.frameMs ?? 0;
     const paintMs = this.renderStats.paintMs ?? 0;
 
+    this.updateArrivalHistory(arrivalRowsPerSecond);
     this.updateBufferHistory(bufferedRows);
     this.updateSpeedHistory(paintedRowsPerSecond);
 
     this.ui.renderStatsText.innerText = [
       `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
       `buffer: ${bufferedRows} rows`,
-      `arrive: ${Math.round(arrivalRowsPerSecond)} rows/s`,
       `frame:  ${frameMs.toFixed(1)} ms`,
       `put:    ${paintMs.toFixed(2)} ms`
     ].join("\n");
+    this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawBufferGraph();
+  }
+
+  updateArrivalHistory(rowsPerSecond) {
+    this.updateHistory(this.arrivalHistory, rowsPerSecond);
   }
 
   updateBufferHistory(bufferedRows) {
@@ -228,6 +237,10 @@ export class App {
     if (firstCurrentPoint > 0) history.splice(0, firstCurrentPoint);
   }
 
+  drawArrivalGraph() {
+    this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory);
+  }
+
   drawSpeedGraph() {
     this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory);
   }
@@ -236,11 +249,33 @@ export class App {
     this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory);
   }
 
+  redrawStatsGraphs() {
+    this.drawArrivalGraph();
+    this.drawSpeedGraph();
+    this.drawBufferGraph();
+  }
+
+  prepareGraphCanvas(canvas, context) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = window.devicePixelRatio || 1;
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    const pixelWidth = Math.round(width * scale);
+    const pixelHeight = Math.round(height * scale);
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+
+    context.setTransform(scale, 0, 0, scale, 0, 0);
+    return {width, height};
+  }
+
   drawHistoryGraph(canvas, context, history) {
     if (!canvas || !context) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const {width, height} = this.prepareGraphCanvas(canvas, context);
     const now = performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
     const maxValue = Math.max(1, ...history.map(point => point.value));
@@ -444,11 +479,17 @@ export class App {
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
     this.ui.renderStats = document.getElementById("render-stats");
+    this.ui.renderStatsHeader = document.getElementById("render-stats-header");
     this.ui.renderStatsText = document.getElementById("render-stats-text");
+    this.ui.arriveGraph = document.getElementById("arrive-graph");
+    this.ui.arriveGraphContext = this.ui.arriveGraph.getContext("2d");
     this.ui.speedGraph = document.getElementById("speed-graph");
     this.ui.speedGraphContext = this.ui.speedGraph.getContext("2d");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
+    this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
+    this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
+    this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
 
     this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
@@ -702,7 +743,7 @@ export class App {
     this.ui.size.style.top = displayTop + "px";
   }
 
-  setUpPanelDrag(panel, handle) {
+  setUpPanelDrag(panel, handle, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     handle.addEventListener("pointerdown", event => {
       if (event.target.closest("button")) return;
       event.preventDefault();
@@ -723,7 +764,7 @@ export class App {
 
       const onPointerUp = upEvent => {
         handle.releasePointerCapture(upEvent.pointerId);
-        this.savePanelPosition(panel);
+        this.savePanelPosition(panel, storageKey);
         handle.removeEventListener("pointermove", onPointerMove);
         handle.removeEventListener("pointerup", onPointerUp);
         handle.removeEventListener("pointercancel", onPointerUp);
@@ -735,24 +776,26 @@ export class App {
     });
   }
 
-  setUpPanelResize(panel) {
+  setUpPanelResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
     if (!window.ResizeObserver) return;
 
     let isRestoring = true;
     let saveTimeout = undefined;
     requestAnimationFrame(() => isRestoring = false);
 
-    this.panelResizeObserver = new ResizeObserver(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (onResize) onResize();
       if (isRestoring) return;
       clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => this.savePanelPosition(panel), 150);
+      saveTimeout = setTimeout(() => this.savePanelPosition(panel, storageKey), 150);
     });
-    this.panelResizeObserver.observe(panel);
+    resizeObserver.observe(panel);
+    this.panelResizeObservers.push(resizeObserver);
   }
 
-  restorePanelPosition(panel) {
+  restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     try {
-      const position = JSON.parse(localStorage.getItem(App.STORAGE_PARAMETERS_POSITION));
+      const position = JSON.parse(localStorage.getItem(storageKey));
       if (!position) return;
 
       requestAnimationFrame(() => {
@@ -773,10 +816,10 @@ export class App {
     }
   }
 
-  savePanelPosition(panel) {
+  savePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     try {
       const rect = panel.getBoundingClientRect();
-      localStorage.setItem(App.STORAGE_PARAMETERS_POSITION, JSON.stringify({
+      localStorage.setItem(storageKey, JSON.stringify({
         left: Math.round(rect.left),
         top: Math.round(rect.top),
         width: Math.round(rect.width),

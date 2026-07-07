@@ -126,8 +126,8 @@ html:fullscreen .image-size-overlay {
 }
 
 .render-stats h1 {
-  margin: 0 -12px 10px -12px;
-  cursor: default;
+  margin: 0;
+  flex: 0 0 36px;
 }
 
 .controls-panel.hidden {
@@ -176,7 +176,8 @@ html:fullscreen .image-size-overlay {
   color: #6f7982;
 }
 
-.label-unit {
+.control-row .label-unit,
+.stats-graph-title .label-unit {
   font-weight: 400;
 }
 
@@ -373,17 +374,52 @@ button:disabled {
   right: 16px;
   bottom: 70px;
   z-index: 20;
+  width: 320px;
   min-width: 280px;
+  min-height: 220px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
   border: 1px solid #343a40;
   border-radius: 6px;
-  padding: 0 12px 12px 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  resize: both;
   background: rgba(21, 24, 27, 0.92);
   color: #d7e7ff;
   font-family: "Cascadia Mono", Consolas, monospace;
   font-size: 12px;
   line-height: 1.45;
   white-space: normal;
-  pointer-events: none;
+}
+
+.render-stats-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: 12px;
+  overflow: auto;
+  scrollbar-color: #3d454d rgba(21, 24, 27, 0.6);
+  scrollbar-width: thin;
+}
+
+.render-stats-content::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.render-stats-content::-webkit-scrollbar-track {
+  background: rgba(21, 24, 27, 0.6);
+}
+
+.render-stats-content::-webkit-scrollbar-thumb {
+  background: #3d454d;
+  border: 2px solid rgba(21, 24, 27, 0.6);
+  border-radius: 999px;
+}
+
+.render-stats-content::-webkit-scrollbar-thumb:hover {
+  background: #4b5661;
 }
 
 .render-stats pre {
@@ -401,6 +437,7 @@ button:disabled {
   line-height: 14px;
 }
 
+#arrive-graph,
 #speed-graph,
 #buffer-graph {
   display: block;
