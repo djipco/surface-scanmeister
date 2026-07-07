@@ -198,7 +198,7 @@ export class App {
       ...this.renderStats,
       ...nextStats
     };
-    if (!this.renderStatsVisible || !this.ui.renderStats) return;
+    if (!this.isStatsDisplayed()) return;
 
     const availableRows = this.renderStats.availableRows ?? this.getAvailablePaintRows();
     const bufferedRows = Math.max(0, availableRows - this.paintedRows);
@@ -269,10 +269,21 @@ export class App {
   }
 
   redrawStatsGraphs() {
+    if (!this.isStatsDisplayed()) return;
+
     this.drawArrivalGraph();
     this.drawSpeedGraph();
     this.drawFpsGraph();
     this.drawBufferGraph();
+  }
+
+  isStatsDisplayed() {
+    return Boolean(
+      this.renderStatsVisible &&
+      this.ui.renderStats &&
+      !this.ui.renderStats.classList.contains("hidden") &&
+      this.ui.renderStats.getClientRects().length
+    );
   }
 
   prepareGraphCanvas(canvas, context) {
@@ -1387,24 +1398,23 @@ export class App {
 
   async saveCanvasToFile(filename) {
 
-    // Create temporary download link
-    const link = document.createElement('a');
-
-    link.setAttribute('download', filename);
-
-    await new Promise(resolve => {
-
-      this.canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.click();
-        resolve();
-      });
-
+    const blob = await new Promise(resolve => {
+      this.canvas.toBlob(resolve, "image/png");
     });
+    if (!blob) return;
 
-    // Remove temporary link
-    link.remove();
+    const response = await fetch(
+      App.URL + "/save?filename=" + encodeURIComponent(filename),
+      {
+        method: "POST",
+        headers: {"Content-Type": "image/png"},
+        body: blob
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Could not save scan:", await response.text());
+    }
 
   }
 

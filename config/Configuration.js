@@ -1,7 +1,8 @@
 export const Configuration = {
 
   paths: {
-    logs: "./logs"              // Directory where logfiles will be saved (in rotation)
+    logs: "./logs",             // Directory where logfiles will be saved (in rotation)
+    scans: "./scans"            // Directory where scanned images will be saved
   },
 
   network: {

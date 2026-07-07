@@ -430,6 +430,19 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.stats-option-row {
+  min-height: 24px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #9aa4ad;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .stats-graph-title {
   margin-top: 10px;
   color: #9aa4ad;

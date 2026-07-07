@@ -1,6 +1,8 @@
 // Node.js standard imports
 import {Configuration as config} from "../config/Configuration.js";
 import http from 'node:http';
+import path from 'node:path';
+import {mkdir, writeFile} from 'node:fs/promises';
 import express from 'express';
 
 // Application imports
@@ -12,7 +14,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command", "scanners"];
+  static COMMANDS = ["scan", "command", "scanners", "save"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -46,6 +48,7 @@ export class Server extends EventEmitter {
     // If we make it here, command is valid. Channel defaults to 1 if not specified.
     parsed.command = segments[0];
     parsed.channel = parseInt(segments[1]) || 1;
+    parsed.filename = this.#sanitizeFilename(url.searchParams.get('filename') || 'scan.png');
 
     // Parse query string for valid resolution
     const resolution = parseInt(url.searchParams.get('resolution'));
@@ -81,8 +84,14 @@ export class Server extends EventEmitter {
     // Set headers for CORS
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Request-Method', '*');
-    response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+    response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
     response.setHeader('Access-Control-Allow-Headers', '*');
+
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
 
     // Try to parse the request
     let parsed;
@@ -110,6 +119,30 @@ export class Server extends EventEmitter {
           scanning: scanner.scanning
         }))
       }));
+      return;
+    }
+
+    if (parsed.command === "save") {
+      if (request.method !== 'POST') {
+        response.writeHead(405, {'Content-Type': 'text/plain'});
+        response.end('Method not allowed');
+        return;
+      }
+
+      try {
+        const body = await this.#readRequestBody(request);
+        await mkdir(config.paths.scans, {recursive: true});
+        const filename = parsed.filename.endsWith('.png') ? parsed.filename : parsed.filename + '.png';
+        const filePath = path.join(config.paths.scans, filename);
+        await writeFile(filePath, body);
+        logInfo(`Saved scan to ${filePath}.`);
+        response.writeHead(200, {'Content-Type': 'application/json'});
+        response.end(JSON.stringify({path: filePath}));
+      } catch (err) {
+        logWarn(`Could not save scan. Error: ${err}`);
+        response.writeHead(500, {'Content-Type': 'text/plain'});
+        response.end('Could not save scan');
+      }
       return;
     }
 
@@ -191,6 +224,31 @@ export class Server extends EventEmitter {
   #onServerError(err) {
     this.emit("error", `HTTP server error. ${err}.`);
     this.quit();
+  }
+
+  async #readRequestBody(request) {
+    const chunks = [];
+    let byteLength = 0;
+    const maxByteLength = 1024 * 1024 * 1024;
+
+    for await (const chunk of request) {
+      byteLength += chunk.length;
+      if (byteLength > maxByteLength) throw new Error('Request body is too large.');
+      chunks.push(chunk);
+    }
+
+    return Buffer.concat(chunks);
+  }
+
+  #sanitizeFilename(filename) {
+    const reservedCharacters = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*']);
+    return path.basename(filename)
+      .split('')
+      .map(character => {
+        if (reservedCharacters.has(character)) return '_';
+        return character.charCodeAt(0) < 32 ? '_' : character;
+      })
+      .join('');
   }
 
   destroyClient(id) {
