@@ -152,6 +152,12 @@ html.kiosk-mode .image-size-overlay {
   font-weight: 400;
 }
 
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .controls-panel h1 button {
   width: 22px;
   height: 22px;
@@ -166,9 +172,27 @@ html.kiosk-mode .image-size-overlay {
   cursor: pointer;
 }
 
+.controls-panel h1 .quit-kiosk-button {
+  width: auto;
+  min-width: 44px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  border-radius: 4px;
+  color: #ffb1b1;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .controls-panel h1 button:hover {
   color: #f2f4f5;
   background: #303841;
+}
+
+.controls-panel h1 .quit-kiosk-button:hover {
+  border-color: rgba(255, 107, 107, 0.65);
+  background: rgba(255, 107, 107, 0.14);
+  color: #ffd2d2;
 }
 
 .control-row {

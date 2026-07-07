@@ -19,7 +19,10 @@
 
       <h1 id="controls-panel-header">
         <span>PARAMETERS <span class="shortcut">(P)</span></span>
-        <button type="button" id="controls-panel-close" aria-label="Close parameters">×</button>
+        <span class="panel-header-actions">
+          <button type="button" id="quit-kiosk" class="quit-kiosk-button hidden">Quit</button>
+          <button type="button" id="controls-panel-close" aria-label="Close parameters">×</button>
+        </span>
       </h1>
 
       <div class="controls-panel-content">
@@ -121,7 +124,6 @@
 
       <div class="button-row">
         <button type="button" id="fullscreen">Enter Fullscreen</button>
-        <button type="button" id="quit-kiosk" class="hidden">Quit</button>
         <button id="scan">Scan</button>
       </div>
 
