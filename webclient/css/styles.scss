@@ -283,7 +283,7 @@ select {
   padding-right: 30px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%239aa4ad' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 13px center;
+  background-position: right 11px center;
   background-size: 12px 12px;
 }
 
@@ -422,9 +422,8 @@ button:disabled {
   transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
-.top-info-copyright {
-  justify-self: center;
-  text-align: center;
+.top-info-title span {
+  font-weight: 400;
 }
 
 .quit-kiosk-button {

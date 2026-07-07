@@ -993,12 +993,12 @@ export class App {
 
   updateAuxiliaryOverlayVisibility() {
     const isUiOverlayVisible = !this.ui.controlsPanel.classList.contains("hidden");
-    const isDebugVisible = isUiOverlayVisible && this.ui.debugToggle.checked;
+    const isStatsVisible = isUiOverlayVisible && this.ui.debugToggle.checked;
 
-    this.renderStatsVisible = isDebugVisible;
-    this.ui.commandPanel.classList.toggle("hidden", !isDebugVisible);
-    this.ui.renderStats.classList.toggle("hidden", !isDebugVisible);
-    if (isDebugVisible) this.updateRenderStats();
+    this.renderStatsVisible = isStatsVisible;
+    this.ui.commandPanel.classList.toggle("hidden", !isUiOverlayVisible);
+    this.ui.renderStats.classList.toggle("hidden", !isStatsVisible);
+    if (isStatsVisible) this.updateRenderStats();
   }
 
   updateScanButtonState() {
