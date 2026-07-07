@@ -19,6 +19,7 @@ export class App {
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
+  static STORAGE_AUTO_HIDE_ENABLED = "scanmeister.autoHideEnabled";
   static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
@@ -564,6 +565,10 @@ export class App {
     return this.roundInputValue(this.ui.autoHideSeconds, seconds);
   }
 
+  get autoHideEnabled() {
+    return Boolean(this.ui.autoHideToggle.checked);
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -620,6 +625,8 @@ export class App {
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.debugToggle = document.getElementById("show-debug");
+    this.ui.autoHideToggle = document.getElementById("auto-hide-ui");
+    this.ui.autoHideSecondsRow = document.getElementById("auto-hide-seconds-row");
     this.ui.autoHideSeconds = document.getElementById("auto-hide-seconds");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
@@ -659,6 +666,7 @@ export class App {
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
+    this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, true);
     this.restoreNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
     if (!this.ui.autoHideSeconds.value) this.ui.autoHideSeconds.value = App.DEFAULT_AUTO_HIDE_SECONDS;
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
@@ -682,6 +690,10 @@ export class App {
     this.ui.debugToggle.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
       this.updateAuxiliaryOverlayVisibility();
+    });
+    this.ui.autoHideToggle.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED);
+      this.updateAutoHideState();
     });
     this.ui.autoHideSeconds.addEventListener("input", () => {
       this.saveNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
@@ -787,6 +799,7 @@ export class App {
     this.updateCommandPreview();
     this.updateScanButtonState();
     this.updateRenderSpeedState();
+    this.updateAutoHideState();
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
@@ -853,6 +866,7 @@ export class App {
   scheduleUiAutoHide() {
     this.cancelUiAutoHide();
     if (!this.ui.controlsPanel || this.ui.controlsPanel.classList.contains("hidden")) return;
+    if (!this.autoHideEnabled) return;
     if (!this.ui.autoHideSeconds) return;
 
     const delay = this.autoHideSeconds * 1000;
@@ -867,6 +881,17 @@ export class App {
     if (this.autoHideTimer === undefined) return;
     clearTimeout(this.autoHideTimer);
     this.autoHideTimer = undefined;
+  }
+
+  updateAutoHideState() {
+    const isDisabled = !this.autoHideEnabled;
+    this.ui.autoHideSeconds.disabled = isDisabled;
+    this.ui.autoHideSecondsRow.classList.toggle("disabled", isDisabled);
+    if (isDisabled) {
+      this.cancelUiAutoHide();
+    } else {
+      this.scheduleUiAutoHide();
+    }
   }
 
   updateAuxiliaryOverlayVisibility() {
