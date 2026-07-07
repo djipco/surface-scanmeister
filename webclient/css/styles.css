@@ -18,10 +18,10 @@ body {
   top: 50%;
   left: 50%;
   border: #343a40 solid 1px;
+  border-radius: 6px;
   width: auto;
   height: min(100vw - 32px, 100vh - 32px);
   display: block;
-  background: #050607;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   transform: translate(-50%, -50%);
 }
@@ -33,6 +33,7 @@ html:fullscreen body {
 
 html:fullscreen #canvas {
   border: 0;
+  border-radius: 0;
   box-shadow: none;
 }
 
