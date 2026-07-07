@@ -18,6 +18,7 @@ export class App {
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
+  static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
@@ -260,7 +261,7 @@ export class App {
   }
 
   drawFpsGraph() {
-    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt, {maxValue: 65});
+    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt, {maxValue: 120});
   }
 
   drawBufferGraph() {
@@ -354,7 +355,8 @@ export class App {
     context.strokeStyle = "#7aa2d6";
     context.lineWidth = 2;
     context.beginPath();
-    history.forEach((point, index) => {
+    const displayHistory = this.smoothGraphs ? this.smoothHistory(history) : history;
+    displayHistory.forEach((point, index) => {
       const x = plot.left + this.clamp(
         (point.time - startTime) / App.BUFFER_GRAPH_DURATION * plotWidth,
         0,
@@ -368,6 +370,27 @@ export class App {
       }
     });
     context.stroke();
+  }
+
+  smoothHistory(history) {
+    if (history.length < 4) return history;
+
+    const radius = 3;
+    return history.map((point, index) => {
+      if (index === 0 || index === history.length - 1) return point;
+
+      const start = Math.max(0, index - radius);
+      const end = Math.min(history.length - 1, index + radius);
+      let total = 0;
+      for (let sampleIndex = start; sampleIndex <= end; sampleIndex++) {
+        total += history[sampleIndex].value;
+      }
+
+      return {
+        time: point.time,
+        value: total / (end - start + 1)
+      };
+    });
   }
 
   toggleRenderStats() {
@@ -453,6 +476,10 @@ export class App {
     return this.ui.drawMode.value === "clear";
   }
 
+  get smoothGraphs() {
+    return Boolean(this.ui.smoothGraphs.checked);
+  }
+
   setUpUi() {
 
     this.ui.controlsPanel = document.getElementById("controls-panel");
@@ -494,6 +521,7 @@ export class App {
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.debugToggle = document.getElementById("show-debug");
+    this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
@@ -523,6 +551,7 @@ export class App {
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
+    this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
     this.ui.channelInput.addEventListener("change", () => {
@@ -543,6 +572,10 @@ export class App {
     this.ui.debugToggle.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
       this.updateAuxiliaryOverlayVisibility();
+    });
+    this.ui.smoothGraphs.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
+      this.redrawStatsGraphs();
     });
     this.ui.drawMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
@@ -625,6 +658,7 @@ export class App {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST, {normalize: true});
       this.updateCommandPreview();
     });
+    this.setUpEnterToValidateParameters();
 
     this.updateExpectedImageSize();
     this.updateCommandPreview();
@@ -634,6 +668,18 @@ export class App {
     this.updateScannerAvailability();
     setInterval(() => this.updateScannerAvailability(), 5000);
 
+  }
+
+  setUpEnterToValidateParameters() {
+    const fields = this.ui.controlsPanel.querySelectorAll("input:not([type='checkbox']), select");
+    fields.forEach(field => {
+      field.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        field.dispatchEvent(new Event("change", {bubbles: true}));
+        field.blur();
+      });
+    });
   }
 
   toggleUiOverlay() {
