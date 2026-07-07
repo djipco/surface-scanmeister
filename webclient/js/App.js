@@ -44,10 +44,13 @@ export class App {
     this.displayFpsHistory = [];
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
+    this.parserWorker = new Worker("js/pnm-parser-worker.js");
+    this.parserScanId = 0;
     this.panelResizeObservers = [];
 
     this.reset();
     this.setUpUi();
+    this.parserWorker.addEventListener("message", event => this.onParserMessage(event.data));
     window.addEventListener("resize", () => this.updateCanvasDisplaySize());
   }
 
@@ -58,7 +61,6 @@ export class App {
     this.imageData = new Uint8Array();
     this.state = App.STATE_STANDBY;
     this.header = '';
-    this.buffer = new Uint8Array();
     this.position = 0;
     this.paintedRows = 0;
     this.paintCursor = 0;
@@ -80,6 +82,10 @@ export class App {
     this.statsGraphFrozenAt = undefined;
     this.width = undefined;
     this.height = undefined;
+    this.parserScanId += 1;
+    if (this.parserWorker) {
+      this.parserWorker.postMessage({type: "reset", scanId: this.parserScanId});
+    }
   }
 
   scheduleCanvasPaint() {
@@ -155,6 +161,35 @@ export class App {
       ? Math.ceil(pixelPosition / this.canvas.width)
       : Math.floor(pixelPosition / this.canvas.width);
     return this.clamp(completedRows, 0, this.canvas.height);
+  }
+
+  onParserMessage(message) {
+    if (message.scanId !== this.parserScanId) return;
+
+    if (message.type === "pixels") {
+      const rgba = new Uint8ClampedArray(message.buffer);
+      if (this.imageData && this.imageData.data) {
+        this.imageData.data.set(rgba, this.position);
+        this.position += rgba.length;
+        this.updateArrivalStats(this.getAvailablePaintRows());
+        this.scheduleCanvasPaint();
+      }
+      return;
+    }
+
+    if (message.type === "complete") {
+      this.streamComplete = true;
+      this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
+      if (this.renderMode === "speed") {
+        this.scheduleCanvasPaint();
+        if (this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
+          this.finalizeScan();
+        }
+      } else {
+        this.flushCanvasPaint();
+        this.finalizeScan();
+      }
+    }
   }
 
   getSpeedPaintRows(availableRows) {
@@ -1398,42 +1433,18 @@ export class App {
     }
 
     if (this.state == App.STATE_HEADER_PARSED && !done) {
-
-      // Merge buffer content with new data
-      const newArray = new Uint8Array(this.buffer.length + value.length);
-      newArray.set(this.buffer);
-      newArray.set(value, this.buffer.length);
-      this.buffer = newArray;
-
-      // Process buffer as image data
-      for (let i = 0; i < this.buffer.length - 2; i += 3) {
-        if (i + 2 >= this.buffer.length) break;  // Ensure we have a full pixel (3 bytes)
-        this.imageData.data[this.position]     = this.buffer[i];    // R
-        this.imageData.data[this.position + 1] = this.buffer[i+1];  // G
-        this.imageData.data[this.position + 2] = this.buffer[i+2];  // B
-        this.imageData.data[this.position + 3] = 255;               // Alpha channel
-        this.position += 4;
-      }
-
-      this.updateArrivalStats(this.getAvailablePaintRows());
-      this.scheduleCanvasPaint();
-
-      this.buffer = this.buffer.slice(Math.floor(this.buffer.length / 3) * 3);
+      const buffer = value.byteOffset === 0 && value.byteLength === value.buffer.byteLength
+        ? value.buffer
+        : value.slice().buffer;
+      this.parserWorker.postMessage(
+        {type: "chunk", scanId: this.parserScanId, buffer},
+        [buffer]
+      );
 
     }
 
     if (done) {
-      this.streamComplete = true;
-      if (this.renderMode === "speed") {
-        this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
-        this.scheduleCanvasPaint();
-        if (this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
-          this.finalizeScan();
-        }
-      } else {
-        this.flushCanvasPaint();
-        this.finalizeScan();
-      }
+      this.parserWorker.postMessage({type: "complete", scanId: this.parserScanId});
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
     }
