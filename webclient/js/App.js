@@ -175,6 +175,7 @@ export class App {
     document.addEventListener('fullscreenchange', () => {
       this.ui.fullscreenButton.checked = Boolean(document.fullscreenElement);
       this.saveCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
+      this.updateCanvasDisplaySize();
     });
 
     this.ui.resolution = document.getElementById("resolution");
@@ -328,7 +329,7 @@ export class App {
   updateCanvasDisplaySize() {
     if (!this.displayPixelWidth || !this.displayPixelHeight) return;
 
-    const margin = 32;
+    const margin = document.fullscreenElement ? 0 : 32;
     const availableWidth = Math.max(1, window.innerWidth - margin);
     const availableHeight = Math.max(1, window.innerHeight - margin);
     const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;

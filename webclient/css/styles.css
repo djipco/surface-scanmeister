@@ -26,6 +26,16 @@ body {
   transform: translate(-50%, -50%);
 }
 
+html:fullscreen,
+html:fullscreen body {
+  background: #000;
+}
+
+html:fullscreen #canvas {
+  border: 0;
+  box-shadow: none;
+}
+
 .controls-panel {
   position: absolute;
   top: 16px;
