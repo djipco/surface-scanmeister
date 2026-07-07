@@ -401,7 +401,8 @@ export class App {
       const step = this.inputStep(input);
       const pixelsPerStep = Math.max(1, options.pixelsPerStep ?? 20);
       let currentValue = this.clampInputValue(input, parseFloat(input.value) || 0);
-      let pixelCarry = 0;
+      let anchorValue = currentValue;
+      let dragOffset = 0;
       let isDragging = false;
       let pointerLocked = false;
       let isStopped = false;
@@ -411,22 +412,21 @@ export class App {
       input.setPointerCapture(event.pointerId);
 
       const applyMovement = pixels => {
-        pixelCarry += pixels;
-        const steps = pixelCarry >= 0
-          ? Math.floor(pixelCarry / pixelsPerStep)
-          : Math.ceil(pixelCarry / pixelsPerStep);
+        dragOffset += pixels;
+        const steps = dragOffset >= 0
+          ? Math.floor(dragOffset / pixelsPerStep)
+          : Math.ceil(dragOffset / pixelsPerStep);
         if (steps === 0) return;
 
-        const nextValue = this.clampInputValue(input, currentValue + steps * step);
-        if (nextValue === currentValue) {
-          pixelCarry = 0;
-          return;
+        const nextValue = this.clampInputValue(input, anchorValue + steps * step);
+        if (nextValue !== currentValue) {
+          currentValue = nextValue;
+          input.value = currentValue;
+          onChange();
         }
 
-        currentValue = nextValue;
-        pixelCarry -= steps * pixelsPerStep;
-        input.value = currentValue;
-        onChange();
+        anchorValue = currentValue;
+        dragOffset = 0;
       };
 
       const onLockedMouseMove = moveEvent => {
@@ -497,7 +497,7 @@ export class App {
         if (document.pointerLockElement === input) document.exitPointerLock();
       };
 
-      const onPointerUp = upEvent => {
+      const onPointerUp = () => {
         stopDragging();
       };
 
