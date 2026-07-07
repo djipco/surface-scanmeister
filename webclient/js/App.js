@@ -282,7 +282,6 @@ export class App {
   updateStatsAverageDisplays() {
     this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
     this.updateAverageDisplay(this.ui.fpsAverage, this.fpsHistory);
-    this.updateAverageDisplay(this.ui.bufferAverage, this.bufferHistory);
   }
 
   updateAverageDisplay(element, history) {
@@ -572,7 +571,6 @@ export class App {
     this.ui.fpsAverage = document.getElementById("fps-average");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
-    this.ui.bufferAverage = document.getElementById("buffer-average");
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
