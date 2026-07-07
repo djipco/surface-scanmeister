@@ -15,12 +15,13 @@ export class App {
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
+  static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
-  static SMOOTH_RENDER_DELAY_MULTIPLIER = 8;
+  static DEFAULT_RENDER_SPEED = "500";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -54,7 +55,8 @@ export class App {
     this.lastFrameTime = undefined;
     this.lastAvailableRows = 0;
     this.lastAvailableRowsTime = undefined;
-    this.smoothedRowsPerMs = undefined;
+    this.streamComplete = false;
+    this.scanFinalized = false;
     this.renderStats = {};
     this.width = undefined;
     this.height = undefined;
@@ -76,12 +78,12 @@ export class App {
       this.paintRequest = undefined;
     }
     this.paintCanvasRows({includePartialRow: true});
-    this.resetSmoothRenderState(this.getAvailablePaintRows({includePartialRow: true}));
+    this.resetSpeedRenderTiming();
   }
 
   shouldContinueCanvasPaint() {
     if (this.state !== App.STATE_HEADER_PARSED) return false;
-    return this.paintedRows < this.getAvailablePaintRows();
+    return this.paintedRows < this.getAvailablePaintRows({includePartialRow: this.streamComplete});
   }
 
   paintCanvasRows(options = {}) {
@@ -89,8 +91,8 @@ export class App {
     if (!this.canvas.width || !this.canvas.height) return;
 
     const availableRows = this.getAvailablePaintRows(options);
-    const nextPaintedRows = this.renderMode === "smooth" && !options.includePartialRow
-      ? this.getSmoothPaintRows(availableRows)
+    const nextPaintedRows = this.renderMode === "speed" && !options.includePartialRow
+      ? this.getSpeedPaintRows(availableRows)
       : availableRows;
     this.updateRenderStats({availableRows});
     if (nextPaintedRows <= this.paintedRows) return;
@@ -121,6 +123,10 @@ export class App {
         ? 0
         : (this.paintedRows - previousPaintedRows) / ((now - previousFrameTime) / 1000)
     });
+
+    if (this.streamComplete && this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
+      this.finalizeScan();
+    }
   }
 
   getAvailablePaintRows(options = {}) {
@@ -131,62 +137,45 @@ export class App {
     return this.clamp(completedRows, 0, this.canvas.height);
   }
 
-  getSmoothPaintRows(availableRows) {
+  getSpeedPaintRows(availableRows) {
     const now = performance.now();
-    this.updateSmoothRenderRate(availableRows, now);
-    if (this.smoothedRowsPerMs === undefined) return this.paintedRows;
-
     if (this.lastPaintTime === undefined) {
       this.lastPaintTime = now;
+      this.paintCursor = this.paintedRows;
       return this.paintedRows;
     }
 
     const elapsed = Math.max(0, now - this.lastPaintTime);
     this.lastPaintTime = now;
-
-    const delayRows = this.smoothedRowsPerMs * this.getSmoothRenderDelay();
-    const bufferedRows = Math.max(this.paintedRows, Math.floor(availableRows - delayRows));
     this.paintCursor = Math.min(
-      bufferedRows,
-      this.paintCursor + this.smoothedRowsPerMs * elapsed
+      availableRows,
+      this.paintCursor + this.renderSpeed * elapsed / 1000
     );
-    return this.clamp(Math.floor(this.paintCursor), this.paintedRows, bufferedRows);
+    return this.clamp(Math.floor(this.paintCursor), this.paintedRows, availableRows);
   }
 
-  updateSmoothRenderRate(availableRows, now) {
+  updateArrivalStats(availableRows, now = performance.now()) {
     if (this.lastAvailableRowsTime === undefined) {
-      this.resetSmoothRenderState(availableRows, now);
+      this.lastAvailableRows = availableRows;
+      this.lastAvailableRowsTime = now;
       return;
     }
 
     const rowsDelta = availableRows - this.lastAvailableRows;
     const timeDelta = now - this.lastAvailableRowsTime;
     if (rowsDelta > 0 && timeDelta > 0) {
-      const measuredRowsPerMs = rowsDelta / timeDelta;
-      this.smoothedRowsPerMs = this.smoothedRowsPerMs === undefined
-        ? measuredRowsPerMs
-        : this.smoothedRowsPerMs * 0.85 + measuredRowsPerMs * 0.15;
-      this.lastAvailableRows = availableRows;
-      this.lastAvailableRowsTime = now;
       this.updateRenderStats({
         availableRows,
-        arrivalRowsPerSecond: measuredRowsPerMs * 1000
+        arrivalRowsPerSecond: rowsDelta / (timeDelta / 1000)
       });
     }
-  }
-
-  resetSmoothRenderState(availableRows = 0, now = performance.now()) {
-    this.paintCursor = this.paintedRows;
-    this.lastPaintTime = undefined;
     this.lastAvailableRows = availableRows;
     this.lastAvailableRowsTime = now;
-    this.smoothedRowsPerMs = undefined;
   }
 
-  getSmoothRenderDelay() {
-    const resolution = this.resolution || 75;
-    const scale = Math.log2(Math.max(1, resolution / 75));
-    return this.clamp(100 + scale * 60, 100, 320) * App.SMOOTH_RENDER_DELAY_MULTIPLIER;
+  resetSpeedRenderTiming() {
+    this.paintCursor = this.paintedRows;
+    this.lastPaintTime = undefined;
   }
 
   updateRenderStats(nextStats = {}) {
@@ -198,20 +187,17 @@ export class App {
 
     const availableRows = this.renderStats.availableRows ?? this.getAvailablePaintRows();
     const bufferedRows = Math.max(0, availableRows - this.paintedRows);
-    const arrivalRowsPerSecond = this.smoothedRowsPerMs === undefined
-      ? 0
-      : this.smoothedRowsPerMs * 1000;
-    const rawArrivalRowsPerSecond = this.renderStats.arrivalRowsPerSecond ?? 0;
+    const arrivalRowsPerSecond = this.renderStats.arrivalRowsPerSecond ?? 0;
     const paintedRowsPerSecond = this.renderStats.paintedRowsPerSecond ?? 0;
     const frameMs = this.renderStats.frameMs ?? 0;
     const paintMs = this.renderStats.paintMs ?? 0;
 
     this.ui.renderStats.innerText = [
       `render: ${this.renderMode}`,
-      `delay:  ${Math.round(this.getSmoothRenderDelay())} ms`,
+      `target: ${Math.round(this.renderSpeed)} rows/s`,
       `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
       `buffer: ${bufferedRows} rows`,
-      `arrive: ${Math.round(rawArrivalRowsPerSecond)} / ${Math.round(arrivalRowsPerSecond)} rows/s`,
+      `arrive: ${Math.round(arrivalRowsPerSecond)} rows/s`,
       `paint:  ${Math.round(paintedRowsPerSecond)} rows/s`,
       `frame:  ${frameMs.toFixed(1)} ms`,
       `put:    ${paintMs.toFixed(2)} ms`
@@ -288,7 +274,13 @@ export class App {
   }
 
   get renderMode() {
-    return this.ui.renderMode.value === "smooth" ? "smooth" : "live";
+    return this.ui.renderMode.value === "speed" ? "speed" : "live";
+  }
+
+  get renderSpeed() {
+    const speed = parseFloat(this.ui.renderSpeed.value);
+    if (isNaN(speed)) return parseFloat(App.DEFAULT_RENDER_SPEED);
+    return this.roundInputValue(this.ui.renderSpeed, speed);
   }
 
   get clearCanvasBeforeScan() {
@@ -331,6 +323,7 @@ export class App {
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
+    this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.command = document.getElementById("command");
@@ -344,7 +337,8 @@ export class App {
     this.restoreScanWidth();
     this.restoreScanHeight();
     this.restoreDrawMode();
-    this.restoreSelectValue(this.ui.renderMode, App.STORAGE_RENDER_MODE);
+    this.restoreRenderMode();
+    this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
 
@@ -368,6 +362,23 @@ export class App {
     });
     this.ui.renderMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.renderMode, App.STORAGE_RENDER_MODE);
+      this.updateRenderSpeedState();
+      this.resetSpeedRenderTiming();
+      this.scheduleCanvasPaint();
+      this.updateRenderStats();
+    });
+    this.ui.renderSpeed.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
+      this.resetSpeedRenderTiming();
+      this.scheduleCanvasPaint();
+      this.updateRenderStats();
+    });
+    this.ui.renderSpeed.addEventListener("change", () => {
+      this.ui.renderSpeed.value = this.clampInputValue(this.ui.renderSpeed, this.renderSpeed);
+      this.saveNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED, {normalize: true});
+      this.resetSpeedRenderTiming();
+      this.scheduleCanvasPaint();
+      this.updateRenderStats();
     });
     this.ui.fullscreenButton.addEventListener("click", () => {
       this.setFullScreen(!document.fullscreenElement);
@@ -431,6 +442,7 @@ export class App {
     this.updateExpectedImageSize();
     this.updateCommandPreview();
     this.updateScanButtonState();
+    this.updateRenderSpeedState();
 
   }
 
@@ -452,7 +464,12 @@ export class App {
     this.ui.scanButton.disabled =
       !this.isChannelValid ||
       this.channelOutOfBounds ||
-      this.state === App.STATE_REQUEST_SENT;
+      this.state === App.STATE_REQUEST_SENT ||
+      this.state === App.STATE_HEADER_PARSED;
+  }
+
+  updateRenderSpeedState() {
+    this.ui.renderSpeed.disabled = this.renderMode !== "speed";
   }
 
   updateExpectedImageSize() {
@@ -797,6 +814,17 @@ export class App {
     }
   }
 
+  restoreRenderMode() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_RENDER_MODE);
+      this.ui.renderMode.value = value === "speed" || value === "smooth" ? "speed" : "live";
+      localStorage.setItem(App.STORAGE_RENDER_MODE, this.ui.renderMode.value);
+    } catch (err) {
+      this.ui.renderMode.value = "live";
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
   saveCheckboxValue(input, storageKey) {
     try {
       localStorage.setItem(storageKey, input.checked ? "true" : "false");
@@ -967,7 +995,7 @@ export class App {
             this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
           }
           this.paintedRows = 0;
-          this.resetSmoothRenderState();
+          this.resetSpeedRenderTiming();
 
           // Keep unparsed binary data for later parsing
           value = value.slice(i + 1);
@@ -999,6 +1027,7 @@ export class App {
         this.position += 4;
       }
 
+      this.updateArrivalStats(this.getAvailablePaintRows());
       this.scheduleCanvasPaint();
 
       this.buffer = this.buffer.slice(Math.floor(this.buffer.length / 3) * 3);
@@ -1006,18 +1035,34 @@ export class App {
     }
 
     if (done) {
-      this.flushCanvasPaint();
-      this.position = 0;
-      this.state = App.STATE_DATA_PARSED;
-      this.ui.channelInput.disabled = false;
-      this.updateScanButtonState();
-      const date = this.getFormattedDate(new Date());
-      const ch = this.channel.toString().padStart(2, "0");
-      this.saveCanvasToFile(`CH-${ch} ${date}.png`);
+      this.streamComplete = true;
+      if (this.renderMode === "speed") {
+        this.updateArrivalStats(this.getAvailablePaintRows({includePartialRow: true}));
+        this.scheduleCanvasPaint();
+        if (this.paintedRows >= this.getAvailablePaintRows({includePartialRow: true})) {
+          this.finalizeScan();
+        }
+      } else {
+        this.flushCanvasPaint();
+        this.finalizeScan();
+      }
     } else {
       setTimeout(this.#processChunk.bind(this), 2);
     }
 
+  }
+
+  finalizeScan() {
+    if (this.scanFinalized) return;
+
+    this.scanFinalized = true;
+    this.position = 0;
+    this.state = App.STATE_DATA_PARSED;
+    this.ui.channelInput.disabled = false;
+    this.updateScanButtonState();
+    const date = this.getFormattedDate(new Date());
+    const ch = this.channel.toString().padStart(2, "0");
+    this.saveCanvasToFile(`CH-${ch} ${date}.png`);
   }
 
   getFormattedDate(date) {
