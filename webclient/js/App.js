@@ -1124,9 +1124,8 @@ export class App {
   updateCanvasDisplaySize() {
     if (!this.displayPixelWidth || !this.displayPixelHeight) return;
 
-    const margin = this.isFullscreenPresentation() ? 0 : 32;
-    const availableWidth = Math.max(1, window.innerWidth - margin);
-    const availableHeight = Math.max(1, window.innerHeight - margin);
+    const availableWidth = Math.max(1, window.innerWidth);
+    const availableHeight = Math.max(1, window.innerHeight);
     const canvasRatio = this.displayPixelWidth / this.displayPixelHeight;
     const isCanvasLandscape = canvasRatio >= 1;
     const isViewportLandscape = availableWidth >= availableHeight;
@@ -1135,19 +1134,11 @@ export class App {
     const cssHeight = shouldRotate
       ? Math.min(availableWidth, availableHeight / canvasRatio)
       : Math.min(availableHeight, availableWidth / canvasRatio);
-    const cssWidth = cssHeight * canvasRatio;
-    const displayWidth = shouldRotate ? cssHeight : cssWidth;
-    const displayHeight = shouldRotate ? cssWidth : cssHeight;
-    const overlayInset = 12;
-    const displayLeft = (window.innerWidth - displayWidth) / 2 + overlayInset;
-    const displayTop = (window.innerHeight - displayHeight) / 2 + overlayInset;
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = shouldRotate
       ? "translate(-50%, -50%) rotate(270deg)"
       : "translate(-50%, -50%) rotate(180deg)";
-    this.ui.size.style.left = displayLeft + "px";
-    this.ui.size.style.top = displayTop + "px";
   }
 
   setUpPanelDrag(panel, handle, storageKey = App.STORAGE_PARAMETERS_POSITION) {
@@ -1886,6 +1877,7 @@ export class App {
   }
 
   isKioskMode() {
+    if (document.fullscreenElement) return false;
     if (window.matchMedia("(display-mode: fullscreen)").matches) return true;
 
     const params = new URLSearchParams(window.location.search);

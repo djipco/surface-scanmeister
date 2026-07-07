@@ -181,7 +181,6 @@
 
     <canvas id="canvas" width="319" height="439"></canvas>
     <div id="overlay-grid-display" class="calibration-grid-overlay hidden"></div>
-    <span id="size" class="image-size-overlay">unknown</span>
 
     <section class="command-panel" id="command-panel">
       <span class="command-label"><span class="command-label-text">COMMAND</span></span>
@@ -189,7 +188,10 @@
     </section>
 
     <section class="render-stats hidden" id="render-stats">
-      <h1 id="render-stats-header">STATS</h1>
+      <h1 id="render-stats-header">
+        <span>STATS</span>
+        <span id="size" class="stats-size">unknown</span>
+      </h1>
       <div class="render-stats-content">
         <pre id="render-stats-text"></pre>
         <div class="stats-option-row">
