@@ -826,6 +826,7 @@ export class App {
   }
 
   setUiOverlayVisible(isVisible) {
+    document.documentElement.classList.toggle("ui-overlay-hidden", !isVisible);
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
     if (isVisible) {
       this.scheduleUiAutoHide();

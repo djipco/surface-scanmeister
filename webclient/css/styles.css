@@ -13,6 +13,11 @@ body {
   place-items: center;
 }
 
+html.ui-overlay-hidden,
+html.ui-overlay-hidden * {
+  cursor: none !important;
+}
+
 #canvas {
   position: absolute;
   top: 50%;
