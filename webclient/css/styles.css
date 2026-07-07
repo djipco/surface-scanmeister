@@ -61,6 +61,9 @@ html:fullscreen .image-size-overlay {
   resize: both;
   background: rgba(27, 31, 35, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 0s;
 }
 
 .controls-panel-content {
@@ -131,10 +134,13 @@ html:fullscreen .image-size-overlay {
 }
 
 .controls-panel.hidden {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
-.hidden {
+.hidden:not(.controls-panel):not(.command-panel):not(.render-stats) {
   display: none !important;
 }
 
@@ -346,10 +352,16 @@ button:disabled {
   gap: 0;
   background: rgba(21, 24, 27, 0.9);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 0s;
 }
 
 .command-panel.hidden {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
 #command {
@@ -396,6 +408,9 @@ button:disabled {
   font-size: 12px;
   line-height: 1.45;
   white-space: normal;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease, visibility 0s linear 0s;
 }
 
 .render-stats-content {
@@ -488,7 +503,10 @@ button:disabled {
 }
 
 .render-stats.hidden {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
 /*# sourceMappingURL=styles.css.map */
