@@ -217,7 +217,7 @@ html.kiosk-mode body {
 
 .control-row {
   display: grid;
-  grid-template-columns: 124px minmax(0, 1fr);
+  grid-template-columns: 120px minmax(0, 1fr);
   align-items: center;
   gap: 14px;
 }
@@ -254,7 +254,7 @@ html.kiosk-mode body {
 
 .server-address-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 76px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.45fr);
   gap: 8px;
 }
 
