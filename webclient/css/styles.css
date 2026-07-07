@@ -190,7 +190,7 @@ html.kiosk-mode .image-size-overlay {
   color: #6f7982;
 }
 
-.control-row .label-unit,
+.control-row label .label-unit,
 .stats-graph-title .label-unit {
   font-weight: 400;
 }

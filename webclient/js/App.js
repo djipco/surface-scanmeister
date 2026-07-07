@@ -50,7 +50,6 @@ export class App {
     this.lastStatsGraphDrawTime = 0;
     this.parseRequest = undefined;
     this.autoHideTimer = undefined;
-    this.controlsPanelPointerInside = false;
     this.panelResizeObservers = [];
 
     this.reset();
@@ -585,21 +584,19 @@ export class App {
       event.stopPropagation();
       this.setUiOverlayVisible(false);
     });
-    this.ui.controlsPanel.addEventListener("mouseenter", () => {
-      this.controlsPanelPointerInside = true;
-      this.cancelUiAutoHide();
-    });
-    this.ui.controlsPanel.addEventListener("mouseleave", () => {
-      this.controlsPanelPointerInside = false;
-      this.scheduleUiAutoHide();
-    });
     this.ui.controlsPanel.addEventListener("focusin", () => this.cancelUiAutoHide());
     this.ui.controlsPanel.addEventListener("focusout", () => this.scheduleUiAutoHide());
     document.addEventListener("keydown", event => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (this.isTypingInField(event.target)) return;
       if (event.key.toLowerCase() === "d") {
         event.preventDefault();
         this.toggleRenderStats();
+        return;
+      }
+      if (event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        this.startScanFromShortcut();
         return;
       }
       if (event.key.toLowerCase() !== "p") return;
@@ -812,6 +809,20 @@ export class App {
     });
   }
 
+  isTypingInField(target) {
+    if (!(target instanceof HTMLElement)) return false;
+    const tagName = target.tagName.toLowerCase();
+    return target.isContentEditable ||
+      tagName === "input" ||
+      tagName === "select" ||
+      tagName === "textarea";
+  }
+
+  startScanFromShortcut() {
+    if (this.ui.scanButton.disabled) return;
+    this.getImage();
+  }
+
   toggleUiOverlay() {
     this.setUiOverlayVisible(this.ui.controlsPanel.classList.contains("hidden"));
   }
@@ -850,7 +861,7 @@ export class App {
 
     this.autoHideTimer = setTimeout(() => {
       const focusInside = this.ui.controlsPanel.contains(document.activeElement);
-      if (this.controlsPanelPointerInside || focusInside) {
+      if (focusInside) {
         this.scheduleUiAutoHide();
         return;
       }
