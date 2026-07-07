@@ -13,6 +13,7 @@ export class App {
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
+  static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_FULLSCREEN = "scanmeister.fullscreen";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
@@ -146,7 +147,7 @@ export class App {
   }
 
   get clearCanvasBeforeScan() {
-    return Boolean(this.ui.clearCanvas.checked);
+    return this.ui.drawMode.value === "clear";
   }
 
   setUpUi() {
@@ -188,7 +189,7 @@ export class App {
     this.ui.contrast = document.getElementById("contrast");
     this.ui.width = document.getElementById("width");
     this.ui.height = document.getElementById("height");
-    this.ui.clearCanvas = document.getElementById("clear-canvas");
+    this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
@@ -199,7 +200,7 @@ export class App {
     this.restoreNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
     this.restoreScanWidth();
     this.restoreScanHeight();
-    this.restoreCheckboxValue(this.ui.clearCanvas, App.STORAGE_CLEAR_CANVAS, true);
+    this.restoreDrawMode();
     this.restoreCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
@@ -219,8 +220,8 @@ export class App {
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
     });
-    this.ui.clearCanvas.addEventListener("change", () => {
-      this.saveCheckboxValue(this.ui.clearCanvas, App.STORAGE_CLEAR_CANVAS);
+    this.ui.drawMode.addEventListener("change", () => {
+      this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
     });
 
     this.setUpDragInput(this.ui.brightness, () => {
@@ -617,6 +618,23 @@ export class App {
       const value = localStorage.getItem(storageKey);
       input.checked = value === null ? defaultValue : value === "true";
     } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreDrawMode() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_DRAW_MODE);
+      if (value === "clear" || value === "overlay") {
+        this.ui.drawMode.value = value;
+        return;
+      }
+
+      const oldValue = localStorage.getItem(App.STORAGE_CLEAR_CANVAS);
+      this.ui.drawMode.value = oldValue === "false" ? "overlay" : "clear";
+      localStorage.setItem(App.STORAGE_DRAW_MODE, this.ui.drawMode.value);
+    } catch (err) {
+      this.ui.drawMode.value = "clear";
       // Keep the interface usable if localStorage is unavailable.
     }
   }
