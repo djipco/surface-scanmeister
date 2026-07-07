@@ -271,7 +271,7 @@ export class App {
   }
 
   drawSpeedGraph() {
-    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt, {maxValue: 200});
+    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt, {maxValue: 500});
   }
 
   drawDisplayFpsGraph() {
