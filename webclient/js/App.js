@@ -16,6 +16,7 @@ export class App {
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
+  static STORAGE_DIRECTION_MODE = "scanmeister.directionMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
@@ -583,6 +584,10 @@ export class App {
     return this.ui.renderMode.value === "speed" ? "speed" : "live";
   }
 
+  get directionMode() {
+    return this.ui.directionMode.value === "rotated" ? "rotated" : "normal";
+  }
+
   get renderSpeed() {
     const speed = parseFloat(this.ui.renderSpeed.value);
     if (isNaN(speed)) return parseFloat(App.DEFAULT_RENDER_SPEED);
@@ -674,6 +679,7 @@ export class App {
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
+    this.ui.directionMode = document.getElementById("direction-mode");
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
@@ -726,6 +732,7 @@ export class App {
     this.restoreScanHeight();
     this.restoreDrawMode();
     this.restoreRenderMode();
+    this.restoreDirectionMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
@@ -830,6 +837,10 @@ export class App {
       this.resetSpeedRenderTiming();
       this.scheduleCanvasPaint();
       this.updateRenderStats();
+    });
+    this.ui.directionMode.addEventListener("change", () => {
+      this.saveControlValue(this.ui.directionMode, App.STORAGE_DIRECTION_MODE);
+      this.updateCanvasDisplaySize();
     });
     this.ui.renderSpeed.addEventListener("input", () => {
       this.saveNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
@@ -1175,11 +1186,12 @@ export class App {
     const cssHeight = shouldRotate
       ? Math.min(availableWidth, availableHeight / canvasRatio)
       : Math.min(availableHeight, availableWidth / canvasRatio);
+    const baseAngle = shouldRotate ? 270 : 180;
+    const directionOffset = this.directionMode === "rotated" ? 180 : 0;
+    const angle = (baseAngle + directionOffset) % 360;
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
-    this.canvas.style.transform = shouldRotate
-      ? "translate(-50%, -50%) rotate(270deg)"
-      : "translate(-50%, -50%) rotate(180deg)";
+    this.canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
   }
 
   setUpPanelDrag(panel, handle, storageKey = App.STORAGE_PARAMETERS_POSITION) {
@@ -1518,6 +1530,17 @@ export class App {
       localStorage.setItem(App.STORAGE_RENDER_MODE, this.ui.renderMode.value);
     } catch (err) {
       this.ui.renderMode.value = "live";
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreDirectionMode() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_DIRECTION_MODE);
+      this.ui.directionMode.value = value === "rotated" ? "rotated" : "normal";
+      localStorage.setItem(App.STORAGE_DIRECTION_MODE, this.ui.directionMode.value);
+    } catch (err) {
+      this.ui.directionMode.value = "normal";
       // Keep the interface usable if localStorage is unavailable.
     }
   }

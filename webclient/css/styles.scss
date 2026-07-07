@@ -128,7 +128,7 @@ html.kiosk-mode body {
   padding: 14px;
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
   overflow: auto;
   scrollbar-color: #3d454d rgba(21, 24, 27, 0.6);
   scrollbar-width: thin;
@@ -232,11 +232,11 @@ html.kiosk-mode body {
 
 .control-group {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .control-group + .control-group {
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid rgba(61, 69, 77, 0.55);
 }
 
