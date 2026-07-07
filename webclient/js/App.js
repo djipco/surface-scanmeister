@@ -36,6 +36,7 @@ export class App {
     this.renderStatsVisible = false;
     this.renderStats = {};
     this.bufferHistory = [];
+    this.speedHistory = [];
 
     this.reset();
     this.setUpUi();
@@ -62,6 +63,7 @@ export class App {
     this.scanFinalized = false;
     this.renderStats = {};
     this.bufferHistory = [];
+    this.speedHistory = [];
     this.width = undefined;
     this.height = undefined;
   }
@@ -197,39 +199,54 @@ export class App {
     const paintMs = this.renderStats.paintMs ?? 0;
 
     this.updateBufferHistory(bufferedRows);
+    this.updateSpeedHistory(paintedRowsPerSecond);
 
     this.ui.renderStatsText.innerText = [
-      `render: ${this.renderMode}`,
-      `speed:  ${Math.round(paintedRowsPerSecond)} rows/s`,
       `rows:   ${this.paintedRows} / ${availableRows} / ${this.canvas.height}`,
       `buffer: ${bufferedRows} rows`,
       `arrive: ${Math.round(arrivalRowsPerSecond)} rows/s`,
       `frame:  ${frameMs.toFixed(1)} ms`,
       `put:    ${paintMs.toFixed(2)} ms`
     ].join("\n");
+    this.drawSpeedGraph();
     this.drawBufferGraph();
   }
 
   updateBufferHistory(bufferedRows) {
+    this.updateHistory(this.bufferHistory, bufferedRows);
+  }
+
+  updateSpeedHistory(rowsPerSecond) {
+    this.updateHistory(this.speedHistory, rowsPerSecond);
+  }
+
+  updateHistory(history, value) {
     const now = performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
-    this.bufferHistory.push({time: now, value: bufferedRows});
-    this.bufferHistory = this.bufferHistory.filter(point => point.time >= startTime);
+    history.push({time: now, value});
+    const firstCurrentPoint = history.findIndex(point => point.time >= startTime);
+    if (firstCurrentPoint > 0) history.splice(0, firstCurrentPoint);
+  }
+
+  drawSpeedGraph() {
+    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory);
   }
 
   drawBufferGraph() {
-    const canvas = this.ui.bufferGraph;
-    const context = this.ui.bufferGraphContext;
+    this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory);
+  }
+
+  drawHistoryGraph(canvas, context, history) {
     if (!canvas || !context) return;
 
     const width = canvas.width;
     const height = canvas.height;
     const now = performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
-    const maxValue = Math.max(1, ...this.bufferHistory.map(point => point.value));
+    const maxValue = Math.max(1, ...history.map(point => point.value));
     const plot = {
       left: 42,
-      top: 20,
+      top: 8,
       right: width - 8,
       bottom: height - 20
     };
@@ -241,11 +258,6 @@ export class App {
     context.fillRect(0, 0, width, height);
 
     context.font = "11px Cascadia Mono, Consolas, monospace";
-    context.fillStyle = "#9aa4ad";
-    context.textBaseline = "top";
-    context.textAlign = "left";
-    context.fillText("Buffer", plot.left, 6);
-
     context.strokeStyle = "rgba(122, 162, 214, 0.18)";
     context.lineWidth = 1;
     for (let index = 0; index <= 4; index++) {
@@ -288,7 +300,7 @@ export class App {
     context.strokeStyle = "#7aa2d6";
     context.lineWidth = 2;
     context.beginPath();
-    this.bufferHistory.forEach((point, index) => {
+    history.forEach((point, index) => {
       const x = plot.left + this.clamp(
         (point.time - startTime) / App.BUFFER_GRAPH_DURATION * plotWidth,
         0,
@@ -433,6 +445,8 @@ export class App {
     this.ui.size = document.getElementById("size");
     this.ui.renderStats = document.getElementById("render-stats");
     this.ui.renderStatsText = document.getElementById("render-stats-text");
+    this.ui.speedGraph = document.getElementById("speed-graph");
+    this.ui.speedGraphContext = this.ui.speedGraph.getContext("2d");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
 
