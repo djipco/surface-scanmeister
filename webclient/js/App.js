@@ -5,8 +5,9 @@ export class App {
   static STATE_HEADER_PARSED = 2;
   static STATE_DATA_PARSED = 3;
 
-  static URL = "http://127.0.0.1:5678";
   static STORAGE_CHANNEL = "scanmeister.channel";
+  static STORAGE_SERVER_HOST = "scanmeister.serverHost";
+  static STORAGE_SERVER_PORT = "scanmeister.serverPort";
   static STORAGE_RESOLUTION = "scanmeister.resolution";
   static STORAGE_BRIGHTNESS = "scanmeister.brightness";
   static STORAGE_CONTRAST = "scanmeister.contrast";
@@ -28,6 +29,8 @@ export class App {
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
+  static DEFAULT_SERVER_HOST = "127.0.0.1";
+  static DEFAULT_SERVER_PORT = "5678";
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
   static DEFAULT_RENDER_SPEED = "100";
@@ -512,6 +515,21 @@ export class App {
     return ch >= 1 && ch <= 16;
   }
 
+  get serverHost() {
+    const host = this.ui.serverHost.value.trim();
+    return host || App.DEFAULT_SERVER_HOST;
+  }
+
+  get serverPort() {
+    const port = parseInt(this.ui.serverPort.value);
+    if (isNaN(port)) return parseInt(App.DEFAULT_SERVER_PORT);
+    return this.clampInputValue(this.ui.serverPort, port);
+  }
+
+  get serverUrl() {
+    return `http://${this.serverHost}:${this.serverPort}`;
+  }
+
   get resolution() {
     const resolution = parseInt(this.ui.resolution.value);
     if (isNaN(resolution)) {
@@ -645,6 +663,8 @@ export class App {
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => this.getImage());
 
+    this.ui.serverHost = document.getElementById("server-host");
+    this.ui.serverPort = document.getElementById("server-port");
     this.ui.channelInput = document.getElementById('channel');
 
     this.ui.resolution = document.getElementById("resolution");
@@ -695,6 +715,9 @@ export class App {
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
 
+    this.restoreTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
+    this.restoreNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT);
+    if (!this.ui.serverPort.value) this.ui.serverPort.value = App.DEFAULT_SERVER_PORT;
     this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
     this.restoreNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
@@ -718,6 +741,24 @@ export class App {
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreUiOverlayVisibility();
 
+    this.ui.serverHost.addEventListener("input", () => {
+      this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
+    });
+    this.ui.serverHost.addEventListener("change", () => {
+      this.ui.serverHost.value = this.serverHost;
+      this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
+      this.updateCommandPreview();
+      this.updateScannerAvailability();
+    });
+    this.ui.serverPort.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT);
+    });
+    this.ui.serverPort.addEventListener("change", () => {
+      this.ui.serverPort.value = this.clampInputValue(this.ui.serverPort, this.serverPort);
+      this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT, {normalize: true});
+      this.updateCommandPreview();
+      this.updateScannerAvailability();
+    });
     this.ui.channelInput.addEventListener("change", () => {
       this.saveControlValue(this.ui.channelInput, App.STORAGE_CHANNEL);
       this.updateExpectedImageSize();
@@ -1046,7 +1087,7 @@ export class App {
 
   async updateScannerAvailability() {
     try {
-      const response = await fetch(App.URL + "/scanners");
+      const response = await fetch(this.serverUrl + "/scanners");
       if (!response.ok) return;
 
       const data = await response.json();
@@ -1177,8 +1218,6 @@ export class App {
   setUpPanelResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
     if (!window.ResizeObserver) return;
 
-    this.addPanelResizeHandles(panel, storageKey, onResize);
-
     let isRestoring = true;
     let saveTimeout = undefined;
     requestAnimationFrame(() => isRestoring = false);
@@ -1191,59 +1230,6 @@ export class App {
     });
     resizeObserver.observe(panel);
     this.panelResizeObservers.push(resizeObserver);
-  }
-
-  addPanelResizeHandles(panel, storageKey, onResize = undefined) {
-    ["left", "right", "bottom"].forEach(edge => {
-      const handle = document.createElement("span");
-      handle.className = `panel-resize-handle panel-resize-handle-${edge}`;
-      handle.setAttribute("aria-hidden", "true");
-      panel.appendChild(handle);
-
-      handle.addEventListener("pointerdown", event => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        const startRect = panel.getBoundingClientRect();
-        const minWidth = 280;
-        const minHeight = 220;
-        const maxRight = window.innerWidth;
-        const maxBottom = window.innerHeight;
-
-        panel.style.right = "auto";
-        panel.style.bottom = "auto";
-        handle.setPointerCapture(event.pointerId);
-
-        const onPointerMove = moveEvent => {
-          if (edge === "left") {
-            const fixedRight = startRect.right;
-            const left = this.clamp(moveEvent.clientX, 0, Math.max(0, fixedRight - minWidth));
-            panel.style.left = left + "px";
-            panel.style.width = Math.max(minWidth, fixedRight - left) + "px";
-          } else if (edge === "right") {
-            const width = this.clamp(moveEvent.clientX - startRect.left, minWidth, Math.max(minWidth, maxRight - startRect.left));
-            panel.style.width = width + "px";
-          } else if (edge === "bottom") {
-            const height = this.clamp(moveEvent.clientY - startRect.top, minHeight, Math.max(minHeight, maxBottom - startRect.top));
-            panel.style.height = height + "px";
-          }
-
-          if (onResize) onResize();
-        };
-
-        const onPointerUp = upEvent => {
-          handle.releasePointerCapture(upEvent.pointerId);
-          this.savePanelPosition(panel, storageKey);
-          handle.removeEventListener("pointermove", onPointerMove);
-          handle.removeEventListener("pointerup", onPointerUp);
-          handle.removeEventListener("pointercancel", onPointerUp);
-        };
-
-        handle.addEventListener("pointermove", onPointerMove);
-        handle.addEventListener("pointerup", onPointerUp);
-        handle.addEventListener("pointercancel", onPointerUp);
-      });
-    });
   }
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
@@ -1457,9 +1443,28 @@ export class App {
     }
   }
 
+  restoreTextValue(input, storageKey, defaultValue = "") {
+    try {
+      const value = localStorage.getItem(storageKey);
+      input.value = value || defaultValue;
+      localStorage.setItem(storageKey, input.value);
+    } catch (err) {
+      if (!input.value) input.value = defaultValue;
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
   saveControlValue(input, storageKey) {
     try {
       localStorage.setItem(storageKey, input.value);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveTextValue(input, storageKey, defaultValue = "") {
+    try {
+      localStorage.setItem(storageKey, input.value.trim() || defaultValue);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -1604,7 +1609,7 @@ export class App {
     this.setCommandPreviewText("", false);
     try {
       const response = await fetch(
-        App.URL + "/command/" + this.channel + "?" + this.getScanParams()
+        this.serverUrl + "/command/" + this.channel + "?" + this.getScanParams()
       );
       const commandPreview = await response.text();
       const isChannelOutOfBounds = commandPreview.toLowerCase().includes("channel out of bounds");
@@ -1641,7 +1646,7 @@ export class App {
     this.ui.channelInput.disabled = true;
     try {
       this.response = await fetch(
-        App.URL + "/scan/" + this.channel + "?" + this.getScanParams()
+        this.serverUrl + "/scan/" + this.channel + "?" + this.getScanParams()
       );
     } catch (err) {
       this.state = App.STATE_STANDBY;
@@ -1885,7 +1890,7 @@ export class App {
     if (!blob) return;
 
     const response = await fetch(
-      App.URL + "/save?filename=" + encodeURIComponent(filename),
+      this.serverUrl + "/save?filename=" + encodeURIComponent(filename),
       {
         method: "POST",
         headers: {"Content-Type": "image/png"},

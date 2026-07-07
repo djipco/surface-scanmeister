@@ -39,6 +39,16 @@
 
       <div class="control-group">
         <div class="control-row">
+          <label for="server-host">Server Host &amp; Port</label>
+          <div class="server-address-fields">
+            <input type="text" id="server-host" value="127.0.0.1" autocomplete="off" spellcheck="false" aria-label="Server host">
+            <input type="number" id="server-port" min="0" max="65535" step="1" value="5678" aria-label="Server port">
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-row">
           <label for="channel">Channel</label>
           <select id="channel" name="channel">
             <option value="1">1</option>
