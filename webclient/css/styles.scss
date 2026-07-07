@@ -52,7 +52,7 @@ html:fullscreen .image-size-overlay {
   padding: 0 14px 14px 14px;
   display: grid;
   gap: 10px;
-  background: rgba(27, 31, 35, 0.82);
+  background: rgba(27, 31, 35, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
@@ -65,7 +65,7 @@ html:fullscreen .image-size-overlay {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(35, 41, 47, 0.88);
+  background: rgba(35, 41, 47, 0.94);
   color: #f2f4f5;
   font-size: 12px;
   font-weight: 700;
@@ -122,7 +122,7 @@ html:fullscreen .image-size-overlay {
   padding: 0 12px;
   border-right: #343a40 solid 1px;
   border-radius: 6px 0 0 6px;
-  background: rgba(27, 31, 35, 0.82);
+  background: rgba(27, 31, 35, 0.92);
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   font-size: 12px;
   line-height: 16px;
@@ -241,7 +241,7 @@ button:disabled {
   position: absolute;
   padding: 6px 9px;
   border-radius: 4px;
-  background: rgba(17, 19, 21, 0.78);
+  background: rgba(17, 19, 21, 0.9);
   color: #f2f4f5;
   font-family: "Cascadia Mono", Consolas, monospace;
   font-size: 14px;
@@ -263,7 +263,7 @@ button:disabled {
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
-  background: rgba(21, 24, 27, 0.78);
+  background: rgba(21, 24, 27, 0.9);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 

@@ -12,6 +12,7 @@ export class App {
   static STORAGE_CONTRAST = "scanmeister.contrast";
   static STORAGE_SCAN_WIDTH = "scanmeister.scanWidth";
   static STORAGE_SCAN_HEIGHT = "scanmeister.scanHeight";
+  static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_FULLSCREEN = "scanmeister.fullscreen";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
@@ -144,6 +145,10 @@ export class App {
     return Boolean(this.ui.forceCalibration.checked);
   }
 
+  get clearCanvasBeforeScan() {
+    return Boolean(this.ui.clearCanvas.checked);
+  }
+
   setUpUi() {
 
     this.ui.controlsPanel = document.getElementById("controls-panel");
@@ -183,6 +188,7 @@ export class App {
     this.ui.contrast = document.getElementById("contrast");
     this.ui.width = document.getElementById("width");
     this.ui.height = document.getElementById("height");
+    this.ui.clearCanvas = document.getElementById("clear-canvas");
     this.ui.forceCalibration = document.getElementById("force-calibration");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
@@ -193,6 +199,7 @@ export class App {
     this.restoreNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
     this.restoreScanWidth();
     this.restoreScanHeight();
+    this.restoreCheckboxValue(this.ui.clearCanvas, App.STORAGE_CLEAR_CANVAS, true);
     this.restoreCheckboxValue(this.ui.fullscreenButton, App.STORAGE_FULLSCREEN);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
     this.restoreUiOverlayVisibility();
@@ -211,6 +218,9 @@ export class App {
     this.ui.forceCalibration.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
+    });
+    this.ui.clearCanvas.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.clearCanvas, App.STORAGE_CLEAR_CANVAS);
     });
 
     this.setUpDragInput(this.ui.brightness, () => {
@@ -602,9 +612,10 @@ export class App {
     }
   }
 
-  restoreCheckboxValue(input, storageKey) {
+  restoreCheckboxValue(input, storageKey, defaultValue = false) {
     try {
-      input.checked = localStorage.getItem(storageKey) === "true";
+      const value = localStorage.getItem(storageKey);
+      input.checked = value === null ? defaultValue : value === "true";
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -773,10 +784,12 @@ export class App {
           // Change state
           this.state = App.STATE_HEADER_PARSED;
 
-          // Resize canvas
-          this.canvas.width = this.width;
-          this.canvas.height = this.height;
-          this.imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
+          if (this.clearCanvasBeforeScan) {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
+          } else {
+            this.imageData = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+          }
 
           // Keep unparsed binary data for later parsing
           value = value.slice(i + 1);
