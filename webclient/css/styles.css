@@ -55,6 +55,7 @@ html:fullscreen .image-size-overlay {
   border-radius: 6px;
   padding: 0 14px 14px 14px;
   display: grid;
+  align-content: start;
   gap: 10px;
   overflow: auto;
   resize: both;
@@ -66,9 +67,9 @@ html:fullscreen .image-size-overlay {
 .render-stats h1 {
   margin: 0 -14px 4px -14px;
   box-sizing: border-box;
-  height: 28px;
-  min-height: 28px;
-  max-height: 28px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   padding: 0 14px;
   border-bottom: #343a40 solid 1px;
   border-radius: 6px 6px 0 0;
@@ -102,14 +103,14 @@ html:fullscreen .image-size-overlay {
 }
 
 .controls-panel h1 button {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: #9aa4ad;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
