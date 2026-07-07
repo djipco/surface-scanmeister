@@ -78,6 +78,14 @@
       </div>
 
       <div class="control-row">
+        <label for="force-calibration">Force Calibration</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="force-calibration">
+          <span></span>
+        </label>
+      </div>
+
+      <div class="control-row">
         <label for="draw-mode">Canvas</label>
         <select id="draw-mode">
           <option value="clear">Clear before scan</option>
@@ -99,14 +107,6 @@
       </div>
 
       <div class="control-row">
-        <label for="force-calibration">Force Calibration</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="force-calibration">
-          <span></span>
-        </label>
-      </div>
-
-      <div class="control-row">
         <label for="show-debug">Debug Info</label>
         <label class="toggle-switch">
           <input type="checkbox" id="show-debug">
@@ -121,6 +121,7 @@
 
       <div class="button-row">
         <button type="button" id="fullscreen">Enter Fullscreen</button>
+        <button type="button" id="quit-kiosk" class="hidden">Quit</button>
         <button id="scan">Scan</button>
       </div>
 

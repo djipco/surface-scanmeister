@@ -628,6 +628,7 @@ export class App {
     this.ui.autoHideSeconds = document.getElementById("auto-hide-seconds");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
+    this.ui.quitKioskButton = document.getElementById("quit-kiosk");
     this.ui.command = document.getElementById("command");
     this.ui.size = document.getElementById("size");
     this.ui.renderStats = document.getElementById("render-stats");
@@ -726,11 +727,15 @@ export class App {
     this.ui.fullscreenButton.addEventListener("click", () => {
       this.setFullScreen(!document.fullscreenElement);
     });
+    this.ui.quitKioskButton.addEventListener("click", () => this.quitKiosk());
     document.addEventListener("fullscreenchange", () => {
       this.updateFullscreenButtonLabel();
+      this.updateKioskControls();
       this.updateCanvasDisplaySize();
     });
+    window.addEventListener("resize", () => this.updateKioskControls());
     this.updateFullscreenButtonLabel();
+    this.updateKioskControls();
 
     this.setUpDragInput(this.ui.brightness, () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
@@ -1652,6 +1657,31 @@ export class App {
     this.ui.fullscreenButton.innerText = document.fullscreenElement
       ? "Exit Fullscreen"
       : "Enter Fullscreen";
+  }
+
+  updateKioskControls() {
+    const isKiosk = this.isKioskLikeDisplay();
+    this.ui.fullscreenButton.classList.toggle("hidden", isKiosk);
+    this.ui.quitKioskButton.classList.toggle("hidden", !isKiosk);
+  }
+
+  isKioskLikeDisplay() {
+    if (window.matchMedia("(display-mode: fullscreen)").matches) return true;
+    if (document.fullscreenElement) return false;
+
+    const screenWidth = screen.width || 0;
+    const screenHeight = screen.height || 0;
+    if (!screenWidth || !screenHeight) return false;
+
+    return Math.abs(window.outerWidth - screenWidth) <= 2 &&
+      Math.abs(window.outerHeight - screenHeight) <= 2;
+  }
+
+  quitKiosk() {
+    window.close();
+    setTimeout(() => {
+      if (!window.closed) alert("Close the kiosk window with Alt+F4 or Ctrl+Q.");
+    }, 250);
   }
 
 }
