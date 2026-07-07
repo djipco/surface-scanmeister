@@ -263,7 +263,7 @@ export class App {
 
       if (blockSize <= 1) return false;
 
-      this.drawPixelatedBand(band.startRow, band.rowCount, blockSize);
+      this.drawPixelatedBand(band, blockSize);
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
@@ -294,8 +294,10 @@ export class App {
     return 1;
   }
 
-  drawPixelatedBand(startRow, rowCount, blockSize) {
+  drawPixelatedBand(band, blockSize) {
     const width = this.canvas.width;
+    const startRow = band.startRow;
+    const rowCount = band.rowCount;
     const sourceHeight = rowCount;
     const smallWidth = Math.max(1, Math.ceil(width / blockSize));
     const smallHeight = Math.max(1, Math.ceil(sourceHeight / blockSize));
@@ -317,7 +319,49 @@ export class App {
     this.revealPixelContext.imageSmoothingEnabled = false;
     this.revealPixelContext.clearRect(0, 0, smallWidth, smallHeight);
     this.revealPixelContext.drawImage(this.revealSourceCanvas, 0, 0, smallWidth, smallHeight);
-    this.context.drawImage(this.revealPixelCanvas, 0, startRow, width, sourceHeight);
+    this.drawJitteredPixelBlocks(band, blockSize, smallWidth, smallHeight);
+  }
+
+  drawJitteredPixelBlocks(band, blockSize, smallWidth, smallHeight) {
+    const age = performance.now() - band.startedAt;
+    const progress = this.clamp(age / App.PIXEL_REVEAL_DURATION_MS, 0, 1);
+    const jitterRows = Math.max(0, Math.round(blockSize * (1 - progress) * 0.75));
+
+    for (let smallY = 0; smallY < smallHeight; smallY++) {
+      for (let smallX = 0; smallX < smallWidth; smallX++) {
+        const sourceX = smallX;
+        const sourceY = smallY;
+        const destX = smallX * blockSize;
+        const baseY = band.startRow + smallY * blockSize;
+        const offsetY = this.getPixelRevealJitter(band, smallX, smallY, jitterRows);
+        const destY = this.clamp(baseY + offsetY, band.startRow, band.startRow + band.rowCount - 1);
+        const destWidth = Math.min(blockSize, this.canvas.width - destX);
+        const destHeight = Math.min(blockSize, band.startRow + band.rowCount - destY);
+        if (destWidth <= 0 || destHeight <= 0) continue;
+
+        this.context.drawImage(
+          this.revealPixelCanvas,
+          sourceX,
+          sourceY,
+          1,
+          1,
+          destX,
+          destY,
+          destWidth,
+          destHeight
+        );
+      }
+    }
+  }
+
+  getPixelRevealJitter(band, x, y, amplitude) {
+    if (amplitude <= 0) return 0;
+
+    const seed = ((x + 1) * 73856093) ^
+      ((y + 1) * 19349663) ^
+      ((band.startRow + 1) * 83492791);
+    const value = Math.abs(Math.sin(seed) * 43758.5453) % 1;
+    return Math.round((value * 2 - 1) * amplitude);
   }
 
   updateArrivalStats(availableRows, now = performance.now()) {
