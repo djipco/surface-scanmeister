@@ -601,12 +601,18 @@ export class App {
       const availableChannels = new Set(
         (data.scanners || []).map(scanner => parseInt(scanner.channel))
       );
+      const scannersByChannel = new Map(
+        (data.scanners || []).map(scanner => [parseInt(scanner.channel), scanner])
+      );
 
       Array.from(this.ui.channelInput.options).forEach(option => {
         const channel = parseInt(option.value);
-        const isAvailable = availableChannels.has(channel);
+        const scanner = scannersByChannel.get(channel);
+        const isAvailable = Boolean(scanner);
         option.disabled = !isAvailable;
-        option.label = isAvailable ? option.value : `${option.value} - unavailable`;
+        option.label = isAvailable
+          ? `${option.value} (${scanner.systemName})`
+          : `${option.value} - unavailable`;
       });
 
       if (!availableChannels.has(this.channel)) {
