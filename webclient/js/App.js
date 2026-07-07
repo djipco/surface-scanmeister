@@ -338,15 +338,15 @@ export class App {
   drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age) {
     const progress = this.clamp(age / App.PIXEL_REVEAL_DURATION_MS, 0, 1);
     const blockProgress = this.clamp((progress - 0.04) / 0.78, 0, 1);
-    const revealTravel = smallHeight + 5;
-    const frontier = blockProgress * revealTravel - 3;
+    const revealTravel = smallHeight + 3;
+    const frontier = blockProgress * revealTravel - 2;
 
     for (let smallY = 0; smallY < smallHeight; smallY++) {
       for (let smallX = 0; smallX < smallWidth; smallX++) {
         const edgeDistance = frontier - smallY;
         const clump = this.getPixelRevealClump(band, smallX, smallY);
         const grain = this.getPixelRevealRandom(band, smallX, smallY);
-        const threshold = -2.2 + clump * 3.8 + grain * 1.4;
+        const threshold = -1.4 + clump * 2.1 + grain * 0.7;
         if (edgeDistance < threshold) continue;
 
         const destX = smallX * blockSize;
