@@ -20,43 +20,6 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "5000";
   static DEFAULT_SCAN_HEIGHT = "215";
 
-  static applyBoundedDragMovement(state) {
-    const {currentValue, carry, movement, step, dragScale, min, max} = state;
-    if ((currentValue <= min && movement < 0) || (currentValue >= max && movement > 0)) {
-      return {value: currentValue, carry: 0};
-    }
-
-    const scaledMovement = movement * step * dragScale + carry;
-    const steps = scaledMovement >= 0
-      ? Math.floor(scaledMovement / step)
-      : Math.ceil(scaledMovement / step);
-    const nextCarry = scaledMovement - steps * step;
-    if (steps === 0) return {value: currentValue, carry: nextCarry};
-
-    const candidate = currentValue + steps * step;
-    const value = App.roundSteppedValue(App.clampValue(candidate, min, max), step);
-    return {
-      value,
-      carry: value === candidate ? nextCarry : 0
-    };
-  }
-
-  static roundSteppedValue(value, step) {
-    const precision = App.stepPrecision(step);
-    return parseFloat((Math.round(value / step) * step).toFixed(precision));
-  }
-
-  static stepPrecision(step) {
-    const stepText = step.toString();
-    const decimalIndex = stepText.indexOf(".");
-    if (decimalIndex === -1) return 0;
-    return Math.min(stepText.length - decimalIndex - 1, 1);
-  }
-
-  static clampValue(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
@@ -223,21 +186,21 @@ export class App {
     this.setUpDragInput(this.ui.brightness, () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
       this.updateCommandPreview();
-    }, {dragScale: 0.05});
+    }, {pixelsPerStep: 20});
     this.setUpDragInput(this.ui.contrast, () => {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
       this.updateCommandPreview();
-    }, {dragScale: 0.05});
+    }, {pixelsPerStep: 20});
     this.setUpDragInput(this.ui.width, () => {
       this.saveScanWidth();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
-    }, {lockPointer: true, dragScale: 0.05});
+    }, {lockPointer: true, pixelsPerStep: 20});
     this.setUpDragInput(this.ui.height, () => {
       this.saveScanHeight();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
-    }, {lockPointer: true, dragScale: 0.05});
+    }, {lockPointer: true, pixelsPerStep: 20});
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -435,44 +398,70 @@ export class App {
 
     input.addEventListener("pointerdown", event => {
       if (event.detail > 1) return;
-      const startX = event.clientX;
-      const startValue = parseFloat(input.value) || 0;
-      const dragScale = options.dragScale ?? 1;
-      const min = parseFloat(input.min);
-      const max = parseFloat(input.max);
       const step = this.inputStep(input);
-      let currentValue = this.clampInputValue(input, startValue);
-      let dragCarry = 0;
+      const pixelsPerStep = Math.max(1, options.pixelsPerStep ?? 20);
+      let currentValue = this.clampInputValue(input, parseFloat(input.value) || 0);
+      let pixelCarry = 0;
       let isDragging = false;
+      let pointerLocked = false;
+      let isStopped = false;
+      const startX = event.clientX;
       let lastX = startX;
-
-      const applyDragMovement = movement => {
-        const nextState = App.applyBoundedDragMovement({
-          currentValue,
-          carry: dragCarry,
-          movement,
-          step,
-          dragScale,
-          min,
-          max
-        });
-        currentValue = nextState.value;
-        dragCarry = nextState.carry;
-        return currentValue;
-      };
 
       input.setPointerCapture(event.pointerId);
 
-      const onLockedMouseMove = moveEvent => {
-        updateValue(moveEvent.movementX);
+      const applyMovement = pixels => {
+        pixelCarry += pixels;
+        const steps = pixelCarry >= 0
+          ? Math.floor(pixelCarry / pixelsPerStep)
+          : Math.ceil(pixelCarry / pixelsPerStep);
+        if (steps === 0) return;
+
+        const nextValue = this.clampInputValue(input, currentValue + steps * step);
+        if (nextValue === currentValue) {
+          pixelCarry = 0;
+          return;
+        }
+
+        currentValue = nextValue;
+        pixelCarry -= steps * pixelsPerStep;
+        input.value = currentValue;
+        onChange();
       };
 
-      const onDocumentMouseUp = () => {
-        stopDragging();
+      const onLockedMouseMove = moveEvent => {
+        applyMovement(moveEvent.movementX);
+      };
+
+      const onDocumentMouseUp = event => {
+        if (event.button === 0) {
+          stopDragging();
+        }
       };
 
       const onPointerLockChange = () => {
-        if (document.pointerLockElement !== input) stopDragging();
+        pointerLocked = document.pointerLockElement === input;
+        if (!pointerLocked && isDragging) {
+          stopDragging();
+        }
+      };
+
+      const onPointerLockError = () => {
+        pointerLocked = false;
+        stopDragging();
+      };
+
+      const onPointerMove = moveEvent => {
+        if (!isDragging) {
+          if (Math.abs(moveEvent.clientX - startX) < 4) return;
+          startDragging();
+        }
+
+        if (pointerLocked) return;
+
+        const movement = moveEvent.clientX - lastX;
+        lastX = moveEvent.clientX;
+        applyMovement(movement);
       };
 
       const startDragging = () => {
@@ -480,48 +469,36 @@ export class App {
         isDragging = true;
         input.classList.add("dragging");
         input.blur();
+        lastX = startX;
 
         if (options.lockPointer && input.requestPointerLock) {
           input.requestPointerLock();
           document.addEventListener("mousemove", onLockedMouseMove);
           document.addEventListener("mouseup", onDocumentMouseUp);
           document.addEventListener("pointerlockchange", onPointerLockChange);
+          document.addEventListener("pointerlockerror", onPointerLockError);
         }
-      };
-
-      const updateValue = movement => {
-        const nextValue = applyDragMovement(movement);
-        if (parseFloat(input.value) === nextValue) return;
-        input.value = nextValue;
-        onChange();
       };
 
       const stopDragging = () => {
+        if (isStopped) return;
+        isStopped = true;
         input.classList.remove("dragging");
+        if (input.hasPointerCapture(event.pointerId)) {
+          input.releasePointerCapture(event.pointerId);
+        }
+        input.removeEventListener("pointermove", onPointerMove);
+        input.removeEventListener("pointerup", onPointerUp);
+        input.removeEventListener("pointercancel", onPointerUp);
         document.removeEventListener("mousemove", onLockedMouseMove);
         document.removeEventListener("mouseup", onDocumentMouseUp);
         document.removeEventListener("pointerlockchange", onPointerLockChange);
+        document.removeEventListener("pointerlockerror", onPointerLockError);
         if (document.pointerLockElement === input) document.exitPointerLock();
-      };
-
-      const onPointerMove = moveEvent => {
-        const delta = moveEvent.clientX - lastX;
-        lastX = moveEvent.clientX;
-        if (!isDragging) {
-          const totalDelta = moveEvent.clientX - startX;
-          if (Math.abs(totalDelta) < 4) return;
-          startDragging();
-        }
-        if (document.pointerLockElement === input) return;
-        updateValue(delta);
       };
 
       const onPointerUp = upEvent => {
         stopDragging();
-        input.releasePointerCapture(upEvent.pointerId);
-        input.removeEventListener("pointermove", onPointerMove);
-        input.removeEventListener("pointerup", onPointerUp);
-        input.removeEventListener("pointercancel", onPointerUp);
       };
 
       input.addEventListener("pointermove", onPointerMove);
