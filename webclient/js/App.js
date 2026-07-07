@@ -39,6 +39,7 @@ export class App {
     this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
+    this.fpsHistory = [];
     this.panelResizeObservers = [];
 
     this.reset();
@@ -68,6 +69,8 @@ export class App {
     this.arrivalHistory = [];
     this.bufferHistory = [];
     this.speedHistory = [];
+    this.fpsHistory = [];
+    this.inputGraphFrozenAt = undefined;
     this.statsGraphFrozenAt = undefined;
     this.width = undefined;
     this.height = undefined;
@@ -202,21 +205,26 @@ export class App {
     const paintedRowsPerSecond = this.renderStats.paintedRowsPerSecond ?? 0;
     const frameMs = this.renderStats.frameMs ?? 0;
     const framesPerSecond = frameMs > 0 ? 1000 / frameMs : 0;
-    const graphTime = this.statsGraphFrozenAt ?? performance.now();
-    const shouldFreezeGraphs = this.canvas.height > 0 && availableRows >= this.canvas.height;
+    const graphTime = performance.now();
+    const hasFullInput = this.canvas.height > 0 && availableRows >= this.canvas.height;
+    const hasFinishedDrawing = hasFullInput && this.paintedRows >= availableRows;
 
-    if (this.statsGraphFrozenAt === undefined) {
+    if (this.inputGraphFrozenAt === undefined) {
       this.updateArrivalHistory(arrivalRowsPerSecond, graphTime);
-      this.updateBufferHistory(bufferedRows, graphTime);
-      this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
-      if (shouldFreezeGraphs) this.statsGraphFrozenAt = graphTime;
+      if (hasFullInput) this.inputGraphFrozenAt = graphTime;
     }
 
-    this.ui.renderStatsText.innerText = [
-      `fps:    ${framesPerSecond.toFixed(1)}`
-    ].join("\n");
+    if (this.statsGraphFrozenAt === undefined) {
+      this.updateBufferHistory(bufferedRows, graphTime);
+      this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
+      this.updateFpsHistory(framesPerSecond, graphTime);
+      if (hasFinishedDrawing) this.statsGraphFrozenAt = graphTime;
+    }
+
+    this.ui.renderStatsText.innerText = "";
     this.drawArrivalGraph();
     this.drawSpeedGraph();
+    this.drawFpsGraph();
     this.drawBufferGraph();
   }
 
@@ -232,6 +240,10 @@ export class App {
     this.updateHistory(this.speedHistory, rowsPerSecond, now);
   }
 
+  updateFpsHistory(framesPerSecond, now = performance.now()) {
+    this.updateHistory(this.fpsHistory, framesPerSecond, now);
+  }
+
   updateHistory(history, value, now = performance.now()) {
     const startTime = now - App.BUFFER_GRAPH_DURATION;
     history.push({time: now, value});
@@ -240,20 +252,25 @@ export class App {
   }
 
   drawArrivalGraph() {
-    this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory);
+    this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory, this.inputGraphFrozenAt);
   }
 
   drawSpeedGraph() {
-    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory);
+    this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt);
+  }
+
+  drawFpsGraph() {
+    this.drawHistoryGraph(this.ui.fpsGraph, this.ui.fpsGraphContext, this.fpsHistory, this.statsGraphFrozenAt);
   }
 
   drawBufferGraph() {
-    this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory);
+    this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory, this.statsGraphFrozenAt);
   }
 
   redrawStatsGraphs() {
     this.drawArrivalGraph();
     this.drawSpeedGraph();
+    this.drawFpsGraph();
     this.drawBufferGraph();
   }
 
@@ -274,11 +291,11 @@ export class App {
     return {width, height};
   }
 
-  drawHistoryGraph(canvas, context, history) {
+  drawHistoryGraph(canvas, context, history, frozenAt = undefined) {
     if (!canvas || !context) return;
 
     const {width, height} = this.prepareGraphCanvas(canvas, context);
-    const now = this.statsGraphFrozenAt ?? performance.now();
+    const now = frozenAt ?? performance.now();
     const startTime = now - App.BUFFER_GRAPH_DURATION;
     const maxValue = Math.max(1, ...history.map(point => point.value));
     const plot = {
@@ -487,6 +504,8 @@ export class App {
     this.ui.arriveGraphContext = this.ui.arriveGraph.getContext("2d");
     this.ui.speedGraph = document.getElementById("speed-graph");
     this.ui.speedGraphContext = this.ui.speedGraph.getContext("2d");
+    this.ui.fpsGraph = document.getElementById("fps-graph");
+    this.ui.fpsGraphContext = this.ui.fpsGraph.getContext("2d");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
