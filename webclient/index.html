@@ -117,17 +117,16 @@
         </label>
       </div>
 
-      <div class="control-row">
-        <label for="auto-hide-ui">Auto-Hide UI</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="auto-hide-ui">
-          <span></span>
-        </label>
-      </div>
-
       <div class="control-row" id="auto-hide-seconds-row">
-        <label for="auto-hide-seconds">Hide After <span class="label-unit">(sec)</span></label>
-        <input type="number" id="auto-hide-seconds" min="1" max="60" step="1" value="3">
+        <label for="auto-hide-ui">Auto-Hide UI</label>
+        <div class="inline-toggle-number">
+          <label class="toggle-switch">
+            <input type="checkbox" id="auto-hide-ui">
+            <span></span>
+          </label>
+          <input type="number" id="auto-hide-seconds" min="1" max="60" step="1" value="3" aria-label="Auto-hide delay in seconds">
+          <span class="label-unit">sec</span>
+        </div>
       </div>
 
       <div class="button-row">

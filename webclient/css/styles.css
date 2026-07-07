@@ -224,6 +224,18 @@ html.kiosk-mode .image-size-overlay {
   font-weight: 400;
 }
 
+.inline-toggle-number {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-toggle-number .label-unit {
+  color: #9aa4ad;
+  font-weight: 400;
+}
+
 .command-label {
   display: flex;
   align-items: center;
