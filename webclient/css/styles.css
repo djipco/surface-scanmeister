@@ -67,6 +67,8 @@ html:fullscreen .image-size-overlay {
   margin: 0 -14px 4px -14px;
   box-sizing: border-box;
   height: 28px;
+  min-height: 28px;
+  max-height: 28px;
   padding: 0 14px;
   border-bottom: #343a40 solid 1px;
   border-radius: 6px 6px 0 0;
@@ -82,6 +84,7 @@ html:fullscreen .image-size-overlay {
   line-height: 12px;
   letter-spacing: 0;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M12 2v20M2 12h20M12 2l-4 4M12 2l4 4M12 22l-4-4M12 22l4-4M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4'/%3E%3C/svg%3E") 12 12, all-scroll;
+  overflow: hidden;
   user-select: none;
 }
 
@@ -99,14 +102,14 @@ html:fullscreen .image-size-overlay {
 }
 
 .controls-panel h1 button {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: #9aa4ad;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -134,6 +137,10 @@ html:fullscreen .image-size-overlay {
 .control-row.disabled label,
 .control-row.disabled span:first-child {
   color: #6f7982;
+}
+
+.label-unit {
+  font-weight: 400;
 }
 
 .command-label {
