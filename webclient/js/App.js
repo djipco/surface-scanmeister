@@ -39,7 +39,7 @@ export class App {
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static DEFAULT_OVERLAY_GRID_SPACING = "100";
-  static PIXEL_REVEAL_DURATION_MS = 520;
+  static PIXEL_REVEAL_DURATION_MS = 340;
   static CLEAR_CANVAS_FADE_MS = 750;
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
@@ -337,9 +337,9 @@ export class App {
 
   drawClumpyPixelBlocks(band, blockSize, smallWidth, smallHeight, age) {
     const progress = this.clamp(age / App.PIXEL_REVEAL_DURATION_MS, 0, 1);
-    const blockProgress = this.clamp((progress - 0.04) / 0.78, 0, 1);
-    const revealTravel = smallHeight + 3;
-    const frontier = blockProgress * revealTravel - 2;
+    const blockProgress = this.clamp((progress - 0.015) / 0.68, 0, 1);
+    const revealTravel = smallHeight + 2;
+    const frontier = blockProgress * revealTravel - 1;
 
     for (let smallY = 0; smallY < smallHeight; smallY++) {
       for (let smallX = 0; smallX < smallWidth; smallX++) {
