@@ -64,7 +64,7 @@ export class Server extends EventEmitter {
     if (width >= 0 && width <= 5000) parsed.width = width;
 
     const height = parseFloat(url.searchParams.get('height'));
-    if (height >= 0 && height <= 215) parsed.height = height;
+    if (height >= 0 && height <= 216.9) parsed.height = height;
 
     parsed.forceCalibration = url.searchParams.get('forceCalibration') === 'true';
 

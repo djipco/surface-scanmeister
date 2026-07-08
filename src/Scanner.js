@@ -135,7 +135,7 @@ export class Scanner extends EventEmitter {
     }
 
     // Scan height in the physical installation maps to SANE's x-axis.
-    if (options.height >= 0 && options.height <= 215) {
+    if (options.height >= 0 && options.height <= 216.9) {
       args.push('-x', options.height.toString());
     }
 
