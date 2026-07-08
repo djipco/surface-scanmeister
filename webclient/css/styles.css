@@ -45,6 +45,9 @@ html.ui-overlay-hidden * {
   position: fixed;
   inset: 0;
   z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   background: #000;
   opacity: 1;
   transition: opacity 750ms ease;
@@ -59,31 +62,10 @@ html.ui-overlay-hidden * {
 }
 
 .wall-output {
-  position: absolute;
-  width: 50vw;
-  height: 50vh;
+  width: 100%;
+  height: 100%;
   display: block;
   background: transparent;
-}
-
-.wall-output-1 {
-  top: 0;
-  left: 0;
-}
-
-.wall-output-2 {
-  top: 0;
-  left: 50vw;
-}
-
-.wall-output-3 {
-  top: 50vh;
-  left: 0;
-}
-
-.wall-output-4 {
-  top: 50vh;
-  left: 50vw;
 }
 
 html:fullscreen,
