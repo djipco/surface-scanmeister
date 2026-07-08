@@ -103,15 +103,18 @@ html.kiosk-mode body {
 
 .calibration-grid-overlay {
   --grid-spacing: 100px;
+  --grid-border-color: rgba(255, 193, 7, 0.82);
+  --grid-center-color: rgba(80, 255, 210, 0.82);
+  --grid-line-color: rgba(130, 180, 255, 0.28);
   position: fixed;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  border: 2px solid rgba(255, 193, 7, 0.82);
+  border: 2px solid var(--grid-border-color);
   box-sizing: border-box;
   background-image:
-    linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
-    linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68));
+    linear-gradient(var(--grid-center-color), var(--grid-center-color)),
+    linear-gradient(90deg, var(--grid-center-color), var(--grid-center-color));
   background-position:
     center center,
     center center;
@@ -134,8 +137,8 @@ html.kiosk-mode body {
   background-image:
     repeating-linear-gradient(
       to right,
-      rgba(130, 180, 255, 0.28) 0,
-      rgba(130, 180, 255, 0.28) 1px,
+      var(--grid-line-color) 0,
+      var(--grid-line-color) 1px,
       transparent 1px,
       transparent var(--grid-spacing)
     );
@@ -147,8 +150,8 @@ html.kiosk-mode body {
   background-image:
     repeating-linear-gradient(
       to bottom,
-      rgba(130, 180, 255, 0.28) 0,
-      rgba(130, 180, 255, 0.28) 1px,
+      var(--grid-line-color) 0,
+      var(--grid-line-color) 1px,
       transparent 1px,
       transparent var(--grid-spacing)
     );
@@ -176,25 +179,28 @@ html.kiosk-mode body {
 }
 
 .wall-grid-output {
+  --grid-border-color: rgba(255, 193, 7, 0.82);
+  --grid-center-color: rgba(80, 255, 210, 0.82);
+  --grid-line-color: rgba(130, 180, 255, 0.28);
   position: relative;
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(255, 193, 7, 0.82);
+  border: 2px solid var(--grid-border-color);
   box-sizing: border-box;
   background-image:
-    linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
-    linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)),
+    linear-gradient(var(--grid-center-color), var(--grid-center-color)),
+    linear-gradient(90deg, var(--grid-center-color), var(--grid-center-color)),
     repeating-linear-gradient(
       to right,
-      rgba(130, 180, 255, 0.28) 0,
-      rgba(130, 180, 255, 0.28) 1px,
+      var(--grid-line-color) 0,
+      var(--grid-line-color) 1px,
       transparent 1px,
       transparent var(--grid-spacing)
     ),
     repeating-linear-gradient(
       to bottom,
-      rgba(130, 180, 255, 0.28) 0,
-      rgba(130, 180, 255, 0.28) 1px,
+      var(--grid-line-color) 0,
+      var(--grid-line-color) 1px,
       transparent 1px,
       transparent var(--grid-spacing)
     );
