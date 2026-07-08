@@ -51,7 +51,6 @@ export class App {
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
-  static USE_DIRECT_WALL_ROW_RENDERING = true;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -1618,9 +1617,9 @@ export class App {
     const dirtyRect = this.getWallDirtyRectForSourceRows(sourceStartRow, sourceRowCount);
     if (!dirtyRect) return;
 
-    const directSourceCanvas = App.USE_DIRECT_WALL_ROW_RENDERING && !this.isPixelRevealMode()
-      ? this.getWallRowBandCanvas(sourceStartRow, sourceRowCount)
-      : undefined;
+    const sourceCanvas = this.getWallRowBandCanvas(sourceStartRow, sourceRowCount);
+    if (!sourceCanvas) return;
+
     const outputWidth = 1920;
     const outputHeight = 1080;
     this.wallOutputs.forEach((output, index) => {
@@ -1638,7 +1637,7 @@ export class App {
         height: localRect.height,
         sourceStartRow,
         sourceRowCount,
-        sourceCanvas: directSourceCanvas
+        sourceCanvas
       });
     });
   }
@@ -1768,18 +1767,14 @@ export class App {
     context.rect(rect.x, rect.y, rect.width, rect.height);
     context.clip();
     context.translate(-index * width, 0);
-    if (rect.sourceCanvas) {
-      this.drawSourceBandInVirtualWall(
-        context,
-        width * this.wallOutputs.length,
-        height,
-        rect.sourceCanvas,
-        rect.sourceStartRow,
-        rect.sourceRowCount
-      );
-    } else {
-      this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
-    }
+    this.drawSourceBandInVirtualWall(
+      context,
+      width * this.wallOutputs.length,
+      height,
+      rect.sourceCanvas,
+      rect.sourceStartRow,
+      rect.sourceRowCount
+    );
     context.restore();
   }
 
@@ -1806,38 +1801,6 @@ export class App {
       sourceCanvas,
       0,
       0,
-      sourceWidth,
-      rowCount,
-      -sourceWidth / 2,
-      startRow - sourceHeight / 2,
-      sourceWidth,
-      rowCount
-    );
-  }
-
-  drawSourceRowsInVirtualWall(context, wallWidth, wallHeight, startRow, rowCount) {
-    const sourceWidth = this.canvas.width;
-    const sourceHeight = this.canvas.height;
-    if (!sourceWidth || !sourceHeight || rowCount <= 0) return;
-
-    const canvasRatio = sourceWidth / sourceHeight;
-    const wallRatio = wallWidth / wallHeight;
-    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
-    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
-    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
-    const baseAngle = shouldRotate ? 270 : 180;
-    const directionOffset = this.directionMode === "rotated" ? 180 : 0;
-    const angle = (baseAngle + directionOffset) % 360;
-
-    context.imageSmoothingEnabled = true;
-    context.translate(wallWidth / 2, wallHeight / 2);
-    context.rotate(angle * Math.PI / 180);
-    context.scale(scale, scale);
-    context.drawImage(
-      this.canvas,
-      0,
-      startRow,
       sourceWidth,
       rowCount,
       -sourceWidth / 2,
