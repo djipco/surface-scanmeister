@@ -606,7 +606,6 @@ export class App {
       const elapsed = now - this.previousDisplayFrameTime;
       if (elapsed > 0) {
         this.updateDisplayFpsHistory(1000 / elapsed, now);
-        this.drawStatsGraphs();
       }
     }
     this.previousDisplayFrameTime = now;
@@ -1579,19 +1578,85 @@ export class App {
   refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
     if (!this.isWallDisplayLayout || rowCount <= 0 || this.canvas.height <= 0) return;
 
-    const sliceCount = this.wallOutputs.length || 4;
-    const sliceHeight = this.canvas.height / sliceCount;
-    const endRow = startRow + rowCount;
-    const firstSlice = this.clamp(Math.floor(startRow / sliceHeight), 0, sliceCount - 1);
-    const lastSlice = this.clamp(Math.floor((endRow - 1) / sliceHeight), 0, sliceCount - 1);
+    const dirtyRect = this.getWallDirtyRectForSourceRows(startRow, rowCount);
+    if (!dirtyRect) return;
 
-    const refreshedSlices = new Set();
-    for (let sliceIndex = firstSlice; sliceIndex <= lastSlice; sliceIndex++) {
-      const outputIndex = this.directionMode === "rotated" ? sliceCount - 1 - sliceIndex : sliceIndex;
-      if (refreshedSlices.has(outputIndex)) continue;
-      refreshedSlices.add(outputIndex);
-      this.refreshWallDisplay(outputIndex);
+    const outputWidth = 1920;
+    const outputHeight = 1080;
+    this.wallOutputs.forEach((output, index) => {
+      const outputLeft = index * outputWidth;
+      const localRect = this.intersectRects(
+        dirtyRect,
+        {x: outputLeft, y: 0, width: outputWidth, height: outputHeight}
+      );
+      if (!localRect) return;
+
+      this.refreshWallDisplayRect(index, {
+        x: localRect.x - outputLeft,
+        y: localRect.y,
+        width: localRect.width,
+        height: localRect.height
+      });
+    });
+  }
+
+  getWallDirtyRectForSourceRows(startRow, rowCount) {
+    const sourceWidth = this.canvas.width;
+    const sourceHeight = this.canvas.height;
+    if (!sourceWidth || !sourceHeight) return undefined;
+
+    const wallWidth = 1920 * (this.wallOutputs.length || 4);
+    const wallHeight = 1080;
+    const canvasRatio = sourceWidth / sourceHeight;
+    const wallRatio = wallWidth / wallHeight;
+    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
+    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
+    const drawnWidth = orientedWidth * scale;
+    const drawnHeight = orientedHeight * scale;
+    const left = (wallWidth - drawnWidth) / 2;
+    const top = (wallHeight - drawnHeight) / 2;
+    const endRow = startRow + rowCount;
+
+    if (!shouldRotate) {
+      return this.expandRectToPixels({
+        x: left,
+        y: top + startRow * scale,
+        width: drawnWidth,
+        height: rowCount * scale
+      }, wallWidth, wallHeight);
     }
+
+    const normalDirection = this.directionMode !== "rotated";
+    const xStart = normalDirection
+      ? left + startRow * scale
+      : left + (sourceHeight - endRow) * scale;
+
+    return this.expandRectToPixels({
+      x: xStart,
+      y: top,
+      width: rowCount * scale,
+      height: drawnHeight
+    }, wallWidth, wallHeight);
+  }
+
+  expandRectToPixels(rect, maxWidth, maxHeight) {
+    const x = this.clamp(Math.floor(rect.x) - 1, 0, maxWidth);
+    const y = this.clamp(Math.floor(rect.y) - 1, 0, maxHeight);
+    const right = this.clamp(Math.ceil(rect.x + rect.width) + 1, 0, maxWidth);
+    const bottom = this.clamp(Math.ceil(rect.y + rect.height) + 1, 0, maxHeight);
+    if (right <= x || bottom <= y) return undefined;
+    return {x, y, width: right - x, height: bottom - y};
+  }
+
+  intersectRects(a, b) {
+    const x = Math.max(a.x, b.x);
+    const y = Math.max(a.y, b.y);
+    const right = Math.min(a.x + a.width, b.x + b.width);
+    const bottom = Math.min(a.y + a.height, b.y + b.height);
+    if (right <= x || bottom <= y) return undefined;
+    return {x, y, width: right - x, height: bottom - y};
   }
 
   refreshWallDisplays() {
@@ -1617,6 +1682,26 @@ export class App {
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.save();
+    context.translate(-index * width, 0);
+    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
+    context.restore();
+  }
+
+  refreshWallDisplayRect(index, rect) {
+    const output = this.wallOutputs[index];
+    if (!output || !this.canvas.width || !this.canvas.height) return;
+
+    const {canvas, context} = output;
+    const width = 1920;
+    const height = 1080;
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+
+    context.save();
+    context.beginPath();
+    context.rect(rect.x, rect.y, rect.width, rect.height);
+    context.clip();
+    context.clearRect(rect.x, rect.y, rect.width, rect.height);
     context.translate(-index * width, 0);
     this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
     context.restore();
