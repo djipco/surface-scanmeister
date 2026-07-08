@@ -43,13 +43,17 @@ html.ui-overlay-hidden * {
 
 .wall-display {
   position: fixed;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   z-index: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+  width: 100vw;
+  height: 100vh;
   background: #000;
   opacity: 1;
+  transform: translate(-50%, -50%);
   transition: opacity 750ms ease;
 }
 
@@ -164,11 +168,15 @@ html.kiosk-mode body {
 .wall-grid-display {
   --grid-spacing: 100px;
   position: fixed;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   z-index: 2;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+  width: 100vw;
+  height: 100vh;
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 

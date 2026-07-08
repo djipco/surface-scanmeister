@@ -932,6 +932,12 @@ export class App {
     return 0;
   }
 
+  get wallDisplayAspectRatio() {
+    if (this.displayLayout === "wall-8-horizontal") return 32 / 9;
+    if (this.displayLayout === "wall-4-horizontal") return 16 / 9;
+    return 1;
+  }
+
   get activeWallOutputs() {
     return this.wallOutputs.slice(0, this.wallOutputCount);
   }
@@ -1634,8 +1640,11 @@ export class App {
     if (this.isWallDisplayLayout) {
       this.canvas.style.height = "";
       this.canvas.style.transform = "";
+      this.updateWallDisplaySize();
       return;
     }
+
+    this.updateWallDisplaySize();
 
     const availableWidth = Math.max(1, window.innerWidth);
     const availableHeight = Math.max(1, window.innerHeight);
@@ -1653,6 +1662,35 @@ export class App {
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+  }
+
+  updateWallDisplaySize() {
+    if (!this.ui.wallDisplay || !this.ui.wallGrid) return;
+
+    const displays = [this.ui.wallDisplay, this.ui.wallGrid];
+    if (!this.isWallDisplayLayout) {
+      displays.forEach(display => {
+        display.style.width = "";
+        display.style.height = "";
+      });
+      return;
+    }
+
+    const availableWidth = Math.max(1, window.innerWidth);
+    const availableHeight = Math.max(1, window.innerHeight);
+    const wallRatio = this.wallDisplayAspectRatio;
+    const viewportRatio = availableWidth / availableHeight;
+    const width = viewportRatio > wallRatio
+      ? availableHeight * wallRatio
+      : availableWidth;
+    const height = viewportRatio > wallRatio
+      ? availableHeight
+      : availableWidth / wallRatio;
+
+    displays.forEach(display => {
+      display.style.width = `${Math.round(width)}px`;
+      display.style.height = `${Math.round(height)}px`;
+    });
   }
 
   updateDisplayLayoutState() {
