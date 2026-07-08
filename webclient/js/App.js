@@ -1729,7 +1729,7 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
-    context.imageSmoothingEnabled = true;
+    context.imageSmoothingEnabled = false;
     context.translate(wallWidth / 2, wallHeight / 2);
     context.rotate(angle * Math.PI / 180);
     context.scale(scale, scale);
@@ -1759,7 +1759,7 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
-    context.imageSmoothingEnabled = true;
+    context.imageSmoothingEnabled = false;
     context.translate(wallWidth / 2, wallHeight / 2);
     context.rotate(angle * Math.PI / 180);
     context.scale(scale, scale);
