@@ -1578,7 +1578,13 @@ export class App {
   refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
     if (!this.isWallDisplayLayout || rowCount <= 0 || this.canvas.height <= 0) return;
 
-    const dirtyRect = this.getWallDirtyRectForSourceRows(startRow, rowCount);
+    const sourcePaddingRows = 2;
+    const sourceStartRow = this.clamp(startRow - sourcePaddingRows, 0, this.canvas.height);
+    const sourceEndRow = this.clamp(startRow + rowCount + sourcePaddingRows, 0, this.canvas.height);
+    const sourceRowCount = sourceEndRow - sourceStartRow;
+    if (sourceRowCount <= 0) return;
+
+    const dirtyRect = this.getWallDirtyRectForSourceRows(sourceStartRow, sourceRowCount);
     if (!dirtyRect) return;
 
     const outputWidth = 1920;
@@ -1596,8 +1602,8 @@ export class App {
         y: localRect.y,
         width: localRect.width,
         height: localRect.height,
-        sourceStartRow: startRow,
-        sourceRowCount: rowCount
+        sourceStartRow,
+        sourceRowCount
       });
     });
   }
