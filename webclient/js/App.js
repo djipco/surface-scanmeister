@@ -1709,7 +1709,6 @@ export class App {
     context.beginPath();
     context.rect(rect.x, rect.y, rect.width, rect.height);
     context.clip();
-    context.clearRect(rect.x, rect.y, rect.width, rect.height);
     context.translate(-index * width, 0);
     this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
     context.restore();
