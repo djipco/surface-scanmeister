@@ -51,6 +51,7 @@ export class App {
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
+  static SKIP_MAIN_CANVAS_IN_WALL_MODE = true;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -186,20 +187,25 @@ export class App {
 
     const rowCount = nextPaintedRows - this.paintedRows;
     const firstPaintedRow = this.paintedRows;
-    const revealBase = this.capturePixelRevealBase(firstPaintedRow, rowCount);
-    this.context.putImageData(
-      this.imageData,
-      0,
-      0,
-      0,
-      this.paintedRows,
-      this.canvas.width,
-      rowCount
-    );
+    const shouldPaintMainCanvas = this.shouldPaintMainCanvasLive();
+    const revealBase = shouldPaintMainCanvas
+      ? this.capturePixelRevealBase(firstPaintedRow, rowCount)
+      : undefined;
+    if (shouldPaintMainCanvas) {
+      this.context.putImageData(
+        this.imageData,
+        0,
+        0,
+        0,
+        this.paintedRows,
+        this.canvas.width,
+        rowCount
+      );
+    }
     const paintEnded = performance.now();
     const now = paintEnded;
     this.addPixelRevealBand(firstPaintedRow, rowCount, now, revealBase);
-    this.drawPixelRevealBands(now);
+    if (shouldPaintMainCanvas) this.drawPixelRevealBands(now);
     if (!this.isPixelRevealMode()) this.refreshWallDisplaysForRows(firstPaintedRow, rowCount);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
@@ -225,6 +231,14 @@ export class App {
       ? Math.ceil(pixelPosition / this.canvas.width)
       : Math.floor(pixelPosition / this.canvas.width);
     return this.clamp(completedRows, 0, this.canvas.height);
+  }
+
+  shouldPaintMainCanvasLive() {
+    return !(
+      App.SKIP_MAIN_CANVAS_IN_WALL_MODE &&
+      this.isWallDisplayLayout &&
+      !this.isPixelRevealMode()
+    );
   }
 
   getSpeedPaintRows(availableRows) {
@@ -1726,6 +1740,7 @@ export class App {
 
   refreshWallDisplays() {
     if (!this.isWallDisplayLayout) return;
+    this.ensureMainCanvasFromImageData();
     this.wallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
   }
 
@@ -2557,6 +2572,7 @@ export class App {
     if (this.scanFinalized) return;
 
     this.scanFinalized = true;
+    this.ensureMainCanvasFromImageData();
     this.position = 0;
     this.freezeDisplayFpsGraph();
     this.state = App.STATE_DATA_PARSED;
@@ -2583,6 +2599,7 @@ export class App {
   }
 
   async saveCanvasToFile(filename) {
+    this.ensureMainCanvasFromImageData();
 
     const blob = await new Promise(resolve => {
       this.canvas.toBlob(resolve, "image/png");
@@ -2602,6 +2619,14 @@ export class App {
       console.error("Could not save scan:", await response.text());
     }
 
+  }
+
+  ensureMainCanvasFromImageData() {
+    if (this.shouldPaintMainCanvasLive()) return;
+    if (!this.imageData?.data || !this.canvas.width || !this.canvas.height) return;
+    if (this.imageData.width !== this.canvas.width || this.imageData.height !== this.canvas.height) return;
+
+    this.context.putImageData(this.imageData, 0, 0);
   }
 
   setFullScreen(enabled) {
