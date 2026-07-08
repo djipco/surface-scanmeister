@@ -78,6 +78,9 @@ export class App {
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
     this.revealBands = [];
+    this.wallRefreshRequest = undefined;
+    this.pendingWallRefreshStartRow = undefined;
+    this.pendingWallRefreshEndRow = undefined;
     this.revealSourceCanvas = document.createElement("canvas");
     this.revealSourceContext = this.revealSourceCanvas.getContext("2d");
     this.revealPixelCanvas = document.createElement("canvas");
@@ -91,6 +94,7 @@ export class App {
 
   reset() {
     this.flushCanvasPaint();
+    this.cancelQueuedWallDisplayRows();
     if (this.parseRequest !== undefined) {
       cancelAnimationFrame(this.parseRequest);
       this.parseRequest = undefined;
@@ -192,7 +196,7 @@ export class App {
     const now = paintEnded;
     this.addPixelRevealBand(firstPaintedRow, rowCount, now, revealBase);
     this.drawPixelRevealBands(now);
-    if (!this.isPixelRevealMode()) this.refreshWallDisplaysForRows(firstPaintedRow, rowCount);
+    if (!this.isPixelRevealMode()) this.queueWallDisplayRows(firstPaintedRow, rowCount);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
     this.paintedRows = nextPaintedRows;
@@ -286,7 +290,7 @@ export class App {
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
-    refreshedBands.forEach(band => this.refreshWallDisplaysForRows(band.startRow, band.rowCount));
+    refreshedBands.forEach(band => this.queueWallDisplayRows(band.startRow, band.rowCount));
   }
 
   isPixelRevealMode() {
@@ -1572,7 +1576,48 @@ export class App {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
     }
+    if (!isWall) this.cancelQueuedWallDisplayRows();
     this.updateOverlayGridState();
+  }
+
+  queueWallDisplayRows(startRow, rowCount) {
+    if (!this.isWallDisplayLayout || rowCount <= 0 || this.canvas.height <= 0) return;
+
+    const nextStartRow = this.clamp(startRow, 0, this.canvas.height);
+    const nextEndRow = this.clamp(startRow + rowCount, 0, this.canvas.height);
+    if (nextEndRow <= nextStartRow) return;
+
+    this.pendingWallRefreshStartRow = this.pendingWallRefreshStartRow === undefined
+      ? nextStartRow
+      : Math.min(this.pendingWallRefreshStartRow, nextStartRow);
+    this.pendingWallRefreshEndRow = this.pendingWallRefreshEndRow === undefined
+      ? nextEndRow
+      : Math.max(this.pendingWallRefreshEndRow, nextEndRow);
+
+    if (this.wallRefreshRequest !== undefined) return;
+    this.wallRefreshRequest = requestAnimationFrame(() => {
+      this.wallRefreshRequest = undefined;
+      this.flushQueuedWallDisplayRows();
+    });
+  }
+
+  flushQueuedWallDisplayRows() {
+    if (this.pendingWallRefreshStartRow === undefined || this.pendingWallRefreshEndRow === undefined) return;
+
+    const startRow = this.pendingWallRefreshStartRow;
+    const rowCount = this.pendingWallRefreshEndRow - this.pendingWallRefreshStartRow;
+    this.pendingWallRefreshStartRow = undefined;
+    this.pendingWallRefreshEndRow = undefined;
+    this.refreshWallDisplaysForRows(startRow, rowCount);
+  }
+
+  cancelQueuedWallDisplayRows() {
+    if (this.wallRefreshRequest !== undefined) {
+      cancelAnimationFrame(this.wallRefreshRequest);
+      this.wallRefreshRequest = undefined;
+    }
+    this.pendingWallRefreshStartRow = undefined;
+    this.pendingWallRefreshEndRow = undefined;
   }
 
   refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
@@ -1669,10 +1714,12 @@ export class App {
 
   refreshWallDisplays() {
     if (!this.isWallDisplayLayout) return;
+    this.cancelQueuedWallDisplayRows();
     this.wallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
   }
 
   clearWallDisplays() {
+    this.cancelQueuedWallDisplayRows();
     this.wallOutputs.forEach(output => {
       output.context.clearRect(0, 0, output.canvas.width, output.canvas.height);
     });
