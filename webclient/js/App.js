@@ -917,11 +917,23 @@ export class App {
   }
 
   get displayLayout() {
-    return this.ui.displayLayout.value === "wall-4-horizontal" ? "wall-4-horizontal" : "single";
+    if (this.ui.displayLayout.value === "wall-4-horizontal") return "wall-4-horizontal";
+    if (this.ui.displayLayout.value === "wall-8-horizontal") return "wall-8-horizontal";
+    return "single";
   }
 
   get isWallDisplayLayout() {
-    return this.displayLayout === "wall-4-horizontal";
+    return this.displayLayout !== "single";
+  }
+
+  get wallOutputCount() {
+    if (this.displayLayout === "wall-8-horizontal") return 8;
+    if (this.displayLayout === "wall-4-horizontal") return 4;
+    return 0;
+  }
+
+  get activeWallOutputs() {
+    return this.wallOutputs.slice(0, this.wallOutputCount);
   }
 
   get directionMode() {
@@ -1645,7 +1657,9 @@ export class App {
 
   updateDisplayLayoutState() {
     const isWall = this.isWallDisplayLayout;
-    document.documentElement.classList.toggle("display-layout-wall-4", isWall);
+    document.documentElement.classList.toggle("display-layout-wall", isWall);
+    document.documentElement.classList.toggle("display-layout-wall-4", this.displayLayout === "wall-4-horizontal");
+    document.documentElement.classList.toggle("display-layout-wall-8", this.displayLayout === "wall-8-horizontal");
     if (this.ui.wallDisplay) {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
@@ -1670,7 +1684,7 @@ export class App {
 
     const outputWidth = 1920;
     const outputHeight = 1080;
-    this.wallOutputs.forEach((output, index) => {
+    this.activeWallOutputs.forEach((output, index) => {
       const outputLeft = index * outputWidth;
       const localRect = this.intersectRects(
         dirtyRect,
@@ -1718,7 +1732,7 @@ export class App {
     const sourceHeight = this.canvas.height;
     if (!sourceWidth || !sourceHeight) return undefined;
 
-    const wallWidth = 1920 * (this.wallOutputs.length || 4);
+    const wallWidth = 1920 * Math.max(1, this.wallOutputCount);
     const wallHeight = 1080;
     const canvasRatio = sourceWidth / sourceHeight;
     const wallRatio = wallWidth / wallHeight;
@@ -1775,7 +1789,7 @@ export class App {
   refreshWallDisplays() {
     if (!this.isWallDisplayLayout) return;
     this.ensureMainCanvasFromImageData();
-    this.wallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
+    this.activeWallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
   }
 
   clearWallDisplays() {
@@ -1797,7 +1811,7 @@ export class App {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.save();
     context.translate(-index * width, 0);
-    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
+    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputCount, height);
     context.restore();
   }
 
@@ -1818,7 +1832,7 @@ export class App {
     context.translate(-index * width, 0);
     this.drawSourceBandInVirtualWall(
       context,
-      width * this.wallOutputs.length,
+      width * this.wallOutputCount,
       height,
       rect.sourceCanvas,
       rect.sourceStartRow,
@@ -2228,7 +2242,11 @@ export class App {
   restoreDisplayLayout() {
     try {
       const value = localStorage.getItem(App.STORAGE_DISPLAY_LAYOUT);
-      this.ui.displayLayout.value = value === "wall-4-horizontal" ? "wall-4-horizontal" : "single";
+      if (value === "wall-4-horizontal" || value === "wall-8-horizontal") {
+        this.ui.displayLayout.value = value;
+      } else {
+        this.ui.displayLayout.value = "single";
+      }
       localStorage.setItem(App.STORAGE_DISPLAY_LAYOUT, this.ui.displayLayout.value);
     } catch (err) {
       this.ui.displayLayout.value = "single";

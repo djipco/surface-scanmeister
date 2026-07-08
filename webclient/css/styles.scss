@@ -36,7 +36,7 @@ html.ui-overlay-hidden * {
   opacity: 0;
 }
 
-.display-layout-wall-4 #canvas {
+.display-layout-wall #canvas {
   opacity: 0;
   pointer-events: none;
 }
@@ -67,6 +67,28 @@ html.ui-overlay-hidden * {
   display: block;
   background: transparent;
 }
+
+.display-layout-wall-4 .wall-output-5,
+.display-layout-wall-4 .wall-output-6,
+.display-layout-wall-4 .wall-output-7,
+.display-layout-wall-4 .wall-output-8 {
+  display: none;
+}
+
+.display-layout-wall-8 .wall-display,
+.display-layout-wall-8 .wall-grid-display {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.display-layout-wall-8 .wall-output-1 { grid-column: 1; grid-row: 1; }
+.display-layout-wall-8 .wall-output-2 { grid-column: 2; grid-row: 1; }
+.display-layout-wall-8 .wall-output-3 { grid-column: 1; grid-row: 2; }
+.display-layout-wall-8 .wall-output-4 { grid-column: 2; grid-row: 2; }
+.display-layout-wall-8 .wall-output-5 { grid-column: 3; grid-row: 1; }
+.display-layout-wall-8 .wall-output-6 { grid-column: 4; grid-row: 1; }
+.display-layout-wall-8 .wall-output-7 { grid-column: 3; grid-row: 2; }
+.display-layout-wall-8 .wall-output-8 { grid-column: 4; grid-row: 2; }
 
 html:fullscreen,
 html:fullscreen body,
