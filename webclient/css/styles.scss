@@ -53,6 +53,10 @@ html.ui-overlay-hidden * {
   transition: opacity 750ms ease;
 }
 
+html.wall-debug .wall-display {
+  background: #ff00ff;
+}
+
 .wall-display.hidden {
   display: none;
 }
