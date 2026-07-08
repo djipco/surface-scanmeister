@@ -16,6 +16,7 @@ export class App {
   static STORAGE_CLEAR_CANVAS = "scanmeister.clearCanvas";
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
+  static STORAGE_DISPLAY_LAYOUT = "scanmeister.displayLayout";
   static STORAGE_DIRECTION_MODE = "scanmeister.directionMode";
   static STORAGE_REVEAL_MODE = "scanmeister.revealMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
@@ -75,6 +76,7 @@ export class App {
     this.revealSourceContext = this.revealSourceCanvas.getContext("2d");
     this.revealPixelCanvas = document.createElement("canvas");
     this.revealPixelContext = this.revealPixelCanvas.getContext("2d");
+    this.wallOutputs = [];
 
     this.reset();
     this.setUpUi();
@@ -183,6 +185,7 @@ export class App {
     const now = paintEnded;
     this.addPixelRevealBand(firstPaintedRow, rowCount, now, revealBase);
     this.drawPixelRevealBands(now);
+    if (!this.isPixelRevealMode()) this.refreshWallDisplaysForRows(firstPaintedRow, rowCount);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
     this.paintedRows = nextPaintedRows;
@@ -254,12 +257,14 @@ export class App {
     }
 
     this.context.imageSmoothingEnabled = false;
+    const refreshedBands = [];
     this.revealBands = this.revealBands.filter(band => {
       const age = now - band.startedAt;
       const blockSize = this.getPixelRevealBlockSize(age);
 
       if (blockSize <= 1) {
         this.restorePixelRevealBand(band);
+        refreshedBands.push(band);
         return false;
       }
 
@@ -270,9 +275,11 @@ export class App {
         this.restorePixelRevealBand(band);
         this.drawPixelatedBand(band, blockSize, age);
       }
+      refreshedBands.push(band);
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
+    refreshedBands.forEach(band => this.refreshWallDisplaysForRows(band.startRow, band.rowCount));
   }
 
   isPixelRevealMode() {
@@ -797,6 +804,14 @@ export class App {
     return this.ui.renderMode.value === "speed" ? "speed" : "live";
   }
 
+  get displayLayout() {
+    return this.ui.displayLayout.value === "wall-4-horizontal" ? "wall-4-horizontal" : "single";
+  }
+
+  get isWallDisplayLayout() {
+    return this.displayLayout === "wall-4-horizontal";
+  }
+
   get directionMode() {
     return this.ui.directionMode.value === "rotated" ? "rotated" : "normal";
   }
@@ -898,6 +913,7 @@ export class App {
     this.ui.height = document.getElementById("height");
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
+    this.ui.displayLayout = document.getElementById("display-layout");
     this.ui.directionMode = document.getElementById("direction-mode");
     this.ui.revealMode = document.getElementById("reveal-mode");
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
@@ -911,6 +927,11 @@ export class App {
     this.ui.autoScanSecondsRow = document.getElementById("auto-scan-seconds-row");
     this.ui.autoScanSeconds = document.getElementById("auto-scan-seconds");
     this.ui.overlayGrid = document.getElementById("overlay-grid-display");
+    this.ui.wallDisplay = document.getElementById("wall-display");
+    this.wallOutputs = Array.from(document.querySelectorAll(".wall-output")).map(canvas => ({
+      canvas,
+      context: canvas.getContext("2d")
+    }));
     this.ui.overlayGridRow = document.getElementById("overlay-grid-row");
     this.ui.overlayGridToggle = document.getElementById("overlay-grid");
     this.ui.overlayGridSpacing = document.getElementById("overlay-grid-spacing");
@@ -952,6 +973,7 @@ export class App {
     this.restoreScanHeight();
     this.restoreDrawMode();
     this.restoreRenderMode();
+    this.restoreDisplayLayout();
     this.restoreDirectionMode();
     this.restoreRevealMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
@@ -1059,9 +1081,16 @@ export class App {
       this.scheduleCanvasPaint();
       this.updateRenderStats();
     });
+    this.ui.displayLayout.addEventListener("change", () => {
+      this.saveControlValue(this.ui.displayLayout, App.STORAGE_DISPLAY_LAYOUT);
+      this.updateDisplayLayoutState();
+      this.updateCanvasDisplaySize();
+      this.refreshWallDisplays();
+    });
     this.ui.directionMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.directionMode, App.STORAGE_DIRECTION_MODE);
       this.updateCanvasDisplaySize();
+      this.refreshWallDisplays();
     });
     this.ui.revealMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.revealMode, App.STORAGE_REVEAL_MODE);
@@ -1396,10 +1425,17 @@ export class App {
     if (this.canvas.height !== nextHeight) this.canvas.height = nextHeight;
     this.ui.size.innerText = `${nextWidth} × ${nextHeight} px`;
     this.updateCanvasDisplaySize();
+    this.refreshWallDisplays();
   }
 
   updateCanvasDisplaySize() {
     if (!this.displayPixelWidth || !this.displayPixelHeight) return;
+
+    if (this.isWallDisplayLayout) {
+      this.canvas.style.height = "";
+      this.canvas.style.transform = "";
+      return;
+    }
 
     const availableWidth = Math.max(1, window.innerWidth);
     const availableHeight = Math.max(1, window.innerHeight);
@@ -1417,6 +1453,81 @@ export class App {
 
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+  }
+
+  updateDisplayLayoutState() {
+    const isWall = this.isWallDisplayLayout;
+    document.documentElement.classList.toggle("display-layout-wall-4", isWall);
+    if (this.ui.wallDisplay) {
+      this.ui.wallDisplay.classList.toggle("hidden", !isWall);
+      this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
+    }
+  }
+
+  refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
+    if (!this.isWallDisplayLayout || rowCount <= 0 || this.canvas.height <= 0) return;
+
+    const sliceCount = this.wallOutputs.length || 4;
+    const sliceHeight = this.canvas.height / sliceCount;
+    const endRow = startRow + rowCount;
+    const firstSlice = this.clamp(Math.floor(startRow / sliceHeight), 0, sliceCount - 1);
+    const lastSlice = this.clamp(Math.floor((endRow - 1) / sliceHeight), 0, sliceCount - 1);
+
+    const refreshedSlices = new Set();
+    for (let sliceIndex = firstSlice; sliceIndex <= lastSlice; sliceIndex++) {
+      const outputIndex = this.directionMode === "rotated" ? sliceCount - 1 - sliceIndex : sliceIndex;
+      if (refreshedSlices.has(outputIndex)) continue;
+      refreshedSlices.add(outputIndex);
+      this.refreshWallDisplay(outputIndex);
+    }
+  }
+
+  refreshWallDisplays() {
+    if (!this.isWallDisplayLayout) return;
+    this.wallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
+  }
+
+  clearWallDisplays() {
+    this.wallOutputs.forEach(output => {
+      output.context.clearRect(0, 0, output.canvas.width, output.canvas.height);
+    });
+  }
+
+  refreshWallDisplay(index) {
+    const output = this.wallOutputs[index];
+    if (!output || !this.canvas.width || !this.canvas.height) return;
+
+    const {canvas, context} = output;
+    const width = 1920;
+    const height = 1080;
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.save();
+    context.translate(-index * width, 0);
+    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
+    context.restore();
+  }
+
+  drawSourceCanvasInVirtualWall(context, wallWidth, wallHeight) {
+    const sourceWidth = this.canvas.width;
+    const sourceHeight = this.canvas.height;
+    const canvasRatio = sourceWidth / sourceHeight;
+    const wallRatio = wallWidth / wallHeight;
+    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
+    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
+    const baseAngle = shouldRotate ? 270 : 180;
+    const directionOffset = this.directionMode === "rotated" ? 180 : 0;
+    const angle = (baseAngle + directionOffset) % 360;
+
+    context.imageSmoothingEnabled = true;
+    context.translate(wallWidth / 2, wallHeight / 2);
+    context.rotate(angle * Math.PI / 180);
+    context.scale(scale, scale);
+    context.drawImage(this.canvas, -sourceWidth / 2, -sourceHeight / 2);
   }
 
   setUpPanelDrag(panel, handle, storageKey = App.STORAGE_PARAMETERS_POSITION) {
@@ -1759,6 +1870,18 @@ export class App {
     }
   }
 
+  restoreDisplayLayout() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_DISPLAY_LAYOUT);
+      this.ui.displayLayout.value = value === "wall-4-horizontal" ? "wall-4-horizontal" : "single";
+      localStorage.setItem(App.STORAGE_DISPLAY_LAYOUT, this.ui.displayLayout.value);
+    } catch (err) {
+      this.ui.displayLayout.value = "single";
+      // Keep the interface usable if localStorage is unavailable.
+    }
+    this.updateDisplayLayoutState();
+  }
+
   restoreDirectionMode() {
     try {
       const value = localStorage.getItem(App.STORAGE_DIRECTION_MODE);
@@ -2013,6 +2136,7 @@ export class App {
     }
 
     this.canvas.classList.add("canvas-clearing");
+    if (this.ui.wallDisplay) this.ui.wallDisplay.classList.add("canvas-clearing");
     this.clearCanvasFadePromise = new Promise(resolve => {
       this.clearCanvasFadeTimer = setTimeout(() => {
         this.clearCanvasFadeTimer = undefined;
@@ -2027,7 +2151,11 @@ export class App {
     this.clearCanvasFadePromise = undefined;
     this.setImageSizeOverlay(pixelWidth, pixelHeight);
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    requestAnimationFrame(() => this.canvas.classList.remove("canvas-clearing"));
+    this.clearWallDisplays();
+    requestAnimationFrame(() => {
+      this.canvas.classList.remove("canvas-clearing");
+      if (this.ui.wallDisplay) this.ui.wallDisplay.classList.remove("canvas-clearing");
+    });
   }
 
   cancelCanvasClearFade() {
@@ -2035,6 +2163,7 @@ export class App {
     this.clearCanvasFadeTimer = undefined;
     this.clearCanvasFadePromise = undefined;
     this.canvas.classList.remove("canvas-clearing");
+    if (this.ui.wallDisplay) this.ui.wallDisplay.classList.remove("canvas-clearing");
   }
 
   parseQueuedScanData() {

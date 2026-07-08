@@ -109,7 +109,7 @@ pip3 install rpi-lgpio
 
 #### Start At Boot
 
-To configure ScanMeister to automatically start at boot, copy the `config/scanmeister.service` file
+To configure ScanMeister to automatically start at boot, copy the `system/scanmeister.service` file
 to `/etc/systemd/system/scanmeister.service`.
 
 Once the file is in place, issue the following command to tell `systemd` it exists:

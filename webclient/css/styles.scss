@@ -36,6 +36,56 @@ html.ui-overlay-hidden * {
   opacity: 0;
 }
 
+.display-layout-wall-4 #canvas {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wall-display {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  opacity: 1;
+  transition: opacity 750ms ease;
+}
+
+.wall-display.hidden {
+  display: none;
+}
+
+.wall-display.canvas-clearing {
+  opacity: 0;
+}
+
+.wall-output {
+  position: absolute;
+  width: 50vw;
+  height: 50vh;
+  display: block;
+  background: transparent;
+}
+
+.wall-output-1 {
+  top: 0;
+  left: 0;
+}
+
+.wall-output-2 {
+  top: 0;
+  left: 50vw;
+}
+
+.wall-output-3 {
+  top: 50vh;
+  left: 0;
+}
+
+.wall-output-4 {
+  top: 50vh;
+  left: 50vw;
+}
+
 html:fullscreen,
 html:fullscreen body,
 html.kiosk-mode,

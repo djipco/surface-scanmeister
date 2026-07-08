@@ -25,12 +25,17 @@
 #   sudo systemctl status scanmeister.service
 
 [Unit]
-Description=ScanMeister Scanner Daemon
-After=multi-user.target
+Description=ScanMeister Daemon
+After=network.target
 
 [Service]
 Type=simple
+User=scanmeister
+Group=scanmeister
+WorkingDirectory=/home/scanmeister/Desktop/surface-scanmeister
 ExecStart=/usr/bin/node /home/scanmeister/Desktop/surface-scanmeister/ScanMeister.js
+Restart=on-failure
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
