@@ -135,6 +135,9 @@ html.kiosk-mode body {
   position: fixed;
   inset: 0;
   z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   pointer-events: none;
 }
 
@@ -143,9 +146,9 @@ html.kiosk-mode body {
 }
 
 .wall-grid-output {
-  position: absolute;
-  width: 50vw;
-  height: 50vh;
+  position: relative;
+  width: 100%;
+  height: 100%;
   border: 2px solid rgba(255, 193, 7, 0.82);
   box-sizing: border-box;
   background-image:
