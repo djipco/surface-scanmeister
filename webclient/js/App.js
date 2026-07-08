@@ -21,6 +21,7 @@ export class App {
   static STORAGE_REVEAL_MODE = "scanmeister.revealMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
+  static STORAGE_SAVE_IMAGES = "scanmeister.saveImages";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
   static STORAGE_GRAPH_SAMPLING = "scanmeister.graphSampling";
@@ -904,6 +905,10 @@ export class App {
     return Boolean(this.ui.forceCalibration.checked);
   }
 
+  get saveImages() {
+    return Boolean(this.ui.saveImages.checked);
+  }
+
   get renderMode() {
     return this.ui.renderMode.value === "speed" ? "speed" : "live";
   }
@@ -1038,6 +1043,7 @@ export class App {
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
     this.ui.renderSpeed = document.getElementById("render-speed");
     this.ui.forceCalibration = document.getElementById("force-calibration");
+    this.ui.saveImages = document.getElementById("save-images");
     this.ui.debugToggle = document.getElementById("show-debug");
     this.ui.autoHideToggle = document.getElementById("auto-hide-ui");
     this.ui.autoHideSecondsRow = document.getElementById("auto-hide-seconds-row");
@@ -1110,6 +1116,7 @@ export class App {
     this.restoreRevealMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
+    this.restoreCheckboxValue(this.ui.saveImages, App.STORAGE_SAVE_IMAGES, true);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
     this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, true);
     this.restoreNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
@@ -1162,6 +1169,9 @@ export class App {
     this.ui.forceCalibration.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
+    });
+    this.ui.saveImages.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.saveImages, App.STORAGE_SAVE_IMAGES);
     });
     this.ui.debugToggle.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE);
@@ -2579,9 +2589,11 @@ export class App {
     this.ui.channelInput.disabled = false;
     this.updateScanButtonState();
     this.drawStatsGraphs({force: true});
-    const date = this.getFormattedDate(new Date());
-    const ch = this.channel.toString().padStart(2, "0");
-    this.saveCanvasToFile(`CH-${ch} ${date}.png`);
+    if (this.saveImages) {
+      const date = this.getFormattedDate(new Date());
+      const ch = this.channel.toString().padStart(2, "0");
+      this.saveCanvasToFile(`CH-${ch} ${date}.png`);
+    }
   }
 
   getFormattedDate(date) {
@@ -2600,9 +2612,10 @@ export class App {
 
   async saveCanvasToFile(filename) {
     this.ensureMainCanvasFromImageData();
+    const exportCanvas = this.getOrientedExportCanvas();
 
     const blob = await new Promise(resolve => {
-      this.canvas.toBlob(resolve, "image/png");
+      exportCanvas.toBlob(resolve, "image/png");
     });
     if (!blob) return;
 
@@ -2619,6 +2632,22 @@ export class App {
       console.error("Could not save scan:", await response.text());
     }
 
+  }
+
+  getOrientedExportCanvas() {
+    const exportCanvas = document.createElement("canvas");
+    const exportContext = exportCanvas.getContext("2d");
+    const sourceWidth = this.canvas.width;
+    const sourceHeight = this.canvas.height;
+    const angle = this.directionMode === "rotated" ? 90 : 270;
+
+    exportCanvas.width = sourceHeight;
+    exportCanvas.height = sourceWidth;
+    exportContext.imageSmoothingEnabled = true;
+    exportContext.translate(exportCanvas.width / 2, exportCanvas.height / 2);
+    exportContext.rotate(angle * Math.PI / 180);
+    exportContext.drawImage(this.canvas, -sourceWidth / 2, -sourceHeight / 2);
+    return exportCanvas;
   }
 
   ensureMainCanvasFromImageData() {
