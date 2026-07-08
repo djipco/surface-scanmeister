@@ -56,8 +56,6 @@ export class App {
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
     this.ui = {};
-    this.wallDebug = new URLSearchParams(window.location.search).get("wallDebug") === "1";
-    document.documentElement.classList.toggle("wall-debug", this.wallDebug);
     this.channelOutOfBounds = false;
     this.displayPixelWidth = this.canvas.width;
     this.displayPixelHeight = this.canvas.height;
@@ -845,7 +843,7 @@ export class App {
     if (isNaN(width)) {
       return undefined;
     } else {
-      return this.roundInputValue(this.ui.width, width);
+      return this.clampScanDimensionValue(this.ui.width, width);
     }
   }
 
@@ -854,7 +852,7 @@ export class App {
     if (isNaN(height)) {
       return undefined;
     } else {
-      return this.roundInputValue(this.ui.height, height);
+      return this.clampScanDimensionValue(this.ui.height, height);
     }
   }
 
@@ -1259,13 +1257,13 @@ export class App {
       this.updateCommandPreview();
     });
     this.ui.width.addEventListener("change", () => {
-      this.ui.width.value = this.roundInputValue(this.ui.width, this.scanWidth || 0);
+      this.ui.width.value = this.clampScanDimensionValue(this.ui.width, this.scanWidth || 0);
       this.saveScanWidth();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
     });
     this.ui.height.addEventListener("change", () => {
-      this.ui.height.value = this.roundInputValue(this.ui.height, this.scanHeight || 0);
+      this.ui.height.value = this.clampScanDimensionValue(this.ui.height, this.scanHeight || 0);
       this.saveScanHeight();
       this.updateExpectedImageSize();
       this.updateCommandPreview();
@@ -1675,9 +1673,8 @@ export class App {
   }
 
   clearWallDisplays() {
-    this.wallOutputs.forEach((output, index) => {
+    this.wallOutputs.forEach(output => {
       output.context.clearRect(0, 0, output.canvas.width, output.canvas.height);
-      this.drawWallDebugBackground(output.context, index, output.canvas.width, output.canvas.height);
     });
   }
 
@@ -1692,7 +1689,6 @@ export class App {
     if (canvas.height !== height) canvas.height = height;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
-    this.drawWallDebugBackground(context, index, width, height);
     context.save();
     context.translate(-index * width, 0);
     this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
@@ -1715,26 +1711,6 @@ export class App {
     context.clip();
     context.translate(-index * width, 0);
     this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
-    context.restore();
-  }
-
-  drawWallDebugBackground(context, index, width, height) {
-    if (!this.wallDebug) return;
-
-    const colors = [
-      "rgba(255, 0, 0, 0.45)",
-      "rgba(0, 255, 0, 0.45)",
-      "rgba(0, 128, 255, 0.45)",
-      "rgba(255, 220, 0, 0.45)"
-    ];
-
-    context.save();
-    context.fillStyle = colors[index] || "rgba(255, 0, 255, 0.45)";
-    context.fillRect(0, 0, width, height);
-    context.fillStyle = "rgba(0, 0, 0, 0.72)";
-    context.font = "700 48px Inter, Segoe UI, Arial, sans-serif";
-    context.textBaseline = "top";
-    context.fillText(`OUTPUT ${index + 1}`, 40, 36);
     context.restore();
   }
 
@@ -2013,6 +1989,12 @@ export class App {
     return parseFloat(this.clamp(value, min, max).toFixed(this.inputPrecision(input)));
   }
 
+  clampScanDimensionValue(input, value) {
+    const min = parseFloat(input.min);
+    const max = parseFloat(input.max);
+    return this.clamp(value, min, max);
+  }
+
   clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -2190,7 +2172,7 @@ export class App {
       const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH) ||
         this.ui.width.value ||
         App.DEFAULT_SCAN_WIDTH;
-      this.ui.width.value = this.clampInputValue(this.ui.width, parseFloat(width));
+      this.ui.width.value = this.clampScanDimensionValue(this.ui.width, parseFloat(width));
       localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.ui.width.value);
     } catch (err) {
       if (!this.ui.width.value) this.ui.width.value = App.DEFAULT_SCAN_WIDTH;
@@ -2211,7 +2193,7 @@ export class App {
       const height = localStorage.getItem(App.STORAGE_SCAN_HEIGHT) ||
         this.ui.height.value ||
         App.DEFAULT_SCAN_HEIGHT;
-      this.ui.height.value = this.clampInputValue(this.ui.height, parseFloat(height));
+      this.ui.height.value = this.clampScanDimensionValue(this.ui.height, parseFloat(height));
       localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.ui.height.value);
     } catch (err) {
       if (!this.ui.height.value) this.ui.height.value = App.DEFAULT_SCAN_HEIGHT;
