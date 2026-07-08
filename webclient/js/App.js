@@ -66,6 +66,8 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.displayFpsHistory = [];
+    this.displayFpsSamples = [];
+    this.currentDisplayFps = 0;
     this.displayFrameRequest = undefined;
     this.previousDisplayFrameTime = undefined;
     this.lastStatsGraphDrawTime = 0;
@@ -78,9 +80,6 @@ export class App {
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
     this.revealBands = [];
-    this.wallRefreshRequest = undefined;
-    this.pendingWallRefreshStartRow = undefined;
-    this.pendingWallRefreshEndRow = undefined;
     this.revealSourceCanvas = document.createElement("canvas");
     this.revealSourceContext = this.revealSourceCanvas.getContext("2d");
     this.revealPixelCanvas = document.createElement("canvas");
@@ -89,12 +88,12 @@ export class App {
 
     this.reset();
     this.setUpUi();
+    window.scanmeister = this;
     window.addEventListener("resize", () => this.updateCanvasDisplaySize());
   }
 
   reset() {
     this.flushCanvasPaint();
-    this.cancelQueuedWallDisplayRows();
     if (this.parseRequest !== undefined) {
       cancelAnimationFrame(this.parseRequest);
       this.parseRequest = undefined;
@@ -119,6 +118,8 @@ export class App {
     this.bufferHistory = [];
     this.speedHistory = [];
     this.displayFpsHistory = [];
+    this.displayFpsSamples = [];
+    this.currentDisplayFps = 0;
     this.previousDisplayFrameTime = undefined;
     this.lastStatsGraphDrawTime = 0;
     this.inputGraphFrozenAt = undefined;
@@ -196,7 +197,7 @@ export class App {
     const now = paintEnded;
     this.addPixelRevealBand(firstPaintedRow, rowCount, now, revealBase);
     this.drawPixelRevealBands(now);
-    if (!this.isPixelRevealMode()) this.queueWallDisplayRows(firstPaintedRow, rowCount);
+    if (!this.isPixelRevealMode()) this.refreshWallDisplaysForRows(firstPaintedRow, rowCount);
     const previousPaintedRows = this.previousPaintedRows;
     const previousFrameTime = this.lastFrameTime;
     this.paintedRows = nextPaintedRows;
@@ -290,7 +291,7 @@ export class App {
       return age < App.PIXEL_REVEAL_DURATION_MS;
     });
     this.context.imageSmoothingEnabled = true;
-    refreshedBands.forEach(band => this.queueWallDisplayRows(band.startRow, band.rowCount));
+    refreshedBands.forEach(band => this.refreshWallDisplaysForRows(band.startRow, band.rowCount));
   }
 
   isPixelRevealMode() {
@@ -595,13 +596,8 @@ export class App {
   }
 
   updateDisplayFrameStats(now) {
-    if (!this.isStatsDisplayed() || !this.isGraphEnabled("frameRate")) {
-      this.previousDisplayFrameTime = undefined;
-      return;
-    }
-
     if (!this.isScanActive() || this.statsGraphFrozenAt !== undefined) {
-      this.freezeDisplayFpsGraph();
+      if (this.isStatsDisplayed() && this.isGraphEnabled("frameRate")) this.freezeDisplayFpsGraph();
       this.previousDisplayFrameTime = undefined;
       return;
     }
@@ -609,10 +605,37 @@ export class App {
     if (this.previousDisplayFrameTime !== undefined) {
       const elapsed = now - this.previousDisplayFrameTime;
       if (elapsed > 0) {
-        this.updateDisplayFpsHistory(1000 / elapsed, now);
+        const framesPerSecond = 1000 / elapsed;
+        this.currentDisplayFps = framesPerSecond;
+        this.displayFpsSamples.push(framesPerSecond);
+        if (this.isStatsDisplayed() && this.isGraphEnabled("frameRate")) {
+          this.updateDisplayFpsHistory(framesPerSecond, now);
+        }
       }
     }
     this.previousDisplayFrameTime = now;
+  }
+
+  getFrameRateStats() {
+    const samples = this.displayFpsSamples.filter(value => value > 0);
+    if (samples.length === 0) {
+      return {
+        current: 0,
+        average: 0,
+        minimum: 0,
+        maximum: 0,
+        samples: 0
+      };
+    }
+
+    const total = samples.reduce((sum, value) => sum + value, 0);
+    return {
+      current: Number(this.currentDisplayFps.toFixed(1)),
+      average: Number((total / samples.length).toFixed(1)),
+      minimum: Number(Math.min(...samples).toFixed(1)),
+      maximum: Number(Math.max(...samples).toFixed(1)),
+      samples: samples.length
+    };
   }
 
   isScanActive() {
@@ -1576,48 +1599,7 @@ export class App {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
     }
-    if (!isWall) this.cancelQueuedWallDisplayRows();
     this.updateOverlayGridState();
-  }
-
-  queueWallDisplayRows(startRow, rowCount) {
-    if (!this.isWallDisplayLayout || rowCount <= 0 || this.canvas.height <= 0) return;
-
-    const nextStartRow = this.clamp(startRow, 0, this.canvas.height);
-    const nextEndRow = this.clamp(startRow + rowCount, 0, this.canvas.height);
-    if (nextEndRow <= nextStartRow) return;
-
-    this.pendingWallRefreshStartRow = this.pendingWallRefreshStartRow === undefined
-      ? nextStartRow
-      : Math.min(this.pendingWallRefreshStartRow, nextStartRow);
-    this.pendingWallRefreshEndRow = this.pendingWallRefreshEndRow === undefined
-      ? nextEndRow
-      : Math.max(this.pendingWallRefreshEndRow, nextEndRow);
-
-    if (this.wallRefreshRequest !== undefined) return;
-    this.wallRefreshRequest = requestAnimationFrame(() => {
-      this.wallRefreshRequest = undefined;
-      this.flushQueuedWallDisplayRows();
-    });
-  }
-
-  flushQueuedWallDisplayRows() {
-    if (this.pendingWallRefreshStartRow === undefined || this.pendingWallRefreshEndRow === undefined) return;
-
-    const startRow = this.pendingWallRefreshStartRow;
-    const rowCount = this.pendingWallRefreshEndRow - this.pendingWallRefreshStartRow;
-    this.pendingWallRefreshStartRow = undefined;
-    this.pendingWallRefreshEndRow = undefined;
-    this.refreshWallDisplaysForRows(startRow, rowCount);
-  }
-
-  cancelQueuedWallDisplayRows() {
-    if (this.wallRefreshRequest !== undefined) {
-      cancelAnimationFrame(this.wallRefreshRequest);
-      this.wallRefreshRequest = undefined;
-    }
-    this.pendingWallRefreshStartRow = undefined;
-    this.pendingWallRefreshEndRow = undefined;
   }
 
   refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
@@ -1714,12 +1696,10 @@ export class App {
 
   refreshWallDisplays() {
     if (!this.isWallDisplayLayout) return;
-    this.cancelQueuedWallDisplayRows();
     this.wallOutputs.forEach((output, index) => this.refreshWallDisplay(index));
   }
 
   clearWallDisplays() {
-    this.cancelQueuedWallDisplayRows();
     this.wallOutputs.forEach(output => {
       output.context.clearRect(0, 0, output.canvas.width, output.canvas.height);
     });
@@ -1776,7 +1756,7 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
-    context.imageSmoothingEnabled = false;
+    context.imageSmoothingEnabled = true;
     context.translate(wallWidth / 2, wallHeight / 2);
     context.rotate(angle * Math.PI / 180);
     context.scale(scale, scale);
@@ -1806,7 +1786,7 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
-    context.imageSmoothingEnabled = false;
+    context.imageSmoothingEnabled = true;
     context.translate(wallWidth / 2, wallHeight / 2);
     context.rotate(angle * Math.PI / 180);
     context.scale(scale, scale);
