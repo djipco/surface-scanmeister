@@ -257,23 +257,42 @@
         </div>
         <div class="stats-graph-title">
           <span>Input <span class="label-unit">(rows/s)</span></span>
+          <label class="toggle-switch stats-graph-toggle" aria-label="Show Input graph">
+            <input type="checkbox" id="show-input-graph" checked>
+            <span></span>
+          </label>
         </div>
         <canvas id="arrive-graph" width="280" height="104"></canvas>
         <div class="stats-graph-title">
           <span>Drawing Speed <span class="label-unit">(rows/s)</span></span>
-          <span class="stats-graph-value" id="speed-average">avg --</span>
+          <span class="stats-graph-title-actions">
+            <span class="stats-graph-value" id="speed-average">avg --</span>
+            <label class="toggle-switch stats-graph-toggle" aria-label="Show Drawing Speed graph">
+              <input type="checkbox" id="show-speed-graph" checked>
+              <span></span>
+            </label>
+          </span>
         </div>
         <canvas id="speed-graph" width="280" height="104"></canvas>
         <div class="stats-graph-title">
           <span>Frame Rate <span class="label-unit">(frames/s)</span></span>
-          <span class="stats-graph-value" id="display-fps-average">avg --</span>
+          <span class="stats-graph-title-actions">
+            <span class="stats-graph-value" id="display-fps-average">avg --</span>
+            <label class="toggle-switch stats-graph-toggle" aria-label="Show Frame Rate graph">
+              <input type="checkbox" id="show-frame-rate-graph" checked>
+              <span></span>
+            </label>
+          </span>
         </div>
         <canvas id="display-fps-graph" width="280" height="104"></canvas>
         <div class="stats-graph-title">
           <span>Buffer <span class="label-unit">(rows)</span></span>
+          <label class="toggle-switch stats-graph-toggle" aria-label="Show Buffer graph">
+            <input type="checkbox" id="show-buffer-graph" checked>
+            <span></span>
+          </label>
         </div>
         <canvas id="buffer-graph" width="280" height="104"></canvas>
-        <div class="stats-note" id="stats-graph-rate"></div>
       </div>
     </section>
 

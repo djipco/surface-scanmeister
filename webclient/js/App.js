@@ -24,6 +24,10 @@ export class App {
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
   static STORAGE_GRAPH_SAMPLING = "scanmeister.graphSampling";
+  static STORAGE_INPUT_GRAPH_VISIBLE = "scanmeister.inputGraphVisible";
+  static STORAGE_SPEED_GRAPH_VISIBLE = "scanmeister.speedGraphVisible";
+  static STORAGE_FRAME_RATE_GRAPH_VISIBLE = "scanmeister.frameRateGraphVisible";
+  static STORAGE_BUFFER_GRAPH_VISIBLE = "scanmeister.bufferGraphVisible";
   static STORAGE_AUTO_HIDE_ENABLED = "scanmeister.autoHideEnabled";
   static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
   static STORAGE_AUTO_SCAN_ENABLED = "scanmeister.autoScanEnabled";
@@ -472,14 +476,14 @@ export class App {
     const hasFullInput = this.canvas.height > 0 && availableRows >= this.canvas.height;
     const hasFinishedDrawing = hasFullInput && this.paintedRows >= availableRows;
 
-    if (this.inputGraphFrozenAt === undefined) {
+    if (this.isGraphEnabled("input") && this.inputGraphFrozenAt === undefined) {
       this.updateArrivalHistory(arrivalRowsPerSecond, graphTime);
       if (hasFullInput) this.inputGraphFrozenAt = graphTime;
     }
 
     if (this.statsGraphFrozenAt === undefined) {
-      this.updateBufferHistory(bufferedRows, graphTime);
-      this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
+      if (this.isGraphEnabled("buffer")) this.updateBufferHistory(bufferedRows, graphTime);
+      if (this.isGraphEnabled("speed")) this.updateSpeedHistory(paintedRowsPerSecond, graphTime);
       if (hasFinishedDrawing) this.statsGraphFrozenAt = graphTime;
     }
 
@@ -499,6 +503,7 @@ export class App {
   }
 
   updateDisplayFpsHistory(framesPerSecond, now = performance.now()) {
+    if (!this.isGraphEnabled("frameRate")) return;
     this.updateHistory(this.displayFpsHistory, framesPerSecond, now);
     this.displayFpsGraphFrozenAt = undefined;
   }
@@ -511,14 +516,17 @@ export class App {
   }
 
   drawArrivalGraph() {
+    if (!this.isGraphEnabled("input")) return;
     this.drawHistoryGraph(this.ui.arriveGraph, this.ui.arriveGraphContext, this.arrivalHistory, this.statsGraphFrozenAt);
   }
 
   drawSpeedGraph() {
+    if (!this.isGraphEnabled("speed")) return;
     this.drawHistoryGraph(this.ui.speedGraph, this.ui.speedGraphContext, this.speedHistory, this.statsGraphFrozenAt, {maxValue: 500});
   }
 
   drawDisplayFpsGraph() {
+    if (!this.isGraphEnabled("frameRate")) return;
     this.drawHistoryGraph(
       this.ui.displayFpsGraph,
       this.ui.displayFpsGraphContext,
@@ -529,11 +537,30 @@ export class App {
   }
 
   drawBufferGraph() {
+    if (!this.isGraphEnabled("buffer")) return;
     this.drawHistoryGraph(this.ui.bufferGraph, this.ui.bufferGraphContext, this.bufferHistory, this.statsGraphFrozenAt);
   }
 
   redrawStatsGraphs() {
     this.drawStatsGraphs({force: true});
+  }
+
+  setUpGraphToggle(toggle, storageKey) {
+    toggle.addEventListener("change", () => {
+      this.saveCheckboxValue(toggle, storageKey);
+      this.updateStatsGraphVisibility();
+      this.redrawStatsGraphs();
+    });
+  }
+
+  updateStatsGraphVisibility() {
+    Object.entries(this.ui.graphCanvases).forEach(([name, canvas]) => {
+      canvas.classList.toggle("hidden", !this.isGraphEnabled(name));
+    });
+
+    Object.entries(this.ui.graphAverageLabels).forEach(([name, label]) => {
+      if (!this.isGraphEnabled(name)) label.innerText = "avg --";
+    });
   }
 
   drawStatsGraphs(options = {}) {
@@ -553,11 +580,6 @@ export class App {
     this.updateStatsAverageDisplays();
   }
 
-  updateStatsGraphRateText() {
-    if (!this.ui.statsGraphRate) return;
-    this.ui.statsGraphRate.innerText = `Graphs update ${Math.round(this.graphSampling)} times per second`;
-  }
-
   scheduleDisplayFrameMonitor() {
     if (this.displayFrameRequest !== undefined) return;
 
@@ -569,12 +591,12 @@ export class App {
   }
 
   updateDisplayFrameStats(now) {
-    if (!this.isStatsDisplayed()) {
+    if (!this.isStatsDisplayed() || !this.isGraphEnabled("frameRate")) {
       this.previousDisplayFrameTime = undefined;
       return;
     }
 
-    if (!this.isScanActive()) {
+    if (!this.isScanActive() || this.statsGraphFrozenAt !== undefined) {
       this.freezeDisplayFpsGraph();
       this.previousDisplayFrameTime = undefined;
       return;
@@ -600,8 +622,17 @@ export class App {
   }
 
   updateStatsAverageDisplays() {
-    this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
-    this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
+    if (this.isGraphEnabled("speed")) {
+      this.updateAverageDisplay(this.ui.speedAverage, this.speedHistory);
+    } else {
+      this.ui.speedAverage.innerText = "avg --";
+    }
+
+    if (this.isGraphEnabled("frameRate")) {
+      this.updateAverageDisplay(this.ui.displayFpsAverage, this.displayFpsHistory);
+    } else {
+      this.ui.displayFpsAverage.innerText = "avg --";
+    }
   }
 
   updateAverageDisplay(element, history) {
@@ -898,6 +929,11 @@ export class App {
     return 1000 / Math.max(1, this.graphSampling);
   }
 
+  isGraphEnabled(name) {
+    const toggle = this.ui.graphToggles?.[name];
+    return !toggle || toggle.checked;
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -995,8 +1031,22 @@ export class App {
     this.ui.displayFpsAverage = document.getElementById("display-fps-average");
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
-    this.ui.statsGraphRate = document.getElementById("stats-graph-rate");
-    this.updateStatsGraphRateText();
+    this.ui.graphToggles = {
+      input: document.getElementById("show-input-graph"),
+      speed: document.getElementById("show-speed-graph"),
+      frameRate: document.getElementById("show-frame-rate-graph"),
+      buffer: document.getElementById("show-buffer-graph")
+    };
+    this.ui.graphCanvases = {
+      input: this.ui.arriveGraph,
+      speed: this.ui.speedGraph,
+      frameRate: this.ui.displayFpsGraph,
+      buffer: this.ui.bufferGraph
+    };
+    this.ui.graphAverageLabels = {
+      speed: this.ui.speedAverage,
+      frameRate: this.ui.displayFpsAverage
+    };
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
@@ -1030,7 +1080,11 @@ export class App {
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
     this.restoreNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING);
     if (!this.ui.graphSampling.value) this.ui.graphSampling.value = App.DEFAULT_GRAPH_SAMPLING;
-    this.updateStatsGraphRateText();
+    this.restoreCheckboxValue(this.ui.graphToggles.input, App.STORAGE_INPUT_GRAPH_VISIBLE, true);
+    this.restoreCheckboxValue(this.ui.graphToggles.speed, App.STORAGE_SPEED_GRAPH_VISIBLE, true);
+    this.restoreCheckboxValue(this.ui.graphToggles.frameRate, App.STORAGE_FRAME_RATE_GRAPH_VISIBLE, true);
+    this.restoreCheckboxValue(this.ui.graphToggles.buffer, App.STORAGE_BUFFER_GRAPH_VISIBLE, true);
+    this.updateStatsGraphVisibility();
     this.restoreUiOverlayVisibility();
 
     this.ui.serverHost.addEventListener("input", () => {
@@ -1115,14 +1169,16 @@ export class App {
     });
     this.ui.graphSampling.addEventListener("input", () => {
       this.saveNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING);
-      this.updateStatsGraphRateText();
     });
     this.ui.graphSampling.addEventListener("change", () => {
       this.ui.graphSampling.value = this.clampInputValue(this.ui.graphSampling, this.graphSampling);
       this.saveNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING, {normalize: true});
-      this.updateStatsGraphRateText();
       this.redrawStatsGraphs();
     });
+    this.setUpGraphToggle(this.ui.graphToggles.input, App.STORAGE_INPUT_GRAPH_VISIBLE);
+    this.setUpGraphToggle(this.ui.graphToggles.speed, App.STORAGE_SPEED_GRAPH_VISIBLE);
+    this.setUpGraphToggle(this.ui.graphToggles.frameRate, App.STORAGE_FRAME_RATE_GRAPH_VISIBLE);
+    this.setUpGraphToggle(this.ui.graphToggles.buffer, App.STORAGE_BUFFER_GRAPH_VISIBLE);
     this.ui.drawMode.addEventListener("change", () => {
       this.saveControlValue(this.ui.drawMode, App.STORAGE_DRAW_MODE);
     });

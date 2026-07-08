@@ -809,12 +809,29 @@ button:disabled {
   font-weight: 400;
 }
 
-.stats-note {
-  margin-top: 8px;
-  color: #9aa4ad;
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
-  font-size: 12px;
-  line-height: 14px;
+.stats-graph-title-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.stats-graph-toggle {
+  flex: 0 0 auto;
+}
+
+.stats-graph-toggle.toggle-switch {
+  width: 28px;
+  height: 16px;
+}
+
+.stats-graph-toggle.toggle-switch span::before {
+  width: 12px;
+  height: 12px;
+}
+
+.stats-graph-toggle.toggle-switch input:checked + span::before {
+  transform: translateX(12px);
 }
 
 #arrive-graph,
