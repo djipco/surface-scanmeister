@@ -51,6 +51,7 @@ export class App {
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
+  static USE_DIRECT_WALL_ROW_RENDERING = true;
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -84,6 +85,9 @@ export class App {
     this.revealSourceContext = this.revealSourceCanvas.getContext("2d");
     this.revealPixelCanvas = document.createElement("canvas");
     this.revealPixelContext = this.revealPixelCanvas.getContext("2d");
+    this.wallRowBandCanvas = document.createElement("canvas");
+    this.wallRowBandContext = this.wallRowBandCanvas.getContext("2d");
+    this.wallRowBandImageData = undefined;
     this.wallOutputs = [];
 
     this.reset();
@@ -1614,6 +1618,9 @@ export class App {
     const dirtyRect = this.getWallDirtyRectForSourceRows(sourceStartRow, sourceRowCount);
     if (!dirtyRect) return;
 
+    const directSourceCanvas = App.USE_DIRECT_WALL_ROW_RENDERING && !this.isPixelRevealMode()
+      ? this.getWallRowBandCanvas(sourceStartRow, sourceRowCount)
+      : undefined;
     const outputWidth = 1920;
     const outputHeight = 1080;
     this.wallOutputs.forEach((output, index) => {
@@ -1630,9 +1637,33 @@ export class App {
         width: localRect.width,
         height: localRect.height,
         sourceStartRow,
-        sourceRowCount
+        sourceRowCount,
+        sourceCanvas: directSourceCanvas
       });
     });
+  }
+
+  getWallRowBandCanvas(startRow, rowCount) {
+    const sourceWidth = this.canvas.width;
+    if (!this.imageData?.data || !sourceWidth || rowCount <= 0) return undefined;
+
+    if (this.wallRowBandCanvas.width !== sourceWidth) this.wallRowBandCanvas.width = sourceWidth;
+    if (this.wallRowBandCanvas.height !== rowCount) {
+      this.wallRowBandCanvas.height = rowCount;
+      this.wallRowBandImageData = undefined;
+    }
+    if (!this.wallRowBandImageData ||
+      this.wallRowBandImageData.width !== sourceWidth ||
+      this.wallRowBandImageData.height !== rowCount) {
+      this.wallRowBandImageData = this.wallRowBandContext.createImageData(sourceWidth, rowCount);
+    }
+
+    const rowBytes = sourceWidth * 4;
+    const sourceOffset = startRow * rowBytes;
+    const byteCount = rowCount * rowBytes;
+    this.wallRowBandImageData.data.set(this.imageData.data.subarray(sourceOffset, sourceOffset + byteCount));
+    this.wallRowBandContext.putImageData(this.wallRowBandImageData, 0, 0);
+    return this.wallRowBandCanvas;
   }
 
   getWallDirtyRectForSourceRows(startRow, rowCount) {
@@ -1737,8 +1768,51 @@ export class App {
     context.rect(rect.x, rect.y, rect.width, rect.height);
     context.clip();
     context.translate(-index * width, 0);
-    this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
+    if (rect.sourceCanvas) {
+      this.drawSourceBandInVirtualWall(
+        context,
+        width * this.wallOutputs.length,
+        height,
+        rect.sourceCanvas,
+        rect.sourceStartRow,
+        rect.sourceRowCount
+      );
+    } else {
+      this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
+    }
     context.restore();
+  }
+
+  drawSourceBandInVirtualWall(context, wallWidth, wallHeight, sourceCanvas, startRow, rowCount) {
+    const sourceWidth = this.canvas.width;
+    const sourceHeight = this.canvas.height;
+    if (!sourceWidth || !sourceHeight || !sourceCanvas || rowCount <= 0) return;
+
+    const canvasRatio = sourceWidth / sourceHeight;
+    const wallRatio = wallWidth / wallHeight;
+    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
+    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
+    const baseAngle = shouldRotate ? 270 : 180;
+    const directionOffset = this.directionMode === "rotated" ? 180 : 0;
+    const angle = (baseAngle + directionOffset) % 360;
+
+    context.imageSmoothingEnabled = true;
+    context.translate(wallWidth / 2, wallHeight / 2);
+    context.rotate(angle * Math.PI / 180);
+    context.scale(scale, scale);
+    context.drawImage(
+      sourceCanvas,
+      0,
+      0,
+      sourceWidth,
+      rowCount,
+      -sourceWidth / 2,
+      startRow - sourceHeight / 2,
+      sourceWidth,
+      rowCount
+    );
   }
 
   drawSourceRowsInVirtualWall(context, wallWidth, wallHeight, startRow, rowCount) {
