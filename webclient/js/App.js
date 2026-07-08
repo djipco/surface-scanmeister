@@ -23,6 +23,7 @@ export class App {
   static STORAGE_FORCE_CALIBRATION = "scanmeister.forceCalibration";
   static STORAGE_DEBUG_VISIBLE = "scanmeister.debugVisible";
   static STORAGE_SMOOTH_GRAPHS = "scanmeister.smoothGraphs";
+  static STORAGE_GRAPH_SAMPLING = "scanmeister.graphSampling";
   static STORAGE_AUTO_HIDE_ENABLED = "scanmeister.autoHideEnabled";
   static STORAGE_AUTO_HIDE_SECONDS = "scanmeister.autoHideSeconds";
   static STORAGE_AUTO_SCAN_ENABLED = "scanmeister.autoScanEnabled";
@@ -40,6 +41,7 @@ export class App {
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static DEFAULT_OVERLAY_GRID_SPACING = "100";
+  static DEFAULT_GRAPH_SAMPLING = "15";
   static PIXEL_REVEAL_DURATION_MS = 200;
   static CLEAR_CANVAS_FADE_MS = 750;
   static BUFFER_GRAPH_DURATION = 10000;
@@ -113,6 +115,7 @@ export class App {
     this.lastStatsGraphDrawTime = 0;
     this.inputGraphFrozenAt = undefined;
     this.statsGraphFrozenAt = undefined;
+    this.displayFpsGraphFrozenAt = undefined;
     this.width = undefined;
     this.height = undefined;
     this.rgbRemainder = new Uint8Array();
@@ -497,6 +500,7 @@ export class App {
 
   updateDisplayFpsHistory(framesPerSecond, now = performance.now()) {
     this.updateHistory(this.displayFpsHistory, framesPerSecond, now);
+    this.displayFpsGraphFrozenAt = undefined;
   }
 
   updateHistory(history, value, now = performance.now()) {
@@ -515,7 +519,13 @@ export class App {
   }
 
   drawDisplayFpsGraph() {
-    this.drawHistoryGraph(this.ui.displayFpsGraph, this.ui.displayFpsGraphContext, this.displayFpsHistory, this.statsGraphFrozenAt, {maxValue: 60});
+    this.drawHistoryGraph(
+      this.ui.displayFpsGraph,
+      this.ui.displayFpsGraphContext,
+      this.displayFpsHistory,
+      this.displayFpsGraphFrozenAt ?? this.statsGraphFrozenAt,
+      {maxValue: 60}
+    );
   }
 
   drawBufferGraph() {
@@ -530,7 +540,7 @@ export class App {
     if (!this.isStatsDisplayed()) return;
 
     const now = performance.now();
-    if (!options.force && now - this.lastStatsGraphDrawTime < App.STATS_GRAPH_THROTTLE_MS) {
+    if (!options.force && now - this.lastStatsGraphDrawTime < this.graphThrottleMs) {
       return;
     }
 
@@ -541,6 +551,11 @@ export class App {
     this.drawDisplayFpsGraph();
     this.drawBufferGraph();
     this.updateStatsAverageDisplays();
+  }
+
+  updateStatsGraphRateText() {
+    if (!this.ui.statsGraphRate) return;
+    this.ui.statsGraphRate.innerText = `Graphs update ${Math.round(this.graphSampling)} times per second`;
   }
 
   scheduleDisplayFrameMonitor() {
@@ -560,6 +575,7 @@ export class App {
     }
 
     if (!this.isScanActive()) {
+      this.freezeDisplayFpsGraph();
       this.previousDisplayFrameTime = undefined;
       return;
     }
@@ -576,6 +592,11 @@ export class App {
 
   isScanActive() {
     return this.state === App.STATE_REQUEST_SENT || this.state === App.STATE_HEADER_PARSED;
+  }
+
+  freezeDisplayFpsGraph() {
+    if (this.displayFpsGraphFrozenAt !== undefined || this.displayFpsHistory.length === 0) return;
+    this.displayFpsGraphFrozenAt = this.displayFpsHistory[this.displayFpsHistory.length - 1].time;
   }
 
   updateStatsAverageDisplays() {
@@ -867,6 +888,16 @@ export class App {
     return this.roundInputValue(this.ui.overlayGridSpacing, spacing);
   }
 
+  get graphSampling() {
+    const sampling = parseFloat(this.ui.graphSampling.value);
+    if (isNaN(sampling)) return parseFloat(App.DEFAULT_GRAPH_SAMPLING);
+    return this.roundInputValue(this.ui.graphSampling, sampling);
+  }
+
+  get graphThrottleMs() {
+    return 1000 / Math.max(1, this.graphSampling);
+  }
+
   get clearCanvasBeforeScan() {
     return this.ui.drawMode.value === "clear";
   }
@@ -946,6 +977,7 @@ export class App {
     this.ui.overlayGridToggle = document.getElementById("overlay-grid");
     this.ui.overlayGridSpacing = document.getElementById("overlay-grid-spacing");
     this.ui.smoothGraphs = document.getElementById("smooth-graphs");
+    this.ui.graphSampling = document.getElementById("graph-sampling");
     this.ui.fullscreenButton = document.getElementById("fullscreen");
     this.ui.quitKioskButton = document.getElementById("quit-kiosk");
     this.ui.command = document.getElementById("command");
@@ -964,10 +996,7 @@ export class App {
     this.ui.bufferGraph = document.getElementById("buffer-graph");
     this.ui.bufferGraphContext = this.ui.bufferGraph.getContext("2d");
     this.ui.statsGraphRate = document.getElementById("stats-graph-rate");
-    if (this.ui.statsGraphRate) {
-      this.ui.statsGraphRate.innerText =
-        `Graphs update ${Math.round(1000 / App.STATS_GRAPH_THROTTLE_MS)} times per second`;
-    }
+    this.updateStatsGraphRateText();
     this.restorePanelPosition(this.ui.renderStats, App.STORAGE_STATS_POSITION);
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
@@ -999,6 +1028,9 @@ export class App {
     this.restoreNumericValue(this.ui.overlayGridSpacing, App.STORAGE_OVERLAY_GRID_SPACING);
     if (!this.ui.overlayGridSpacing.value) this.ui.overlayGridSpacing.value = App.DEFAULT_OVERLAY_GRID_SPACING;
     this.restoreCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS, false);
+    this.restoreNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING);
+    if (!this.ui.graphSampling.value) this.ui.graphSampling.value = App.DEFAULT_GRAPH_SAMPLING;
+    this.updateStatsGraphRateText();
     this.restoreUiOverlayVisibility();
 
     this.ui.serverHost.addEventListener("input", () => {
@@ -1079,6 +1111,16 @@ export class App {
     });
     this.ui.smoothGraphs.addEventListener("change", () => {
       this.saveCheckboxValue(this.ui.smoothGraphs, App.STORAGE_SMOOTH_GRAPHS);
+      this.redrawStatsGraphs();
+    });
+    this.ui.graphSampling.addEventListener("input", () => {
+      this.saveNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING);
+      this.updateStatsGraphRateText();
+    });
+    this.ui.graphSampling.addEventListener("change", () => {
+      this.ui.graphSampling.value = this.clampInputValue(this.ui.graphSampling, this.graphSampling);
+      this.saveNumericValue(this.ui.graphSampling, App.STORAGE_GRAPH_SAMPLING, {normalize: true});
+      this.updateStatsGraphRateText();
       this.redrawStatsGraphs();
     });
     this.ui.drawMode.addEventListener("change", () => {
@@ -2266,9 +2308,11 @@ export class App {
 
     this.scanFinalized = true;
     this.position = 0;
+    this.freezeDisplayFpsGraph();
     this.state = App.STATE_DATA_PARSED;
     this.ui.channelInput.disabled = false;
     this.updateScanButtonState();
+    this.drawStatsGraphs({force: true});
     const date = this.getFormattedDate(new Date());
     const ch = this.channel.toString().padStart(2, "0");
     this.saveCanvasToFile(`CH-${ch} ${date}.png`);

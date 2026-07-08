@@ -778,6 +778,18 @@ button:disabled {
   font-weight: 600;
 }
 
+.stats-number-field {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.stats-number-field input {
+  width: 64px;
+  height: 26px;
+}
+
 .stats-graph-title {
   margin-top: 10px;
   display: flex;
