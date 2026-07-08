@@ -927,6 +927,7 @@ export class App {
     this.ui.autoScanSecondsRow = document.getElementById("auto-scan-seconds-row");
     this.ui.autoScanSeconds = document.getElementById("auto-scan-seconds");
     this.ui.overlayGrid = document.getElementById("overlay-grid-display");
+    this.ui.wallGrid = document.getElementById("wall-grid-display");
     this.ui.wallDisplay = document.getElementById("wall-display");
     this.wallOutputs = Array.from(document.querySelectorAll(".wall-output")).map(canvas => ({
       canvas,
@@ -1394,11 +1395,14 @@ export class App {
   updateOverlayGridState() {
     const isDisabled = !this.overlayGridEnabled;
     const spacing = this.clampInputValue(this.ui.overlayGridSpacing, this.overlayGridSpacing);
+    const useWallGrid = !isDisabled && this.isWallDisplayLayout;
 
     this.ui.overlayGridSpacing.disabled = isDisabled;
     this.ui.overlayGridRow.classList.toggle("disabled", isDisabled);
-    this.ui.overlayGrid.classList.toggle("hidden", isDisabled);
+    this.ui.overlayGrid.classList.toggle("hidden", isDisabled || useWallGrid);
+    this.ui.wallGrid.classList.toggle("hidden", isDisabled || !useWallGrid);
     this.ui.overlayGrid.style.setProperty("--grid-spacing", `${spacing}px`);
+    this.ui.wallGrid.style.setProperty("--grid-spacing", `${spacing}px`);
   }
 
   updateExpectedImageSize() {
@@ -1462,6 +1466,7 @@ export class App {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
     }
+    this.updateOverlayGridState();
   }
 
   refreshWallDisplaysForRows(startRow = 0, rowCount = this.canvas.height) {
