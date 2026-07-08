@@ -1595,7 +1595,9 @@ export class App {
         x: localRect.x - outputLeft,
         y: localRect.y,
         width: localRect.width,
-        height: localRect.height
+        height: localRect.height,
+        sourceStartRow: startRow,
+        sourceRowCount: rowCount
       });
     });
   }
@@ -1703,8 +1705,40 @@ export class App {
     context.clip();
     context.clearRect(rect.x, rect.y, rect.width, rect.height);
     context.translate(-index * width, 0);
-    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputs.length, height);
+    this.drawSourceRowsInVirtualWall(context, width * this.wallOutputs.length, height, rect.sourceStartRow, rect.sourceRowCount);
     context.restore();
+  }
+
+  drawSourceRowsInVirtualWall(context, wallWidth, wallHeight, startRow, rowCount) {
+    const sourceWidth = this.canvas.width;
+    const sourceHeight = this.canvas.height;
+    if (!sourceWidth || !sourceHeight || rowCount <= 0) return;
+
+    const canvasRatio = sourceWidth / sourceHeight;
+    const wallRatio = wallWidth / wallHeight;
+    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
+    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
+    const baseAngle = shouldRotate ? 270 : 180;
+    const directionOffset = this.directionMode === "rotated" ? 180 : 0;
+    const angle = (baseAngle + directionOffset) % 360;
+
+    context.imageSmoothingEnabled = true;
+    context.translate(wallWidth / 2, wallHeight / 2);
+    context.rotate(angle * Math.PI / 180);
+    context.scale(scale, scale);
+    context.drawImage(
+      this.canvas,
+      0,
+      startRow,
+      sourceWidth,
+      rowCount,
+      -sourceWidth / 2,
+      startRow - sourceHeight / 2,
+      sourceWidth,
+      rowCount
+    );
   }
 
   drawSourceCanvasInVirtualWall(context, wallWidth, wallHeight) {
