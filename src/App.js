@@ -58,6 +58,8 @@ export default class App {
 
     // Log start details
     logInfo(`Starting ${pkg.title} v${pkg.version}...`);
+    this.#logRuntimeContext();
+    this.#logConfiguredServices();
 
     // Check platform
     if (process.platform !== "linux") {
@@ -88,6 +90,7 @@ export default class App {
 
     // Update scanners list
     await this.#updateScanners();
+    this.#checkSaneScannerAccess();
 
     // Start HTTP server and call its start() method passing a reference to the list of available
     // scanners.
@@ -136,6 +139,30 @@ export default class App {
     await this.quit(1);
   }
 
+  #logRuntimeContext() {
+    logInfo(`Runtime: Node ${process.version} on ${process.platform}/${process.arch}.`);
+    logInfo(`Working directory: ${process.cwd()}`);
+    logInfo(`PATH: ${process.env.PATH || "not set"}`);
+  }
+
+  #logConfiguredServices() {
+    logInfo(`Configured logs path: ${config.paths.logs}`);
+    logInfo(`Configured scans path: ${config.paths.scans}`);
+    logInfo(
+      `Configured API server: ` +
+      `${config.network.api_server.address}:${config.network.api_server.port}`
+    );
+    logInfo(
+      `Configured static file server: ` +
+      `${config.network.files_server.address}:${config.network.files_server.port}`
+    );
+    logInfo(
+      `Configured OSC: listening on ` +
+      `${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ` +
+      `${config.network.osc_client.address}:${config.network.osc_client.port}`
+    );
+  }
+
   #checkPathPermissions() {
     [
       ["Logs", config.paths.logs],
@@ -169,21 +196,31 @@ export default class App {
     }
 
     logInfo(`scanimage found at ${scanImageCommand.executable}.`);
-    logInfo("USB scanners may be visible; checking SANE access with scanimage -L in the background...");
+  }
+
+  #checkSaneScannerAccess() {
+    const result = checkScannerAccessGroups();
+    const scanImageCommand = checkScanImageCommand();
+
+    if (!scanImageCommand.ok) {
+      return;
+    }
+
+    logInfo("Checking SANE scanner access with scanimage -L in the background...");
 
     checkScanImageAccess()
       .then(scanImage => {
         if (scanImage.ok) {
-          logInfo(`scanimage can access scanners: ${scanImage.output}`);
+          logInfo(`SANE scanner access confirmed: ${scanImage.output}`);
         } else {
           logWarn(
-            `scanimage could not list scanners for service user ${formatUserInfo(result.user)}. ` +
+            `SANE scanner access warning for service user ${formatUserInfo(result.user)}. ` +
             `Output: ${scanImage.output || "none"}. Error: ${scanImage.error || "none"}.`
           );
         }
       })
       .catch(error => {
-        logWarn(`scanimage access check failed unexpectedly: ${error.message}`);
+        logWarn(`SANE scanner access check failed unexpectedly: ${error.message}`);
       });
   }
 

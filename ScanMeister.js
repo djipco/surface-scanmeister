@@ -16,6 +16,18 @@ import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+console.log("ScanMeister Daemon starting...");
+
+process.on("uncaughtException", error => {
+  console.error(`\x1b[91m Uncaught exception: ${error.stack || error} \x1b[0m`);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", reason => {
+  console.error(`\x1b[91m Unhandled rejection: ${reason?.stack || reason} \x1b[0m`);
+  process.exit(1);
+});
+
 if (process.cwd() !== __dirname) {
 
   try {

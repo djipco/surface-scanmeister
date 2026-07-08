@@ -21,6 +21,7 @@ export class Scanner extends EventEmitter {
   #scanning = false;    // Whether the device is currently scanning
   #systemName;          // System name (e.g. genesys:libusb:001:071)
   #abortPromise = undefined;
+  #scanStartedAt = null;
 
   constructor(osc, descriptor = {}) {
 
@@ -79,15 +80,24 @@ export class Scanner extends EventEmitter {
 
     // Start scan
     this.#scanning = true;
+    this.#scanStartedAt = Date.now();
     logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
+    logInfo(
+      `Scan parameters for channel ${this.channel}: ` +
+      `resolution=${options.resolution}, width=${options.width}, height=${options.height}, ` +
+      `brightness=${options.brightness}, contrast=${options.contrast}, ` +
+      `forceCalibration=${options.forceCalibration === true}`
+    );
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 1}]);
 
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
+    const args = this.getScanCommandArgs(config, options);
+    logInfo(`scanimage command for channel ${this.channel}: ${this.#formatShellCommand("scanimage", args)}`);
 
     this.scanImageSpawner.execute(
       "scanimage",
-      this.getScanCommandArgs(config, options),
+      args,
       {
         detached: false,
         shell: false,
@@ -101,6 +111,13 @@ export class Scanner extends EventEmitter {
       this.scanImageSpawner.pipe(options.pipe, "stdout");
     }
 
+  }
+
+  #formatShellCommand(command, args) {
+    return [command, ...args].map(arg => {
+      if (/^[A-Za-z0-9_./:=+-]+$/.test(arg)) return arg;
+      return "'" + arg.replaceAll("'", "'\\''") + "'";
+    }).join(" ");
   }
 
   getScanCommandArgs(config, options = {}) {
@@ -211,6 +228,7 @@ export class Scanner extends EventEmitter {
 
     // Send OSC update (wait a little so the messages can be properly sent)
     this.#scanning = false;
+    this.#scanStartedAt = null;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     await new Promise(resolve => setTimeout(resolve, 50));
 
@@ -241,11 +259,17 @@ export class Scanner extends EventEmitter {
   }
 
   #onScanImageEnd() {
+    const durationMs = this.#scanStartedAt ? Date.now() - this.#scanStartedAt : null;
     this.#scanning = false;
+    this.#scanStartedAt = null;
     this.scanImageSpawner = undefined;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
-    logInfo(`Scan completed with ${this.nameAndPort}`);
+    logInfo(
+      `Scan completed with ${this.nameAndPort}` +
+      (durationMs === null ? "" : ` in ${(durationMs / 1000).toFixed(1)}s`) +
+      "."
+    );
   }
 
   #sendOscMessage(address, args = []) {

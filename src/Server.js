@@ -134,12 +134,13 @@ export class Server extends EventEmitter {
         await mkdir(config.paths.scans, {recursive: true});
         const filename = parsed.filename.endsWith('.png') ? parsed.filename : parsed.filename + '.png';
         const filePath = path.join(config.paths.scans, filename);
+        logInfo(`Saving scan (${body.length} bytes) to ${filePath}.`);
         await writeFile(filePath, body);
         logInfo(`Saved scan to ${filePath}.`);
         response.writeHead(200, {'Content-Type': 'application/json'});
         response.end(JSON.stringify({path: filePath}));
       } catch (err) {
-        logWarn(`Could not save scan. Error: ${err}`);
+        logWarn(`Could not save scan as ${parsed.filename}. Error: ${err}`);
         response.writeHead(500, {'Content-Type': 'text/plain'});
         response.end('Could not save scan');
       }
@@ -157,6 +158,10 @@ export class Server extends EventEmitter {
       return;
     } else if (parsed.command === "cancel") {
       const wasScanning = scanner.scanning;
+      logInfo(
+        `Cancel request received for channel ${parsed.channel} from ` +
+        `${request.socket.remoteAddress}:${request.socket.remotePort}. Scanning: ${wasScanning}.`
+      );
       if (wasScanning) await scanner.abort();
       response.writeHead(200, {'Content-Type': 'application/json'});
       response.end(JSON.stringify({cancelled: wasScanning}));
