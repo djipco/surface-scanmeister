@@ -3,17 +3,33 @@ import "winston-daily-rotate-file";
 import { readFile } from 'fs/promises';
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 import {Configuration as config} from "../config/Configuration.js";
+import {checkWritableDirectory, formatWritableDirectoryError} from "./Permissions.js";
 
-// Prepare daily rotate file transport
-const drfTransport = new transports.DailyRotateFile({
-  level: 'debug',
-  filename: `${pkg.name}.%DATE%.log`,
-  dirname: config.paths.logs,
-  datePattern: 'YYYY-MM-DD',
-  zippedArchive: true,
-  maxSize: '20m',
-  maxFiles: '60d'
-});
+const logDirectoryStatus = checkWritableDirectory("Logs", config.paths.logs);
+const activeTransports = [
+  new transports.Console({
+    format: format.combine(
+      format.colorize({all: true, colors: {info: "white", warn: "yellow", error: "red"}}),
+      format.printf(info => `${info.message}`),
+    )
+  })
+];
+
+if (logDirectoryStatus.ok) {
+  activeTransports.push(
+    new transports.DailyRotateFile({
+      level: 'debug',
+      filename: `${pkg.name}.%DATE%.log`,
+      dirname: config.paths.logs,
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '60d'
+    })
+  );
+} else {
+  console.error(formatWritableDirectoryError(logDirectoryStatus));
+}
 
 // Create logger
 const logger = createLogger({
@@ -26,15 +42,7 @@ const logger = createLogger({
       return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
     })
   ),
-  transports: [
-    drfTransport,
-    new transports.Console({
-      format: format.combine(
-        format.colorize({all: true, colors: {info: "white", warn: "yellow", error: "red"}}),
-        format.printf(info => `${info.message}`),
-      )
-    })
-  ]
+  transports: activeTransports
 });
 
 // Export functions

@@ -41,7 +41,7 @@ export class App {
   static DEFAULT_SERVER_HOST = "127.0.0.1";
   static DEFAULT_SERVER_PORT = "5678";
   static DEFAULT_SCAN_WIDTH = "5000";
-  static DEFAULT_SCAN_HEIGHT = "216.9";
+  static DEFAULT_SCAN_HEIGHT = "216";
   static DEFAULT_RENDER_SPEED = "100";
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";

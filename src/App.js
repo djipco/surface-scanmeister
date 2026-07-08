@@ -14,6 +14,15 @@ import {ScannerMappings} from "../config/ScannerMappings.js";
 import {Server} from "./Server.js";
 import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
+import {
+  checkScannerAccessGroups,
+  checkScanImageAccess,
+  checkScanImageCommand,
+  checkWritableDirectory,
+  formatScannerAccessGroupWarning,
+  formatUserInfo,
+  formatWritableDirectoryError
+} from "./Permissions.js";
 
 export default class App {
 
@@ -56,6 +65,9 @@ export default class App {
       await this.quit(1);
       return;
     }
+
+    this.#checkPathPermissions();
+    this.#checkScannerAccessPermissions();
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
     // reference to the OSC object to send status.
@@ -122,6 +134,57 @@ export default class App {
   async #onHttpServerError(err) {
     logError(err);
     await this.quit(1);
+  }
+
+  #checkPathPermissions() {
+    [
+      ["Logs", config.paths.logs],
+      ["Scans", config.paths.scans]
+    ].forEach(([label, directory]) => {
+      const result = checkWritableDirectory(label, directory);
+
+      if (result.ok) {
+        logInfo(`${label} directory is writable: ${result.absolutePath}`);
+      } else {
+        logWarn(formatWritableDirectoryError(result));
+      }
+    });
+  }
+
+  #checkScannerAccessPermissions() {
+    const result = checkScannerAccessGroups();
+
+    logInfo(`Service user: ${formatUserInfo(result.user)}`);
+
+    if (result.ok) {
+      logInfo("Scanner access groups look correct.");
+    } else {
+      logWarn(formatScannerAccessGroupWarning(result));
+    }
+
+    const scanImageCommand = checkScanImageCommand();
+    if (!scanImageCommand.ok) {
+      logWarn(`scanimage was not found in PATH for service user ${formatUserInfo(result.user)}.`);
+      return;
+    }
+
+    logInfo(`scanimage found at ${scanImageCommand.executable}.`);
+    logInfo("USB scanners may be visible; checking SANE access with scanimage -L in the background...");
+
+    checkScanImageAccess()
+      .then(scanImage => {
+        if (scanImage.ok) {
+          logInfo(`scanimage can access scanners: ${scanImage.output}`);
+        } else {
+          logWarn(
+            `scanimage could not list scanners for service user ${formatUserInfo(result.user)}. ` +
+            `Output: ${scanImage.output || "none"}. Error: ${scanImage.error || "none"}.`
+          );
+        }
+      })
+      .catch(error => {
+        logWarn(`scanimage access check failed unexpectedly: ${error.message}`);
+      });
   }
 
   #activateDistanceSensors() {

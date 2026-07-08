@@ -1,6 +1,6 @@
 ### Node template
 # Log files
-/logs/*
+/logs/
 
 # Node.js modules
 /node_modules/
@@ -10,7 +10,7 @@
 /.idea/*
 
 # Images directory
-/scans/*
+/scans/
 
 # NW.js Application (different on different platforms)
 /webclient/nwjs

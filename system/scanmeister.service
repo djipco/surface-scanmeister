@@ -1,12 +1,11 @@
-# This file defines ScanMeister as a systemd service that can be configured to start at system
-# launch. It should be placed in this location on the Raspberry Pi:
+# This file defines ScanMeister as a systemd service that can be configured to start at system launch. It should be
+# placed in this location on the Raspberry Pi:
 #
 #   /etc/systemd/system/scanmeister.service
 #
 #   sudo cp scanmeister.service /etc/systemd/system/
 #
-# Once the file is in place, issue the following command to inform systemd that a new service is
-# available:
+# Once the file is in place, issue the following command to inform systemd that a new service is available:
 #
 #   sudo systemctl daemon-reload
 #
@@ -14,6 +13,7 @@
 #
 #   sudo systemctl start scanmeister.service
 #   sudo systemctl stop scanmeister.service
+#   sudo systemctl restart scanmeister.service
 #
 # To configure ScanMeister to start on system boot (or disable it):
 #

@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=ScanMeister
-Comment=Manually start the ScanMeister scanner control daemon
-Exec=bash -c "cd %k; node ScanMeister.js; read"
-Icon=obconf
-Terminal=true
-Categories=Utility

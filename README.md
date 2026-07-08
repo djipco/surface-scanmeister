@@ -107,41 +107,73 @@ sudo apt remove python3-rpi.gpio
 pip3 install rpi-lgpio
 ```
 
-#### Start At Boot
+#### Server Daemon
 
-To configure ScanMeister to automatically start at boot, copy the `system/scanmeister.service` file
-to `/etc/systemd/system/scanmeister.service`.
+The ScanMeister server is meant to run in the background as a `systemd` service. The repository
+contains the service definition in `system/scanmeister.service`.
 
-Once the file is in place, issue the following command to tell `systemd` it exists:
+Copy it to the system services folder on the Raspberry Pi:
+
+```sh
+sudo cp system/scanmeister.service /etc/systemd/system/scanmeister.service
+```
+
+Then tell `systemd` to reload its service definitions:
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-To make ScanMeister automatically start on boot:
+Enable the service so it starts automatically when the Pi boots:
 
 ```sh
 sudo systemctl enable scanmeister.service
 ```
 
-You can also stop it from starting on boot with:
-
-```sh
-sudo systemctl disable scanmeister.service
-```
-
-To manually start or stop it:
+Start or stop the server manually with:
 
 ```sh
 sudo systemctl start scanmeister.service
 sudo systemctl stop scanmeister.service
 ```
 
-To check if the application is running properly or to see if any error messages have been 
-triggered:
+Restart the server after changing the configuration:
+
+```sh
+sudo systemctl restart scanmeister.service
+```
+
+Check whether the server is running properly and view recent messages:
 
 ```sh
 sudo systemctl status scanmeister.service
+```
+
+To stop ScanMeister from starting automatically on boot:
+
+```sh
+sudo systemctl disable scanmeister.service
+```
+
+The service runs as the `scanmeister` user and uses the project folder as its working directory:
+
+```ini
+User=scanmeister
+Group=scanmeister
+WorkingDirectory=/home/scanmeister/Desktop/surface-scanmeister
+```
+
+This matters for logs, saved scans, and permissions. The `logs` and `scans` folders must be
+writable by the `scanmeister` user.
+
+#### Client Launcher
+
+The graphical client is opened separately from the server. Use the `ScanMeister Client.desktop`
+launcher in the project folder. It opens Chromium in kiosk mode and points it to the local web
+client:
+
+```sh
+http://localhost:8080?kiosk=1
 ```
 
 #### Configuration
@@ -168,17 +200,10 @@ sudo systemctl stop scanmeister.service
 sudo systemctl start scanmeister.service
 ```
 
-#### Manual Launch
+#### Manual Server Launch
 
-Typically, `scanmeister` is started at boot by `systemctl`. You can also start it manually by 
-double-clicking on the `ScanMeister` icon found in the project folder.
-
-    You can deactivate the annoying "Execute File" prompt by opening the File Manager and going to 
-    Edit -> Preferences -> General and checking the option that says "Don't ask options on launch 
-    executable file".
-
-You can also issue the following command in a Terminal from inside the `surface-scanmeister` 
-directory:
+Normally, the server should be controlled through `systemctl`. For development only, it can still be
+started manually from inside the `surface-scanmeister` directory:
 
 ```sh
 node ScanMeister.js
