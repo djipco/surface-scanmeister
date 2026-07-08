@@ -135,6 +135,23 @@ html.kiosk-mode body {
   background-repeat: no-repeat, no-repeat, repeat, repeat;
 }
 
+.wall-grid-output::after {
+  content: attr(data-screen);
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 193, 7, 0.82);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  color: rgba(255, 231, 153, 0.96);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+}
+
 .controls-panel {
   position: absolute;
   top: 16px;

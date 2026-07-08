@@ -1359,7 +1359,10 @@ export class App {
   }
 
   setUpEnterToValidateParameters() {
-    const fields = this.ui.controlsPanel.querySelectorAll("input:not([type='checkbox']), select");
+    const fields = [
+      ...this.ui.controlsPanel.querySelectorAll("input:not([type='checkbox']), select"),
+      ...this.ui.renderStats.querySelectorAll("input:not([type='checkbox']), select")
+    ];
     fields.forEach(field => {
       field.addEventListener("keydown", event => {
         if (event.key !== "Enter") return;
