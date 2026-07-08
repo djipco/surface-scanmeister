@@ -139,60 +139,15 @@ html.kiosk-mode body {
 }
 
 .wall-grid-output {
-  --wall-grid-origin: 0px;
   position: absolute;
   width: 50vw;
   height: 50vh;
+  border: 2px solid rgba(255, 193, 7, 0.82);
   box-sizing: border-box;
-  background-image: repeating-linear-gradient(to right, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing)), repeating-linear-gradient(to bottom, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing)), linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68));
-  background-position: var(--wall-grid-origin) 0, 0 center, 0 center;
-  background-size: var(--grid-spacing) 100%, 100% var(--grid-spacing), 100% 2px;
-  background-repeat: repeat, repeat, no-repeat;
-}
-
-.wall-grid-output::before,
-.wall-grid-output::after {
-  content: "";
-  position: absolute;
-  background: rgba(255, 193, 7, 0.82);
-}
-
-.wall-grid-output::before {
-  top: 0;
-  bottom: 0;
-  width: 2px;
-}
-
-.wall-grid-output::after {
-  left: 0;
-  right: 0;
-  height: 2px;
-}
-
-.wall-grid-output:nth-child(1)::before {
-  left: 0;
-}
-
-.wall-grid-output:nth-child(2)::before {
-  right: 0;
-}
-
-.wall-grid-output:nth-child(3)::before {
-  left: 0;
-}
-
-.wall-grid-output:nth-child(4)::before {
-  right: 0;
-}
-
-.wall-grid-output:nth-child(1)::after,
-.wall-grid-output:nth-child(2)::after {
-  top: 0;
-}
-
-.wall-grid-output:nth-child(3)::after,
-.wall-grid-output:nth-child(4)::after {
-  bottom: 0;
+  background-image: linear-gradient(rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)), linear-gradient(90deg, rgba(255, 193, 7, 0.68), rgba(255, 193, 7, 0.68)), repeating-linear-gradient(to right, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing)), repeating-linear-gradient(to bottom, rgba(130, 180, 255, 0.28) 0, rgba(130, 180, 255, 0.28) 1px, transparent 1px, transparent var(--grid-spacing));
+  background-position: center center, center center, calc(50% - var(--grid-spacing) / 2) 0, 0 calc(50% - var(--grid-spacing) / 2);
+  background-size: 100% 2px, 2px 100%, var(--grid-spacing) 100%, 100% var(--grid-spacing);
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
 }
 
 .controls-panel {
