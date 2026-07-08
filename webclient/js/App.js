@@ -2711,17 +2711,27 @@ export class App {
     });
     if (!blob) return;
 
-    const response = await fetch(
-      this.serverUrl + "/save?filename=" + encodeURIComponent(filename),
-      {
-        method: "POST",
-        headers: {"Content-Type": "image/png"},
-        body: blob
-      }
-    );
+    try {
+      const params = new URLSearchParams({
+        filename
+      });
+      const response = await fetch(
+        this.serverUrl + "/save?" + params,
+        {
+          method: "POST",
+          headers: {"Content-Type": "image/png"},
+          body: blob
+        }
+      );
 
-    if (!response.ok) {
-      console.error("Could not save scan:", await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Could not save scan:", errorText);
+        this.setCommandPreviewText("Could not save scan", true);
+      }
+    } catch (err) {
+      console.error("Could not save scan:", err);
+      this.setCommandPreviewText("Could not save scan", true);
     }
 
   }
