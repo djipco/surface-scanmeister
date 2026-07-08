@@ -515,7 +515,7 @@ export class App {
   }
 
   drawDisplayFpsGraph() {
-    this.drawHistoryGraph(this.ui.displayFpsGraph, this.ui.displayFpsGraphContext, this.displayFpsHistory, undefined, {maxValue: 120});
+    this.drawHistoryGraph(this.ui.displayFpsGraph, this.ui.displayFpsGraphContext, this.displayFpsHistory, this.statsGraphFrozenAt, {maxValue: 60});
   }
 
   drawBufferGraph() {
@@ -559,6 +559,11 @@ export class App {
       return;
     }
 
+    if (!this.isScanActive()) {
+      this.previousDisplayFrameTime = undefined;
+      return;
+    }
+
     if (this.previousDisplayFrameTime !== undefined) {
       const elapsed = now - this.previousDisplayFrameTime;
       if (elapsed > 0) {
@@ -567,6 +572,10 @@ export class App {
       }
     }
     this.previousDisplayFrameTime = now;
+  }
+
+  isScanActive() {
+    return this.state === App.STATE_REQUEST_SENT || this.state === App.STATE_HEADER_PARSED;
   }
 
   updateStatsAverageDisplays() {
