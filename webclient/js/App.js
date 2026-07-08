@@ -105,6 +105,9 @@ export class App {
     }
     this.response = undefined;
     this.reader = undefined;
+    this.scanAbortController = undefined;
+    this.scanCancelled = false;
+    this.cancelInProgress = false;
     this.imageData = new Uint8Array();
     this.state = App.STATE_STANDBY;
     this.header = '';
@@ -1024,7 +1027,13 @@ export class App {
     this.ui.commandPanel = document.getElementById("command-panel");
 
     this.ui.scanButton = document.getElementById("scan");
-    this.ui.scanButton.addEventListener('click', () => this.getImage());
+    this.ui.scanButton.addEventListener('click', () => {
+      if (this.isScanActive()) {
+        this.cancelScan();
+      } else {
+        this.getImage();
+      }
+    });
 
     this.ui.serverHost = document.getElementById("server-host");
     this.ui.serverPort = document.getElementById("server-port");
@@ -1503,6 +1512,18 @@ export class App {
   }
 
   updateScanButtonState() {
+    if (this.isScanActive()) {
+      this.ui.scanButton.disabled = false;
+      this.ui.scanButton.innerText = "Cancel";
+      return;
+    }
+
+    if (this.cancelInProgress) {
+      this.ui.scanButton.disabled = true;
+      this.ui.scanButton.innerText = "Cancelling...";
+      return;
+    }
+
     this.ui.scanButton.disabled = this.autoScanEnabled || !this.canStartScan();
     if (this.autoScanEnabled) {
       this.updateAutoScanCountdownDisplay();
@@ -2349,6 +2370,56 @@ export class App {
     this.ui.command.style.color = isError ? "#ff6b6b" : "";
   }
 
+  async cancelScan() {
+    if (!this.isScanActive()) return;
+
+    this.scanCancelled = true;
+    const reader = this.reader;
+    this.reader = undefined;
+
+    if (this.scanAbortController) this.scanAbortController.abort();
+    if (reader) {
+      try {
+        await reader.cancel();
+      } catch {
+        // The reader can already be closed by the aborted fetch.
+      }
+    }
+
+    this.cancelInProgress = true;
+    this.finishCancelledScan();
+    fetch(this.serverUrl + "/cancel/" + this.channel, {method: "POST"})
+      .catch(() => {
+        this.setCommandPreviewText("Cancel request failed", true);
+      })
+      .finally(() => {
+        this.cancelInProgress = false;
+        this.updateScanButtonState();
+        this.updateCommandPreview();
+      });
+  }
+
+  finishCancelledScan() {
+    if (this.parseRequest !== undefined) {
+      cancelAnimationFrame(this.parseRequest);
+      this.parseRequest = undefined;
+    }
+
+    this.parseQueue = [];
+    this.rgbRemainder = new Uint8Array();
+    this.response = undefined;
+    this.reader = undefined;
+    this.scanAbortController = undefined;
+    this.streamComplete = true;
+    this.scanFinalized = true;
+    this.state = App.STATE_STANDBY;
+    this.ui.channelInput.disabled = false;
+    this.cancelCanvasClearFade();
+    this.freezeDisplayFpsGraph();
+    this.drawStatsGraphs({force: true});
+    this.updateScanButtonState();
+  }
+
   async getImage() {
     if (!this.isChannelValid || this.channelOutOfBounds) {
       this.updateCommandPreview();
@@ -2361,11 +2432,16 @@ export class App {
     this.state = App.STATE_REQUEST_SENT;
     this.updateScanButtonState();
     this.ui.channelInput.disabled = true;
+    this.scanAbortController = new AbortController();
     try {
       this.response = await fetch(
-        this.serverUrl + "/scan/" + this.channel + "?" + this.getScanParams()
+        this.serverUrl + "/scan/" + this.channel + "?" + this.getScanParams(),
+        {signal: this.scanAbortController.signal}
       );
     } catch (err) {
+      if (this.scanCancelled || err.name === "AbortError") {
+        return;
+      }
       this.state = App.STATE_STANDBY;
       this.ui.channelInput.disabled = false;
       this.cancelCanvasClearFade();
@@ -2377,6 +2453,7 @@ export class App {
       const errorText = await this.response.text();
       this.state = App.STATE_STANDBY;
       this.ui.channelInput.disabled = false;
+      this.scanAbortController = undefined;
       this.cancelCanvasClearFade();
       this.setCommandPreviewText(errorText || "Scan request failed", true);
       this.updateScanButtonState();
@@ -2392,7 +2469,21 @@ export class App {
     if (!this.reader) return;
 
     // Read from reader
-    let {done, value} = await this.reader.read();
+    let done;
+    let value;
+    try {
+      ({done, value} = await this.reader.read());
+    } catch (err) {
+      if (this.scanCancelled || err.name === "AbortError") return;
+      this.state = App.STATE_STANDBY;
+      this.ui.channelInput.disabled = false;
+      this.reader = undefined;
+      this.scanAbortController = undefined;
+      this.cancelCanvasClearFade();
+      this.setCommandPreviewText("Scan stream failed", true);
+      this.updateScanButtonState();
+      return;
+    }
 
     // Parse header (if not done already)
     if (this.state == App.STATE_REQUEST_SENT && !done) {
@@ -2582,6 +2673,7 @@ export class App {
     if (this.scanFinalized) return;
 
     this.scanFinalized = true;
+    this.scanAbortController = undefined;
     this.ensureMainCanvasFromImageData();
     this.position = 0;
     this.freezeDisplayFpsGraph();

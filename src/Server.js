@@ -14,7 +14,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command", "scanners", "save"];
+  static COMMANDS = ["scan", "command", "scanners", "save", "cancel"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -154,6 +154,12 @@ export class Server extends EventEmitter {
       );
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('Channel out of bounds.');
+      return;
+    } else if (parsed.command === "cancel") {
+      const wasScanning = scanner.scanning;
+      if (wasScanning) await scanner.abort();
+      response.writeHead(200, {'Content-Type': 'application/json'});
+      response.end(JSON.stringify({cancelled: wasScanning}));
       return;
     } else if (scanner.scanning) {
       logWarn(

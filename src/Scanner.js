@@ -20,6 +20,7 @@ export class Scanner extends EventEmitter {
   #ports = []           // Hierarchy of USB ports (as array)
   #scanning = false;    // Whether the device is currently scanning
   #systemName;          // System name (e.g. genesys:libusb:001:071)
+  #abortPromise = undefined;
 
   constructor(osc, descriptor = {}) {
 
@@ -182,6 +183,17 @@ export class Scanner extends EventEmitter {
   }
 
   async abort() {
+    if (this.#abortPromise) return this.#abortPromise;
+
+    this.#abortPromise = this.#abort();
+    try {
+      await this.#abortPromise;
+    } finally {
+      this.#abortPromise = undefined;
+    }
+  }
+
+  async #abort() {
 
     // Kill 'scanimage' process if running
     if (this.scanImageSpawner) {
