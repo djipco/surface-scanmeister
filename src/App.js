@@ -71,7 +71,7 @@ export default class App {
     }
 
     this.#checkPathPermissions();
-    this.#checkScannerAccessPermissions();
+    await this.#checkScannerAccessPermissions();
 
     // Set up OSC. This must be done before updating the scanners list because scanners need a
     // reference to the OSC object to send status.
@@ -160,7 +160,7 @@ export default class App {
     });
   }
 
-  #checkScannerAccessPermissions() {
+  async #checkScannerAccessPermissions() {
     const result = checkScannerAccessGroups();
 
     logInfo(`Service user: ${formatUserInfo(result.user)}`);
@@ -175,17 +175,17 @@ export default class App {
       return;
     }
 
-    checkScanImageVersion()
-      .then(scanImage => {
-        if (scanImage.ok) {
-          logInfo(`scanimage version: ${scanImage.version}`);
-        } else {
-          logWarn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
-        }
-      })
-      .catch(error => {
-        logWarn(`scanimage version check failed unexpectedly: ${error.message}`);
-      });
+    try {
+      const scanImage = await checkScanImageVersion();
+
+      if (scanImage.ok) {
+        logInfo(`scanimage version: ${scanImage.version}`);
+      } else {
+        logWarn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
+      }
+    } catch (error) {
+      logWarn(`scanimage version check failed unexpectedly: ${error.message}`);
+    }
   }
 
   #activateDistanceSensors() {

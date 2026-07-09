@@ -833,23 +833,6 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-.stats-graph-toggle.toggle-switch {
-  width: 28px;
-  height: 16px;
-  min-height: 16px;
-}
-
-.stats-graph-toggle.toggle-switch span::after {
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-}
-
-.stats-graph-toggle.toggle-switch input:checked + span::after {
-  transform: translateX(12px);
-}
-
 #arrive-graph,
 #speed-graph,
 #display-fps-graph,
