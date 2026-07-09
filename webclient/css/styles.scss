@@ -651,6 +651,10 @@ button:disabled {
   background: rgba(37, 43, 49, 0.78);
 }
 
+.top-info-message-zone.open {
+  border-radius: 4px 4px 0 0;
+}
+
 .top-info-message {
   min-width: 0;
   overflow: hidden;
@@ -710,13 +714,13 @@ button:disabled {
 
 .top-info-log {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 10px);
+  left: -1px;
+  right: -1px;
+  top: calc(100% - 1px);
   max-height: 360px;
   overflow-y: auto;
   border: 1px solid #343a40;
-  border-radius: 6px;
+  border-radius: 0 0 4px 4px;
   padding: 8px;
   display: grid;
   gap: 4px;

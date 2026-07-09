@@ -1048,6 +1048,7 @@ export class App {
     document.addEventListener("mousemove", () => this.handleMouseActivity());
     this.ui.topInfoPanel = document.getElementById("top-info-panel");
     this.ui.topInfoMessage = document.getElementById("top-info-message");
+    this.ui.topInfoMessageZone = this.ui.topInfoMessage.closest(".top-info-message-zone");
     this.ui.topInfoLogToggle = document.getElementById("top-info-log-toggle");
     this.ui.topInfoLog = document.getElementById("top-info-log");
     this.ui.commandPanel = document.getElementById("command-panel");
@@ -1470,6 +1471,7 @@ export class App {
   toggleTopInfoLog() {
     this.topInfoLogVisible = !this.topInfoLogVisible;
     this.ui.topInfoLog.classList.toggle("hidden", !this.topInfoLogVisible);
+    this.ui.topInfoMessageZone.classList.toggle("open", this.topInfoLogVisible);
     this.ui.topInfoLogToggle.classList.toggle("open", this.topInfoLogVisible);
     this.ui.topInfoLogToggle.setAttribute(
       "aria-label",
