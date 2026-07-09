@@ -1,5 +1,5 @@
 /**
- * By default, scanners are ordered by bus nubmer followed by port hierarchy. They are then assigned
+ * By default, scanners are ordered by bus number followed by port hierarchy. They are then assigned
  * a channel starting at 1 and incrementing. If, for whatever reason a scanner is not present, all
  * following scanners will move down to fill the hole. This might not be wanted, hence this file.
  *
@@ -63,7 +63,7 @@ export const ScannerMappings = {
     "1-1-1-1": 16,
     "3-1-1": 17,
     "3-1-2": 18,
-    "3-1-3": 19,
+    "3-1-3": 19
   }
 
 };
