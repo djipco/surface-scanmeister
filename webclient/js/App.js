@@ -1054,6 +1054,7 @@ export class App {
     this.ui.topInfoLog = document.getElementById("top-info-log");
     this.ui.commandPanel = document.getElementById("command-panel");
     this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
+    document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => {
@@ -1488,7 +1489,12 @@ export class App {
   }
 
   toggleTopInfoLog() {
-    this.topInfoLogVisible = !this.topInfoLogVisible;
+    this.setTopInfoLogVisible(!this.topInfoLogVisible);
+    this.renderTopInfoLog();
+  }
+
+  setTopInfoLogVisible(isVisible) {
+    this.topInfoLogVisible = isVisible;
     this.ui.topInfoLog.classList.toggle("hidden", !this.topInfoLogVisible);
     this.ui.topInfoMessageZone.classList.toggle("open", this.topInfoLogVisible);
     this.ui.topInfoLogToggle.classList.toggle("open", this.topInfoLogVisible);
@@ -1496,7 +1502,12 @@ export class App {
       "aria-label",
       this.topInfoLogVisible ? "Hide message log" : "Show message log"
     );
-    this.renderTopInfoLog();
+  }
+
+  handleTopInfoOutsidePointerDown(event) {
+    if (!this.topInfoLogVisible) return;
+    if (this.ui.topInfoMessageZone.contains(event.target)) return;
+    this.setTopInfoLogVisible(false);
   }
 
   renderTopInfoLog() {
