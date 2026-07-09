@@ -36,11 +36,6 @@ export const Configuration = {
     lampOffScan: false,           // Whether to shut off lamp while scanning
     lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
 
-  },
-
-  sensors: {
-    pins: [4],
-    luminosityGain: 1             // [1, 1.25, 1.67, 2.5, 5, 10, 20, 40]
   }
 
 };

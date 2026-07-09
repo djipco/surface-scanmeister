@@ -1,5 +1,4 @@
 // Import Node.js modules
-// import fs from "fs-extra";
 import osc from "osc";
 import process from "node:process";
 import { readFile } from 'fs/promises';
@@ -41,7 +40,6 @@ export default class App {
   #intervals = {};
   #oscPort;
   #scanners = [];
-  #distanceSensorSpawner;
   #server = undefined;
 
   constructor() {}
@@ -109,9 +107,6 @@ export default class App {
     usb.on("attach", this.#callbacks.onUsbAttach);
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
-
-    // Start background Python distance transmitter process
-    // this.#activateDistanceSensors();
 
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
     // information to be written. In that sense, CTRL-C is better.
@@ -184,58 +179,6 @@ export default class App {
     } catch (error) {
       logWarn(`scanimage version check failed unexpectedly: ${error.message}`);
     }
-  }
-
-  #activateDistanceSensors() {
-
-    const pins = config.sensors.pins.join(",")
-    const gain = config.sensors.luminosityGain;
-
-    logInfo(`Activating distance sensors on pin(s): ${pins}. Luminosity gain is set to: ${gain}`);
-
-    this.#distanceSensorSpawner = new Spawner();
-
-    this.#distanceSensorSpawner.execute(
-      ". env/bin/activate; python externals/get_sensor_readings.py", // the "." replaces "source"
-      [`--pins ${pins}`, `--gain ${gain}`],
-      {
-        detached: false,
-        shell: true,
-        errorCallback: this.#onDistanceSensorError.bind(this),
-        stderrCallback: this.#onDistanceSensorError.bind(this),
-        dataCallback: this.#onDistanceSensorData.bind(this)
-      }
-    );
-
-  }
-
-  #onDistanceSensorError(err) {
-
-    // This error happens when two processes are trying to control the same GPIO pin. This may be
-    // because a ghost process is still running. A reboot usaully fixes the problem.
-    if (err.toString() === "'GPIO not allocated'") {
-      logWarn("Distance sensors could not be activated " +
-        "(a reboot of the Raspberry Pi should fix the issue).")
-    } else {
-      logError(err.toString());
-    }
-
-  }
-
-  #onDistanceSensorData(data) {
-
-    let [index, distance, luminosity] = data.toString().split(",", 3);
-    index = parseInt(index);
-    distance = parseInt(distance);
-    luminosity = parseFloat(luminosity);
-
-    // We check 'index' because the first time it is NaN
-    if (!isNaN(index))
-      this.sendOscMessage(`/sensor/${index}/distance`, [{type: "i", value: distance}]);
-
-    if (! isNaN(index))
-      this.sendOscMessage(`/sensor/${index}/luminosity`, [{type: "f", value: luminosity}]);
-
   }
 
   #onStatusInterval() {
@@ -409,10 +352,6 @@ export default class App {
   async quit(status = 0, exit = true) {
 
     logInfo("Exiting...");
-
-    // Kill distance sensor process
-    if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
-    this.#distanceSensorSpawner = undefined;
 
     // Quit HTTP server
     if (this.#server) {

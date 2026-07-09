@@ -41,15 +41,6 @@ sudo apt install -y nodejs
 
 ### Installing ScanMeister
 
-#### Prerequisite
-
-The distance sensors used by `scanmeister` rely on the I2C protocol. Therefore, I2C must be 
-enabled on the Pi:
-
-  * Preferences -> Raspberry Pi Configuration -> Interfaces
-  * Enable I2C
-  * Reboot
-
 #### Installation
 
 To install `scanmeister`, open a terminal, go to desktop and clone from GitHub repo:
@@ -64,47 +55,6 @@ Go inside folder and install all modules:
 ```sh
 cd surface-scanmeister
 npm install
-```
-
-#### Python
-
-Python libraries are used to talk to the distance sensors and send the info to the remote. To 
-install Python libraries in recent versions of the Raspberry Pi OS, you must first create a 
-virtual Python environment. 
-
-Go to root of project, create virtual environment in `env` folder and activate it:
-
-```sh
-cd /path/to/surface-scanmeister
-python3 -m venv env --system-site-packages
-source env/bin/activate
-```
-
-Then we need to install [Blinka]([url](https://learn.adafruit.com/circuitpython-on-raspberrypi-linux/installing-circuitpython-on-raspberry-pi)).
-It is is a framework created by Adafruit and is used by the sensor library. This script does 
-everything automatically:
-
-```
-pip3 install --upgrade adafruit-python-shell
-wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/raspi-blinka.py
-sudo -E env PATH=$PATH python3 raspi-blinka.py
-```
-
-Finally, we need to install the `adafruit-circuitpython-vl6180x` and `python-osc` libraries:
-
-```
-pip install adafruit-circuitpython-vl6180x
-pip install python-osc
-```
-
-Note: if you need to get out of the virtual Python environment, simply call `deactivate`.
-
-**Additional note**: it seems that the `RPi.GPIO` module does not work on Pi 5 due to hardware changes. 
-So we need to do the following in order to install a drop-in replacement (in the virtual env):
-
-```
-sudo apt remove python3-rpi.gpio
-pip3 install rpi-lgpio
 ```
 
 #### Server Daemon
@@ -226,6 +176,12 @@ sudo systemctl start scanmeister.service
 
 Normally, the server should be controlled through `systemctl`. For development only, it can still be
 started manually from inside the `surface-scanmeister` directory:
+
+```sh
+npm start
+```
+
+This is equivalent to:
 
 ```sh
 node ScanMeister.js
