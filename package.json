@@ -5,19 +5,20 @@
   "description": "ScanMeister Daemon lets you scan images and retrieve them by calling a simple HTTP API",
   "author": "Jean-Philippe Cô <null@djip.co> (https://djip.co)",
   "license": "UNLICENSED",
+  "private": true,
   "main": "ScanMeister.js",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "run": "node ScanMeister.js"
+    "start": "node ScanMeister.js",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "date-fns": "^2.30.0",
     "djipevents": "^2.0.7",
     "express": "^4.22.2",
-    "fs-extra": "^11.2.0",
     "osc": "^2.4.4",
-    "samba-client": "^7.2.0",
-    "serialport": "^12.0.0",
     "usb": "^2.11.0",
     "winston": "^3.10.0",
     "winston-daily-rotate-file": "^4.7.1"
