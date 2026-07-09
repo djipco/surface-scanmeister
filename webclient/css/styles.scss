@@ -664,6 +664,16 @@ button:disabled {
   white-space: nowrap;
 }
 
+.top-info-message.success,
+.top-info-log-row.success {
+  color: #8ee6a6;
+}
+
+.top-info-message.error,
+.top-info-log-row.error {
+  color: #ff9a9a;
+}
+
 .top-info-log-toggle {
   width: 24px;
   min-height: 100%;
@@ -734,6 +744,14 @@ button:disabled {
 
 .top-info-log-time {
   color: #7d8790;
+}
+
+.top-info-log-row.success .top-info-log-time {
+  color: rgba(142, 230, 166, 0.7);
+}
+
+.top-info-log-row.error .top-info-log-time {
+  color: rgba(255, 154, 154, 0.7);
 }
 
 .top-info-log-message {

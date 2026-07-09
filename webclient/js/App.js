@@ -1406,12 +1406,8 @@ export class App {
       try {
         this.handleSseOscMessage(JSON.parse(event.data));
       } catch (err) {
-        this.addTopInfoMessage("Client", "Invalid server event");
+        this.addTopInfoMessage("Client", "Invalid server event", "error");
       }
-    });
-
-    this.eventSource.addEventListener("error", () => {
-      this.addTopInfoMessage("Client", "Server events disconnected");
     });
   }
 
@@ -1422,6 +1418,13 @@ export class App {
       const status = this.getOscArgValue(message.args, 0);
       if (status === this.lastSystemStatus) return;
       this.lastSystemStatus = status;
+      const statusKind = Number(status) === 1
+        ? "success"
+        : Number(status) === 0
+          ? "error"
+          : "";
+      this.addTopInfoMessage("Server sent", this.formatSseOscMessage(message), statusKind);
+      return;
     }
 
     this.addTopInfoMessage("Server sent", this.formatSseOscMessage(message));
@@ -1442,7 +1445,7 @@ export class App {
       : message.address;
   }
 
-  addTopInfoMessage(source, message) {
+  addTopInfoMessage(source, message, kind = "") {
     const text = source ? `${source}: ${message}` : message;
     const timestamp = new Date().toLocaleTimeString([], {
       hour: "2-digit",
@@ -1450,16 +1453,18 @@ export class App {
       second: "2-digit"
     });
 
-    this.topInfoLog.push({timestamp, text});
+    this.topInfoLog.push({timestamp, text, kind});
     if (this.topInfoLog.length > App.TOP_INFO_LOG_LIMIT) this.topInfoLog.shift();
 
-    this.setTopInfoMessage(text);
+    this.setTopInfoMessage(text, kind);
     this.renderTopInfoLog();
   }
 
-  setTopInfoMessage(message) {
+  setTopInfoMessage(message, kind = "") {
     if (!this.ui.topInfoMessage) return;
     this.ui.topInfoMessage.innerText = message;
+    this.ui.topInfoMessage.classList.toggle("success", kind === "success");
+    this.ui.topInfoMessage.classList.toggle("error", kind === "error");
   }
 
   toggleTopInfoLog() {
@@ -1488,6 +1493,8 @@ export class App {
     this.topInfoLog.slice().reverse().forEach(entry => {
       const row = document.createElement("span");
       row.className = "top-info-log-row";
+      row.classList.toggle("success", entry.kind === "success");
+      row.classList.toggle("error", entry.kind === "error");
 
       const time = document.createElement("span");
       time.className = "top-info-log-time";
