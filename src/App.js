@@ -200,7 +200,7 @@ export default class App {
       }, 500);
 
       this.#timeouts.startupTouchPress = undefined;
-    }, 2500);
+    }, 5000);
   }
 
   async #updateScanners() {
