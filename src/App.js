@@ -38,7 +38,6 @@ export default class App {
   // Private variables
   #callbacks = {};
   #intervals = {};
-  #timeouts = {};
   #oscPort;
   #scanners = [];
   #server = undefined;
@@ -102,8 +101,6 @@ export default class App {
     // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
     this.#intervals.status = setInterval(this.#callbacks.onStatusInterval, 1000);
-
-    this.#scheduleStartupTouchTest();
 
     // Add callbacks for USB hotplug events
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
@@ -186,21 +183,6 @@ export default class App {
 
   #onStatusInterval() {
     this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
-  }
-
-  #scheduleStartupTouchTest() {
-    this.#timeouts.startupTouchPress = setTimeout(() => {
-      logInfo("Sending temporary startup test touch: /sensor/touch/1 1.");
-      this.sendOscMessage("/sensor/touch/1", [{type: "i", value: 1}]);
-
-      this.#timeouts.startupTouchRelease = setTimeout(() => {
-        logInfo("Sending temporary startup test touch: /sensor/touch/1 0.");
-        this.sendOscMessage("/sensor/touch/1", [{type: "i", value: 0}]);
-        this.#timeouts.startupTouchRelease = undefined;
-      }, 500);
-
-      this.#timeouts.startupTouchPress = undefined;
-    }, 5000);
   }
 
   async #updateScanners() {
@@ -391,15 +373,6 @@ export default class App {
       clearInterval(this.#intervals.status);
       this.#intervals.status = undefined;
       this.#callbacks.onStatusInterval = undefined;
-
-      if (this.#timeouts.startupTouchPress !== undefined) {
-        clearTimeout(this.#timeouts.startupTouchPress);
-        this.#timeouts.startupTouchPress = undefined;
-      }
-      if (this.#timeouts.startupTouchRelease !== undefined) {
-        clearTimeout(this.#timeouts.startupTouchRelease);
-        this.#timeouts.startupTouchRelease = undefined;
-      }
 
       this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
