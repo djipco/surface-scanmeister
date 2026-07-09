@@ -201,7 +201,28 @@ On startup and shutdown, the system sends this OSC message:
 
 The status of scanners is also broadcasted as:
 
-* `/scanner/x` i 0 (or 1)
+* `/device/x/scanning` i 0 (or 1)
+
+The browser client can receive the same outbound OSC information over Server-Sent Events by
+connecting to the API server's `/events` endpoint:
+
+```js
+const events = new EventSource("http://localhost:5678/events");
+
+events.addEventListener("osc", event => {
+  const message = JSON.parse(event.data);
+  console.log(message.address, message.args);
+});
+```
+
+Each event contains the OSC address and argument metadata:
+
+```json
+{
+  "address": "/system/status",
+  "args": [{"type": "i", "value": 1}]
+}
+```
 
 # Testing the scanning environment
 

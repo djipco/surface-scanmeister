@@ -1,9 +1,4 @@
-#!/usr/bin/node
-
-// @todo get the sensor's read_lux() function working. Issue here:
-//    https://github.com/adafruit/Adafruit_CircuitPython_VL6180X/issues
-// @todo fix problem with last bytes being outputted late from scanimage. Issue here:
-//    https://gitlab.com/sane-project/backends/-/issues/737
+#!/usr/bin/env node
 
 // At this stage, we only import necessary builtin modules because we first need to check if the
 // external modules have been installed.
@@ -11,8 +6,8 @@ import { existsSync } from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
-// Check if the current working directory is the one where ScanMeister.js resides. If not (such as
-// when started from systemd),s change it.
+// Check if the current working directory is the one where ScanMeister.js resides. If not, change
+// it.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

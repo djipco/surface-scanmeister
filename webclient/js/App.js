@@ -52,6 +52,7 @@ export class App {
   static BUFFER_GRAPH_DURATION = 10000;
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
+  static TOP_INFO_LOG_LIMIT = 50;
   static SKIP_MAIN_CANVAS_IN_WALL_MODE = true;
 
   constructor() {
@@ -78,6 +79,10 @@ export class App {
     this.autoScanTimer = undefined;
     this.autoScanCountdownTimer = undefined;
     this.autoScanTargetTime = undefined;
+    this.eventSource = undefined;
+    this.lastSystemStatus = undefined;
+    this.topInfoLog = [];
+    this.topInfoLogVisible = false;
     this.clearCanvasFadePromise = undefined;
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
@@ -1042,7 +1047,11 @@ export class App {
     });
     document.addEventListener("mousemove", () => this.handleMouseActivity());
     this.ui.topInfoPanel = document.getElementById("top-info-panel");
+    this.ui.topInfoMessage = document.getElementById("top-info-message");
+    this.ui.topInfoLogToggle = document.getElementById("top-info-log-toggle");
+    this.ui.topInfoLog = document.getElementById("top-info-log");
     this.ui.commandPanel = document.getElementById("command-panel");
+    this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
 
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => {
@@ -1172,6 +1181,7 @@ export class App {
       this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
       this.updateCommandPreview();
       this.updateScannerAvailability();
+      this.connectEventStream();
     });
     this.ui.serverPort.addEventListener("input", () => {
       this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT);
@@ -1181,6 +1191,7 @@ export class App {
       this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT, {normalize: true});
       this.updateCommandPreview();
       this.updateScannerAvailability();
+      this.connectEventStream();
     });
     this.ui.channelInput.addEventListener("change", () => {
       this.saveControlValue(this.ui.channelInput, App.STORAGE_CHANNEL);
@@ -1370,10 +1381,125 @@ export class App {
     this.updateOverlayGridState();
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
+    this.connectEventStream();
     setInterval(() => this.updateScannerAvailability(), 5000);
     this.scheduleDisplayFrameMonitor();
     this.scheduleUiAutoHide();
 
+  }
+
+  connectEventStream() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = undefined;
+    }
+
+    if (!window.EventSource) {
+      this.addTopInfoMessage("Client", "Server events unavailable");
+      return;
+    }
+
+    this.lastSystemStatus = undefined;
+    this.eventSource = new EventSource(this.serverUrl + "/events");
+
+    this.eventSource.addEventListener("osc", event => {
+      try {
+        this.handleSseOscMessage(JSON.parse(event.data));
+      } catch (err) {
+        this.addTopInfoMessage("Client", "Invalid server event");
+      }
+    });
+
+    this.eventSource.addEventListener("error", () => {
+      this.addTopInfoMessage("Client", "Server events disconnected");
+    });
+  }
+
+  handleSseOscMessage(message) {
+    if (!message || typeof message.address !== "string") return;
+
+    if (message.address === "/system/status") {
+      const status = this.getOscArgValue(message.args, 0);
+      if (status === this.lastSystemStatus) return;
+      this.lastSystemStatus = status;
+    }
+
+    this.addTopInfoMessage("Server sent", this.formatSseOscMessage(message));
+  }
+
+  getOscArgValue(args, index) {
+    if (!Array.isArray(args) || !args[index]) return undefined;
+    return args[index].value;
+  }
+
+  formatSseOscMessage(message) {
+    const values = Array.isArray(message.args)
+      ? message.args.map(arg => arg?.value).filter(value => value !== undefined)
+      : [];
+
+    return values.length > 0
+      ? `${message.address} ${values.join(" ")}`
+      : message.address;
+  }
+
+  addTopInfoMessage(source, message) {
+    const text = source ? `${source}: ${message}` : message;
+    const timestamp = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    this.topInfoLog.push({timestamp, text});
+    if (this.topInfoLog.length > App.TOP_INFO_LOG_LIMIT) this.topInfoLog.shift();
+
+    this.setTopInfoMessage(text);
+    this.renderTopInfoLog();
+  }
+
+  setTopInfoMessage(message) {
+    if (!this.ui.topInfoMessage) return;
+    this.ui.topInfoMessage.innerText = message;
+  }
+
+  toggleTopInfoLog() {
+    this.topInfoLogVisible = !this.topInfoLogVisible;
+    this.ui.topInfoLog.classList.toggle("hidden", !this.topInfoLogVisible);
+    this.ui.topInfoLogToggle.classList.toggle("open", this.topInfoLogVisible);
+    this.ui.topInfoLogToggle.setAttribute(
+      "aria-label",
+      this.topInfoLogVisible ? "Hide message log" : "Show message log"
+    );
+    this.renderTopInfoLog();
+  }
+
+  renderTopInfoLog() {
+    if (!this.ui.topInfoLog) return;
+    this.ui.topInfoLog.innerHTML = "";
+
+    if (this.topInfoLog.length === 0) {
+      const empty = document.createElement("span");
+      empty.className = "top-info-log-empty";
+      empty.innerText = "No messages";
+      this.ui.topInfoLog.appendChild(empty);
+      return;
+    }
+
+    this.topInfoLog.slice().reverse().forEach(entry => {
+      const row = document.createElement("span");
+      row.className = "top-info-log-row";
+
+      const time = document.createElement("span");
+      time.className = "top-info-log-time";
+      time.innerText = entry.timestamp;
+
+      const message = document.createElement("span");
+      message.className = "top-info-log-message";
+      message.innerText = entry.text;
+
+      row.append(time, message);
+      this.ui.topInfoLog.appendChild(row);
+    });
   }
 
   setUpEnterToValidateParameters() {

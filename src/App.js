@@ -196,7 +196,9 @@ export default class App {
 
     // Create new scanner objects
     scannerDescriptors.forEach(descriptor => {
-      this.#scanners.push(new Scanner(this.#oscPort, descriptor));
+      const scanner = new Scanner(this.#oscPort, descriptor);
+      scanner.addListener("oscmessage", this.#onScannerOscMessage.bind(this));
+      this.#scanners.push(scanner);
     });
 
     // Report number of scanners found
@@ -353,12 +355,6 @@ export default class App {
 
     logInfo("Exiting...");
 
-    // Quit HTTP server
-    if (this.#server) {
-      await this.#server.quit();
-      this.#server = undefined;
-    }
-
     // Remove USB listeners
     usb.unrefHotplugEvents();
     this.#callbacks.onUsbAttach = undefined;
@@ -383,6 +379,12 @@ export default class App {
       this.#oscPort.close();
       this.#oscPort = undefined;
 
+    }
+
+    // Quit HTTP server
+    if (this.#server) {
+      await this.#server.quit();
+      this.#server = undefined;
     }
 
     logInfo(`ScanMeister stopped with status ${status}.`);
@@ -456,6 +458,11 @@ export default class App {
       return;
     }
     this.#oscPort.send({address: address, args: args});
+    this.#server?.broadcastOscMessage(address, args);
+  }
+
+  #onScannerOscMessage({address, args}) {
+    this.#server?.broadcastOscMessage(address, args);
   }
 
   async #onExitRequest(signal) {

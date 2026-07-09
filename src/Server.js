@@ -14,7 +14,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command", "scanners", "save", "cancel"];
+  static COMMANDS = ["scan", "command", "scanners", "save", "cancel", "events"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -22,6 +22,7 @@ export class Server extends EventEmitter {
   // Private members
   #callbacks = {};                  // callback functions used in this class
   #clients = [];                    // List of clients that requested a scan
+  #eventClients = new Map();         // Long-lived SSE clients
   #apiServer = undefined;   // HTTP Server (5678)
   #express = undefined;             // Express server, for static files (8080)
   #filesServer = undefined;
@@ -109,6 +110,11 @@ export class Server extends EventEmitter {
     }
 
     // Retrieve scanner matching channel and check if it's already in use.
+    if (parsed.command === "events") {
+      this.#startEventStream(request, response);
+      return;
+    }
+
     if (parsed.command === "scanners") {
       response.writeHead(200, {'Content-Type': 'application/json'});
       response.end(JSON.stringify({
@@ -237,6 +243,44 @@ export class Server extends EventEmitter {
     this.quit();
   }
 
+  #startEventStream(request, response) {
+    const id = `${request.socket.remoteAddress}:${request.socket.remotePort}`;
+
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    response.write(': connected\n\n');
+
+    this.#eventClients.set(id, response);
+    logInfo(`Event stream connected: ${id}.`);
+
+    request.once('close', () => {
+      this.#eventClients.delete(id);
+      logInfo(`Event stream disconnected: ${id}.`);
+    });
+  }
+
+  #sendEvent(response, event, data) {
+    response.write(`event: ${event}\n`);
+    response.write(`data: ${JSON.stringify(data)}\n\n`);
+  }
+
+  broadcastOscMessage(address, args = []) {
+    const data = {address, args};
+
+    this.#eventClients.forEach((response, id) => {
+      try {
+        this.#sendEvent(response, 'osc', data);
+      } catch (err) {
+        logWarn(`Could not send event stream update to ${id}. Error: ${err}`);
+        this.#eventClients.delete(id);
+      }
+    });
+  }
+
   async #readRequestBody(request) {
     const chunks = [];
     let byteLength = 0;
@@ -278,6 +322,10 @@ export class Server extends EventEmitter {
     this.removeListener();
     // Destroy all clients
     this.#clients.forEach(async client => await client.destroy());
+
+    // Close all event streams
+    this.#eventClients.forEach(response => response.end());
+    this.#eventClients.clear();
 
     // Stop all scanning processes
     this.#scanners.forEach(async scanner => await scanner.abort());

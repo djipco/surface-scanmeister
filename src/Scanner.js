@@ -287,6 +287,7 @@ export class Scanner extends EventEmitter {
       return;
     }
     this.#osc.send({address: address, args: args});
+    this.emit("oscmessage", {address, args});
   }
 
 }
