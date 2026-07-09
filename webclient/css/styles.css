@@ -430,6 +430,44 @@ html.kiosk-mode body {
   line-height: 1.35;
 }
 
+.guerilla-control {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.guerilla-control label {
+  color: #aeb8c2;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guerilla-stepper {
+  display: grid;
+  grid-template-columns: 58px minmax(92px, 1fr) 58px;
+  gap: 8px;
+  align-items: center;
+}
+
+.guerilla-stepper-button {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 30px;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.guerilla-stepper input {
+  height: 58px;
+  padding: 0 14px;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .controls-panel.hidden,
 .guerilla-panel.hidden {
   opacity: 0;
@@ -662,6 +700,10 @@ button:enabled:hover {
 button:disabled {
   cursor: default;
   opacity: 0.55;
+}
+
+.button-shortcut {
+  font-weight: 400;
 }
 
 .button-row {

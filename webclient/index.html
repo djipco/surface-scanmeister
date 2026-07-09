@@ -231,7 +231,7 @@
 
     <section class="guerilla-panel hidden" id="guerilla-panel">
       <h1 id="guerilla-panel-header">
-        <span>GUERILLA</span>
+        <span>GUERILLA SCAN</span>
         <span class="guerilla-header-actions">
           <button type="button" class="guerilla-rotate-button" id="guerilla-rotate" aria-label="Rotate panel" title="Rotate panel">
             <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -245,7 +245,25 @@
           </span>
         </span>
       </h1>
-      <div class="guerilla-panel-content"></div>
+      <div class="guerilla-panel-content">
+        <div class="guerilla-control">
+          <label for="guerilla-brightness">Brightness</label>
+          <div class="guerilla-stepper">
+            <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="-1" aria-label="Decrease brightness">-</button>
+            <input type="number" min="-100" max="100" step="1" value="25" id="guerilla-brightness" aria-label="Brightness">
+            <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="1" aria-label="Increase brightness">+</button>
+          </div>
+        </div>
+
+        <div class="guerilla-control">
+          <label for="guerilla-contrast">Contrast</label>
+          <div class="guerilla-stepper">
+            <button type="button" class="guerilla-stepper-button" data-guerilla-target="contrast" data-step="-1" aria-label="Decrease contrast">-</button>
+            <input type="number" min="-100" max="100" step="1" value="30" id="guerilla-contrast" aria-label="Contrast">
+            <button type="button" class="guerilla-stepper-button" data-guerilla-target="contrast" data-step="1" aria-label="Increase contrast">+</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <canvas id="canvas" width="319" height="439"></canvas>

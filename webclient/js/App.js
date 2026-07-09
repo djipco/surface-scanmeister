@@ -926,6 +926,7 @@ export class App {
   }
 
   get displayLayout() {
+    if (this.guerillaModeActive) return "single";
     if (this.ui.displayLayout.value === "wall-4-horizontal") return "wall-4-horizontal";
     if (this.ui.displayLayout.value === "wall-8-horizontal") return "wall-8-horizontal";
     return "single";
@@ -1042,7 +1043,7 @@ export class App {
       }
       if (event.key.toLowerCase() === "s") {
         event.preventDefault();
-        this.startScanIfAvailable();
+        this.activateScanButton();
         return;
       }
       if (event.key.toLowerCase() !== "p") return;
@@ -1059,6 +1060,8 @@ export class App {
     this.ui.guerillaPanel = document.getElementById("guerilla-panel");
     this.ui.guerillaPanelHeader = document.getElementById("guerilla-panel-header");
     this.ui.guerillaRotateButton = document.getElementById("guerilla-rotate");
+    this.ui.guerillaBrightness = document.getElementById("guerilla-brightness");
+    this.ui.guerillaContrast = document.getElementById("guerilla-contrast");
     this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelResize(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
@@ -1068,13 +1071,7 @@ export class App {
     document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
     this.ui.scanButton = document.getElementById("scan");
-    this.ui.scanButton.addEventListener('click', () => {
-      if (this.isScanActive()) {
-        this.cancelScan();
-      } else {
-        this.getImage();
-      }
-    });
+    this.ui.scanButton.addEventListener('click', () => this.activateScanButton());
 
     this.ui.serverHost = document.getElementById("server-host");
     this.ui.serverPort = document.getElementById("server-port");
@@ -1157,6 +1154,8 @@ export class App {
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
     this.restoreNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
     this.restoreNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
+    this.syncGuerillaControl(this.ui.guerillaBrightness, this.ui.brightness);
+    this.syncGuerillaControl(this.ui.guerillaContrast, this.ui.contrast);
     this.restoreScanWidth();
     this.restoreScanHeight();
     this.restoreDrawMode();
@@ -1296,6 +1295,10 @@ export class App {
       this.updateRenderStats();
     });
     this.ui.displayLayout.addEventListener("change", () => {
+      if (this.guerillaModeActive) {
+        this.forceGuerillaDisplayLayout();
+        return;
+      }
       this.saveControlValue(this.ui.displayLayout, App.STORAGE_DISPLAY_LAYOUT);
       this.updateDisplayLayoutState();
       this.updateCanvasDisplaySize();
@@ -1338,12 +1341,16 @@ export class App {
 
     this.setUpDragInput(this.ui.brightness, () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
+      this.syncGuerillaControl(this.ui.guerillaBrightness, this.ui.brightness);
       this.updateCommandPreview();
     }, {pixelsPerStep: 20});
     this.setUpDragInput(this.ui.contrast, () => {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
+      this.syncGuerillaControl(this.ui.guerillaContrast, this.ui.contrast);
       this.updateCommandPreview();
     }, {pixelsPerStep: 20});
+    this.setUpGuerillaNumberControl(this.ui.guerillaBrightness, this.ui.brightness, App.STORAGE_BRIGHTNESS);
+    this.setUpGuerillaNumberControl(this.ui.guerillaContrast, this.ui.contrast, App.STORAGE_CONTRAST);
 
     this.ui.width.addEventListener("input", () => {
       this.saveScanWidth();
@@ -1357,10 +1364,12 @@ export class App {
     });
     this.ui.brightness.addEventListener("input", () => {
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
+      this.syncGuerillaControl(this.ui.guerillaBrightness, this.ui.brightness);
       this.updateCommandPreview();
     });
     this.ui.contrast.addEventListener("input", () => {
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST);
+      this.syncGuerillaControl(this.ui.guerillaContrast, this.ui.contrast);
       this.updateCommandPreview();
     });
     this.ui.width.addEventListener("change", () => {
@@ -1378,11 +1387,13 @@ export class App {
     this.ui.brightness.addEventListener("change", () => {
       this.ui.brightness.value = this.clampInputValue(this.ui.brightness, this.brightness);
       this.saveNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS, {normalize: true});
+      this.syncGuerillaControl(this.ui.guerillaBrightness, this.ui.brightness);
       this.updateCommandPreview();
     });
     this.ui.contrast.addEventListener("change", () => {
       this.ui.contrast.value = this.clampInputValue(this.ui.contrast, this.contrast);
       this.saveNumericValue(this.ui.contrast, App.STORAGE_CONTRAST, {normalize: true});
+      this.syncGuerillaControl(this.ui.guerillaContrast, this.ui.contrast);
       this.updateCommandPreview();
     });
     this.setUpEnterToValidateParameters();
@@ -1582,6 +1593,15 @@ export class App {
     this.getImage();
   }
 
+  activateScanButton() {
+    if (this.isScanActive()) {
+      this.cancelScan();
+      return;
+    }
+
+    this.startScanIfAvailable();
+  }
+
   canStartScan() {
     return this.isChannelValid &&
       !this.channelOutOfBounds &&
@@ -1717,7 +1737,7 @@ export class App {
   updateScanButtonState() {
     if (this.isScanActive()) {
       this.ui.scanButton.disabled = false;
-      this.ui.scanButton.innerText = "Cancel";
+      this.setScanButtonLabel("Cancel");
       return;
     }
 
@@ -1731,8 +1751,18 @@ export class App {
     if (this.autoScanEnabled) {
       this.updateAutoScanCountdownDisplay();
     } else {
-      this.ui.scanButton.innerText = "Scan";
+      this.setScanButtonLabel("Scan");
     }
+  }
+
+  setScanButtonLabel(label) {
+    this.ui.scanButton.replaceChildren(
+      document.createTextNode(`${label} `),
+      Object.assign(document.createElement("span"), {
+        className: "button-shortcut",
+        innerText: "(S)"
+      })
+    );
   }
 
   async updateScannerAvailability() {
@@ -2391,6 +2421,47 @@ export class App {
     });
   }
 
+  setUpGuerillaNumberControl(guerillaInput, sourceInput, storageKey) {
+    const applyValue = value => {
+      sourceInput.value = this.clampInputValue(sourceInput, value);
+      this.saveNumericValue(sourceInput, storageKey, {normalize: true});
+      this.syncGuerillaControl(guerillaInput, sourceInput);
+      this.updateCommandPreview();
+    };
+
+    guerillaInput.addEventListener("input", () => applyValue(parseFloat(guerillaInput.value) || 0));
+    guerillaInput.addEventListener("change", () => applyValue(parseFloat(guerillaInput.value) || 0));
+
+    this.ui.guerillaPanel.querySelectorAll(`[data-guerilla-target="${sourceInput.id}"]`).forEach(button => {
+      const step = parseFloat(button.dataset.step) || 0;
+      let repeatDelay;
+      let repeatInterval;
+
+      const stepOnce = () => applyValue((parseFloat(sourceInput.value) || 0) + step);
+      const stopRepeating = () => {
+        clearTimeout(repeatDelay);
+        clearInterval(repeatInterval);
+      };
+
+      button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        stepOnce();
+        repeatDelay = setTimeout(() => {
+          repeatInterval = setInterval(stepOnce, 90);
+        }, 350);
+      });
+      button.addEventListener("pointerup", stopRepeating);
+      button.addEventListener("pointercancel", stopRepeating);
+      button.addEventListener("lostpointercapture", stopRepeating);
+    });
+  }
+
+  syncGuerillaControl(guerillaInput, sourceInput) {
+    if (!guerillaInput || !sourceInput) return;
+    guerillaInput.value = sourceInput.value;
+  }
+
   inputStep(input) {
     return parseFloat(input.step) || 1;
   }
@@ -2601,6 +2672,15 @@ export class App {
     const launchVisibility = this.getLaunchBooleanOverride("guerilla");
     this.guerillaModeActive = launchVisibility === true;
     this.ui.guerillaPanel.classList.toggle("hidden", !this.guerillaModeActive);
+    if (this.guerillaModeActive) this.forceGuerillaDisplayLayout();
+  }
+
+  forceGuerillaDisplayLayout() {
+    this.ui.displayLayout.value = "single";
+    this.ui.displayLayout.disabled = true;
+    this.updateDisplayLayoutState();
+    this.updateCanvasDisplaySize();
+    this.refreshWallDisplays();
   }
 
   rotateGuerillaPanel() {
