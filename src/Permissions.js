@@ -144,7 +144,7 @@ export function checkScanImageDeviceAccess(deviceName) {
   return new Promise(resolve => {
     execFile(
       "scanimage",
-      [`--device-name=${deviceName}`, "-A"],
+      [`--device-name=${deviceName}`, "--format=pnm", "-A"],
       {
         encoding: "utf8",
         timeout: 15000,
