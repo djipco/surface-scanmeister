@@ -231,7 +231,7 @@
 
     <section class="guerilla-panel hidden" id="guerilla-panel">
       <h1 id="guerilla-panel-header">
-        <span>GUERILLA SCAN</span>
+        <span class="guerilla-title"><strong>GuerillaScan</strong> <span>v1.0.0-alpha.5</span></span>
         <span class="guerilla-header-actions">
           <button type="button" class="guerilla-rotate-button" id="guerilla-rotate" aria-label="Rotate panel" title="Rotate panel">
             <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -253,6 +253,14 @@
             <input type="number" min="-100" max="100" step="1" value="25" id="guerilla-brightness" aria-label="Brightness">
             <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="1" aria-label="Increase brightness">+</button>
           </div>
+        </div>
+
+        <div class="guerilla-control guerilla-toggle-control">
+          <label for="guerilla-force-calibration">Force Calibration</label>
+          <label class="toggle-switch guerilla-toggle-switch">
+            <input type="checkbox" id="guerilla-force-calibration">
+            <span></span>
+          </label>
         </div>
 
         <div class="guerilla-control">
