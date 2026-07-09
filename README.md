@@ -161,6 +161,7 @@ http://localhost:8080?kiosk=1&ui=0&guerilla=1
 When `ui=0`, the Parameters panel, top strip, bottom command strip, and Stats panel are initially hidden.
 When `ui=0&guerilla=1`, only the Guerilla panel is shown. When `ui=1`, the regular UI is shown,
 but the Guerilla panel is still shown only if `guerilla=1` is present.
+In Guerilla mode, moving the mouse does not reveal the regular UI. Press `P` to toggle it manually.
 
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:

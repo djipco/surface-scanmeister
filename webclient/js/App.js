@@ -85,6 +85,7 @@ export class App {
     this.lastSystemStatus = undefined;
     this.topInfoLog = [];
     this.topInfoLogVisible = false;
+    this.guerillaModeActive = false;
     this.clearCanvasFadePromise = undefined;
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
@@ -1608,6 +1609,8 @@ export class App {
   }
 
   handleMouseActivity() {
+    if (this.guerillaModeActive) return;
+
     if (!this.isUiOverlayVisible()) {
       this.setUiOverlayVisible(true);
       return;
@@ -2592,7 +2595,8 @@ export class App {
 
   restoreGuerillaUiVisibility() {
     const launchVisibility = this.getLaunchBooleanOverride("guerilla");
-    this.ui.guerillaPanel.classList.toggle("hidden", launchVisibility !== true);
+    this.guerillaModeActive = launchVisibility === true;
+    this.ui.guerillaPanel.classList.toggle("hidden", !this.guerillaModeActive);
   }
 
   getLaunchBooleanOverride(name) {
