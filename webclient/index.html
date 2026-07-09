@@ -230,7 +230,21 @@
     </section>
 
     <section class="guerilla-panel hidden" id="guerilla-panel">
-      <h1 id="guerilla-panel-header">GUERILLA</h1>
+      <h1 id="guerilla-panel-header">
+        <span>GUERILLA</span>
+        <span class="guerilla-header-actions">
+          <button type="button" class="guerilla-rotate-button" id="guerilla-rotate" aria-label="Rotate panel" title="Rotate panel">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7"/>
+            </svg>
+          </button>
+          <span class="touch-drag-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3v18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12h18M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>
+            </svg>
+          </span>
+        </span>
+      </h1>
       <div class="guerilla-panel-content"></div>
     </section>
 

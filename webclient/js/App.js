@@ -39,6 +39,7 @@ export class App {
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
   static STORAGE_GUERILLA_POSITION = "scanmeister.guerillaPosition";
+  static STORAGE_GUERILLA_ROTATION = "scanmeister.guerillaRotation";
   static DEFAULT_SERVER_HOST = "127.0.0.1";
   static DEFAULT_SERVER_PORT = "5678";
   static DEFAULT_SCAN_WIDTH = "5000";
@@ -1057,9 +1058,12 @@ export class App {
     this.ui.commandPanel = document.getElementById("command-panel");
     this.ui.guerillaPanel = document.getElementById("guerilla-panel");
     this.ui.guerillaPanelHeader = document.getElementById("guerilla-panel-header");
+    this.ui.guerillaRotateButton = document.getElementById("guerilla-rotate");
     this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelResize(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
+    this.restoreGuerillaRotation();
+    this.ui.guerillaRotateButton.addEventListener("click", () => this.rotateGuerillaPanel());
     this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
     document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
@@ -2597,6 +2601,35 @@ export class App {
     const launchVisibility = this.getLaunchBooleanOverride("guerilla");
     this.guerillaModeActive = launchVisibility === true;
     this.ui.guerillaPanel.classList.toggle("hidden", !this.guerillaModeActive);
+  }
+
+  rotateGuerillaPanel() {
+    const currentRotation = this.guerillaRotation;
+    const rotation = (currentRotation + 90) % 360;
+    this.setGuerillaRotation(rotation);
+
+    try {
+      localStorage.setItem(App.STORAGE_GUERILLA_ROTATION, String(rotation));
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreGuerillaRotation() {
+    try {
+      this.setGuerillaRotation(parseInt(localStorage.getItem(App.STORAGE_GUERILLA_ROTATION), 10) || 0);
+    } catch (err) {
+      this.setGuerillaRotation(0);
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  setGuerillaRotation(rotation) {
+    const normalizedRotation = ((Math.round(rotation / 90) * 90) % 360 + 360) % 360;
+    this.guerillaRotation = normalizedRotation;
+    [0, 90, 180, 270].forEach(angle => {
+      this.ui.guerillaPanel.classList.toggle(`rotation-${angle}`, normalizedRotation === angle);
+    });
   }
 
   getLaunchBooleanOverride(name) {
