@@ -53,6 +53,7 @@ export class App {
   static STATS_GRAPH_THROTTLE_MS = 67;
   static PARSE_FRAME_BUDGET_MS = 2;
   static TOP_INFO_LOG_LIMIT = 50;
+  static SENSOR_TOUCH_ADDRESS_PATTERN = /^\/sensor\/touch\/\d+$/;
   static SKIP_MAIN_CANVAS_IN_WALL_MODE = true;
 
   constructor() {
@@ -1428,7 +1429,25 @@ export class App {
       return;
     }
 
+    if (this.isSensorTouchActiveMessage(message)) {
+      this.startScanIfAvailable();
+    }
+
     this.addTopInfoMessage("Server sent", this.formatSseOscMessage(message));
+  }
+
+  isSensorTouchActiveMessage(message) {
+    if (!App.SENSOR_TOUCH_ADDRESS_PATTERN.test(message.address)) return false;
+
+    const value = this.getOscArgValue(message.args, 0);
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      return ["1", "true", "yes", "on"].includes(normalized);
+    }
+
+    return false;
   }
 
   getOscArgValue(args, index) {
