@@ -6,11 +6,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
-// Check if the current working directory is the one where ScanMeister.js resides. If not, change
-// it.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Add handlers for unhandled exceptions and rejections.
 process.on("uncaughtException", error => {
   console.error(`Uncaught exception: ${error.stack || error}`);
   process.exit(1);
@@ -20,6 +16,11 @@ process.on("unhandledRejection", reason => {
   console.error(`Unhandled rejection: ${reason?.stack || reason}`);
   process.exit(1);
 });
+
+// Check if the current working directory is the one where ScanMeister.js resides. If not, change
+// it.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 if (process.cwd() !== __dirname) {
 
@@ -37,12 +38,13 @@ if (process.cwd() !== __dirname) {
 // exists, start normally. If not, display an error with instructions.
 if (!existsSync('./node_modules')) {
   console.error(
-    `Error: Modules have not been installed. ` +
-    `To install them, use 'npm install' in a Terminal at root of project.`
+    `Error: Node modules have not been installed. ` +
+    `To install them, use 'npm install' in a Terminal at the root of the project.`
   );
   process.exit(1);
 }
 
+// Instantiate and start applicatio
 const App = (await import(`./src/App.js`)).default;
 const app = new App();
 
