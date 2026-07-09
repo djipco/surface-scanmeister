@@ -474,6 +474,8 @@ export default class App {
 
     }
 
+    logInfo(`ScanMeister stopped with status ${status}.`);
+
     // Exit
     if (exit) {
 

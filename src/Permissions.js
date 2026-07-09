@@ -140,6 +140,10 @@ export function checkScanImageCommand() {
   };
 }
 
+function normalizeScanImageVersion(output) {
+  return output.replace(/^scanimage\s+\(sane-backends\)\s+/i, "").trim();
+}
+
 export function checkScanImageVersion() {
   return new Promise(resolve => {
     execFile(
@@ -156,7 +160,7 @@ export function checkScanImageVersion() {
         if (!error) {
           resolve({
             ok: true,
-            version: output,
+            version: normalizeScanImageVersion(output),
             error: null
           });
           return;

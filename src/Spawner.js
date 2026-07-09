@@ -25,6 +25,7 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessErrorUser = options.errorCallback;
     this.#callbacks.onProcessStderrUser = options.stderrCallback;
     this.#callbacks.onProcessDataUser = options.dataCallback;
+    this.#callbacks.onProcessCloseUser = options.closeCallback;
 
     // Execute command and store resulting process object
     this.#command = command;
@@ -45,8 +46,12 @@ export class Spawner extends EventEmitter {
 
     // Add completion handler
     this.#callbacks.onProcessEnd = this.#onProcessEnd.bind(this);
-    this.#process.stdout.once('end', this.#callbacks.onProcessEnd);
+    this.#process.once('close', this.#callbacks.onProcessEnd);
 
+  }
+
+  get pid() {
+    return this.#process?.pid;
   }
 
   pipe(destination, source = "stdout") {
@@ -99,10 +104,13 @@ export class Spawner extends EventEmitter {
 
   }
 
-  #onProcessEnd() {
+  #onProcessEnd(code, signal) {
 
     if (typeof this.#callbacks.onProcessSuccessUser === 'function') {
       this.#callbacks.onProcessSuccessUser(this.#buffer);
+    }
+    if (typeof this.#callbacks.onProcessCloseUser === 'function') {
+      this.#callbacks.onProcessCloseUser({code, signal});
     }
     this.emit("complete", this.#buffer);
     this.removeAllListeners();
@@ -128,6 +136,7 @@ export class Spawner extends EventEmitter {
     this.#callbacks.onProcessStderr = null
     this.#callbacks.onProcessEnd = null;
     this.#callbacks.onProcessDataUser = null;
+    this.#callbacks.onProcessCloseUser = null;
 
   }
 

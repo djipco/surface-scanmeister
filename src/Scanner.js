@@ -103,9 +103,11 @@ export class Scanner extends EventEmitter {
         shell: false,
         sucessCallback: this.#onScanImageEnd.bind(this),
         errorCallback: this.#onScanImageError.bind(this),
-        stderrCallback: this.#onScanImageStderr.bind(this)
+        stderrCallback: this.#onScanImageStderr.bind(this),
+        closeCallback: this.#onScanImageClose.bind(this)
       }
     );
+    logInfo(`scanimage started for channel ${this.channel} with PID ${this.scanImageSpawner.pid}.`);
 
     if (options.pipe) {
       this.scanImageSpawner.pipe(options.pipe, "stdout");
@@ -269,6 +271,13 @@ export class Scanner extends EventEmitter {
       `Scan completed with ${this.nameAndPort}` +
       (durationMs === null ? "" : ` in ${(durationMs / 1000).toFixed(1)}s`) +
       "."
+    );
+  }
+
+  #onScanImageClose({code, signal}) {
+    logInfo(
+      `scanimage process for channel ${this.channel} closed ` +
+      `with code ${code ?? "none"} and signal ${signal ?? "none"}.`
     );
   }
 
