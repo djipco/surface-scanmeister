@@ -1,7 +1,7 @@
 {
   "name": "scanmeister",
   "title": "ScanMeister Daemon",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "ScanMeister Daemon lets you scan images and retrieve them by calling a simple HTTP API",
   "author": "Jean-Philippe Cô <null@djip.co> (https://djip.co)",
   "license": "UNLICENSED",

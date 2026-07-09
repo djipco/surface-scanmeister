@@ -148,6 +148,34 @@ client:
 http://localhost:8080?kiosk=1
 ```
 
+To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
+the user's autostart folder:
+
+```sh
+mkdir -p ~/.config/autostart
+ln -sf "/home/scanmeister/Desktop/surface-scanmeister/ScanMeister Client.desktop" \
+       ~/.config/autostart/scanmeister-client.desktop
+chmod +x "/home/scanmeister/Desktop/surface-scanmeister/ScanMeister Client.desktop"
+```
+
+Verify that the autostart entry exists:
+
+```sh
+ls -l ~/.config/autostart/scanmeister-client.desktop
+```
+
+After rebooting, the server should start through `systemd`, then Chromium should open the client
+when the `scanmeister` user session starts.
+
+To confirm the server side before rebooting:
+
+```sh
+sudo systemctl is-enabled scanmeister.service
+sudo systemctl status scanmeister.service
+```
+
+The expected result is that the service is `enabled` and `active (running)`.
+
 #### Configuration
 
 By default, the **HTTP API** of ScanMeister listens on port **`5678`**, the **HTTP file** server

@@ -2148,17 +2148,22 @@ export class App {
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     try {
-      const position = JSON.parse(localStorage.getItem(storageKey));
-      if (!position) return;
+      const position = JSON.parse(localStorage.getItem(storageKey)) || {};
 
       requestAnimationFrame(() => {
         const rect = panel.getBoundingClientRect();
+        const usableBounds = this.getPanelUsableVerticalBounds();
         const width = this.clamp(position.width || rect.width, 280, Math.max(280, window.innerWidth - 16));
-        const height = this.clamp(position.height || rect.height, 220, Math.max(220, window.innerHeight - 16));
+        const minHeight = Math.min(220, usableBounds.height);
+        const height = this.clamp(position.height || rect.height, minHeight, usableBounds.height);
         panel.style.width = width + "px";
         panel.style.height = height + "px";
-        const left = this.clamp(position.left, 0, Math.max(0, window.innerWidth - width));
-        const top = this.clamp(position.top, 0, Math.max(0, window.innerHeight - height));
+        const left = this.clamp(position.left ?? rect.left, 0, Math.max(0, window.innerWidth - width));
+        const top = this.clamp(
+          position.top ?? rect.top,
+          usableBounds.top,
+          Math.max(usableBounds.top, usableBounds.bottom - height)
+        );
         panel.style.right = "auto";
         panel.style.bottom = "auto";
         panel.style.left = left + "px";
@@ -2167,6 +2172,35 @@ export class App {
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
+  }
+
+  getPanelUsableVerticalBounds() {
+    const margin = 8;
+    let top = margin;
+    let bottom = window.innerHeight - margin;
+    const topInfoPanel = document.getElementById("top-info-panel");
+    const commandPanel = document.getElementById("command-panel");
+
+    if (topInfoPanel && !topInfoPanel.classList.contains("hidden")) {
+      const rect = topInfoPanel.getBoundingClientRect();
+      if (rect.height > 0) top = Math.max(top, Math.ceil(rect.bottom) + margin);
+    }
+
+    if (commandPanel && !commandPanel.classList.contains("hidden")) {
+      const rect = commandPanel.getBoundingClientRect();
+      if (rect.height > 0) bottom = Math.min(bottom, Math.floor(rect.top) - margin);
+    }
+
+    if (bottom - top < 120) {
+      top = margin;
+      bottom = window.innerHeight - margin;
+    }
+
+    return {
+      top,
+      bottom,
+      height: Math.max(120, bottom - top)
+    };
   }
 
   savePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
