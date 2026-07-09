@@ -48,4 +48,5 @@ export const SupportedScanners = [
     idProduct: "190f",
     driverPrefix: "genesys:libusb:"
   }
+
 ];
