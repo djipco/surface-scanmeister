@@ -140,11 +140,11 @@ export function checkScanImageCommand() {
   };
 }
 
-export function checkScanImageAccess() {
+export function checkScanImageDeviceAccess(deviceName) {
   return new Promise(resolve => {
     execFile(
       "scanimage",
-      ["-L"],
+      [`--device-name=${deviceName}`, "-A"],
       {
         encoding: "utf8",
         timeout: 15000,
@@ -155,7 +155,8 @@ export function checkScanImageAccess() {
 
         if (!error) {
           resolve({
-            ok: output.length > 0 && !output.includes("No scanners were identified"),
+            ok: true,
+            deviceName,
             output,
             error: null
           });
@@ -164,6 +165,7 @@ export function checkScanImageAccess() {
 
         resolve({
           ok: false,
+          deviceName,
           output,
           error: stderr.trim() || normalizeError(error)
         });

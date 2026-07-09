@@ -16,7 +16,7 @@ import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
 import {
   checkScannerAccessGroups,
-  checkScanImageAccess,
+  checkScanImageDeviceAccess,
   checkScanImageCommand,
   checkWritableDirectory,
   formatScannerAccessGroupWarning,
@@ -57,9 +57,11 @@ export default class App {
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
     // Log start details
-    logInfo(`Starting ${pkg.title} v${pkg.version}...`);
+    logInfo(
+      `Starting ${pkg.title} v${pkg.version} ` +
+      `(runtime: Node ${process.version} on ${process.platform}/${process.arch})...`
+    );
     this.#logRuntimeContext();
-    this.#logConfiguredServices();
 
     // Check platform
     if (process.platform !== "linux") {
@@ -140,27 +142,8 @@ export default class App {
   }
 
   #logRuntimeContext() {
-    logInfo(`Runtime: Node ${process.version} on ${process.platform}/${process.arch}.`);
     logInfo(`Working directory: ${process.cwd()}`);
     logInfo(`PATH: ${process.env.PATH || "not set"}`);
-  }
-
-  #logConfiguredServices() {
-    logInfo(`Configured logs path: ${config.paths.logs}`);
-    logInfo(`Configured scans path: ${config.paths.scans}`);
-    logInfo(
-      `Configured API server: ` +
-      `${config.network.api_server.address}:${config.network.api_server.port}`
-    );
-    logInfo(
-      `Configured static file server: ` +
-      `${config.network.files_server.address}:${config.network.files_server.port}`
-    );
-    logInfo(
-      `Configured OSC: listening on ` +
-      `${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ` +
-      `${config.network.osc_client.address}:${config.network.osc_client.port}`
-    );
   }
 
   #checkPathPermissions() {
@@ -183,9 +166,7 @@ export default class App {
 
     logInfo(`Service user: ${formatUserInfo(result.user)}`);
 
-    if (result.ok) {
-      logInfo("Scanner access groups look correct.");
-    } else {
+    if (!result.ok) {
       logWarn(formatScannerAccessGroupWarning(result));
     }
 
@@ -195,29 +176,43 @@ export default class App {
       return;
     }
 
-    logInfo(`scanimage found at ${scanImageCommand.executable}.`);
   }
 
   #checkSaneScannerAccess() {
     const result = checkScannerAccessGroups();
     const scanImageCommand = checkScanImageCommand();
 
-    if (!scanImageCommand.ok) {
+    if (!scanImageCommand.ok || this.scanners.length === 0) {
       return;
     }
 
-    logInfo("Checking SANE scanner access with scanimage -L in the background...");
+    logInfo(`Checking SANE access for ${this.scanners.length} scanner(s) in the background...`);
 
-    checkScanImageAccess()
-      .then(scanImage => {
-        if (scanImage.ok) {
-          logInfo(`SANE scanner access confirmed: ${scanImage.output}`);
-        } else {
+    Promise.all(this.scanners.map(scanner => checkScanImageDeviceAccess(scanner.systemName)))
+      .then(results => {
+        const failed = results.filter(scanImage => !scanImage.ok);
+
+        if (failed.length === 0) {
+          logInfo(`SANE access confirmed for ${results.length} scanner(s).`);
+          return;
+        }
+
+        logWarn(
+          `SANE access warning for service user ${formatUserInfo(result.user)}. ` +
+          `${results.length - failed.length}/${results.length} scanner(s) confirmed.`
+        );
+
+        failed.forEach(scanImage => {
+          const scanner = this.scanners.find(item => item.systemName === scanImage.deviceName);
+          const scannerLabel = scanner
+            ? `channel ${scanner.channel} (${scanner.systemName})`
+            : scanImage.deviceName;
+
           logWarn(
-            `SANE scanner access warning for service user ${formatUserInfo(result.user)}. ` +
+            `SANE access failed for ${scannerLabel}. ` +
             `Output: ${scanImage.output || "none"}. Error: ${scanImage.error || "none"}.`
           );
-        }
+        });
       })
       .catch(error => {
         logWarn(`SANE scanner access check failed unexpectedly: ${error.message}`);

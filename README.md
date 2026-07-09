@@ -112,6 +112,36 @@ pip3 install rpi-lgpio
 The ScanMeister server is meant to run in the background as a `systemd` service. The repository
 contains the service definition in `system/scanmeister.service`.
 
+The service file is configured to run as the `scanmeister` user and group:
+
+```ini
+User=scanmeister
+Group=scanmeister
+WorkingDirectory=/home/scanmeister/Desktop/surface-scanmeister
+```
+
+Create the user if it does not already exist:
+
+```sh
+id scanmeister || sudo useradd -m -s /bin/bash scanmeister
+```
+
+Then add it to the groups needed to access scanners and hardware devices:
+
+```sh
+sudo usermod -aG scanner,lp,plugdev,video,render,input,i2c,gpio,spi,dialout scanmeister
+```
+
+You can verify the result with:
+
+```sh
+id scanmeister
+groups scanmeister
+```
+
+If the `scanmeister` account is currently logged in, log out and back in before relying on the new
+group memberships.
+
 Copy it to the system services folder on the Raspberry Pi:
 
 ```sh
@@ -153,14 +183,6 @@ To stop ScanMeister from starting automatically on boot:
 
 ```sh
 sudo systemctl disable scanmeister.service
-```
-
-The service runs as the `scanmeister` user and uses the project folder as its working directory:
-
-```ini
-User=scanmeister
-Group=scanmeister
-WorkingDirectory=/home/scanmeister/Desktop/surface-scanmeister
 ```
 
 This matters for logs, saved scans, and permissions. The `logs` and `scans` folders must be
