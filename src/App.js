@@ -7,7 +7,6 @@ import { usb } from 'usb';
 
 // Import project classes
 import {Configuration as config} from "../config/Configuration.js";
-import {LightSensors} from "./LightSensors.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Scanner} from './Scanner.js';
 import {ScannerMappings} from "../config/ScannerMappings.js";
@@ -113,7 +112,6 @@ export default class App {
 
     // Start background Python distance transmitter process
     // this.#activateDistanceSensors();
-    // await this.#activateLightSensors();
 
     // Quitting by closing the window is not a problem but it doesn't leave much time for logging
     // information to be written. In that sense, CTRL-C is better.
@@ -208,26 +206,6 @@ export default class App {
         dataCallback: this.#onDistanceSensorData.bind(this)
       }
     );
-
-  }
-
-  async #activateLightSensors() {
-
-    // Create object and start
-    this.lightSensors = new LightSensors();
-    await this.lightSensors.start();
-
-    // Add callback
-    this.#callbacks.onLightSensorsData = this.#onLightSensorsData.bind(this);
-    this.lightSensors.addListener("data", this.#callbacks.onLightSensorsData);
-
-  }
-
-  #onLightSensorsData(data) {
-
-    data.forEach((value, index) => {
-      this.sendOscMessage(`/sensor/${index+1}/luminosity`, [{type: "f", value: value}]);
-    });
 
   }
 
@@ -431,12 +409,6 @@ export default class App {
   async quit(status = 0, exit = true) {
 
     logInfo("Exiting...");
-
-    if (this.lightSensors) {
-      this.lightSensors.quit();
-      this.lightSensors.removeListener("data", this.#callbacks.onLightSensorsData);
-      this.#callbacks.onLightSensorsData = undefined;
-    }
 
     // Kill distance sensor process
     if (this.#distanceSensorSpawner) await this.#distanceSensorSpawner.destroy();
