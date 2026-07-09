@@ -16,8 +16,8 @@ import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
 import {
   checkScannerAccessGroups,
-  checkScanImageDeviceAccess,
   checkScanImageCommand,
+  checkScanImageVersion,
   checkWritableDirectory,
   formatScannerAccessGroupWarning,
   formatUserInfo,
@@ -92,7 +92,6 @@ export default class App {
 
     // Update scanners list
     await this.#updateScanners();
-    this.#checkSaneScannerAccess();
 
     // Start HTTP server and call its start() method passing a reference to the list of available
     // scanners.
@@ -176,46 +175,16 @@ export default class App {
       return;
     }
 
-  }
-
-  #checkSaneScannerAccess() {
-    const result = checkScannerAccessGroups();
-    const scanImageCommand = checkScanImageCommand();
-
-    if (!scanImageCommand.ok || this.scanners.length === 0) {
-      return;
-    }
-
-    logInfo(`Checking SANE access for ${this.scanners.length} scanner(s) in the background...`);
-
-    Promise.all(this.scanners.map(scanner => checkScanImageDeviceAccess(scanner.systemName)))
-      .then(results => {
-        const failed = results.filter(scanImage => !scanImage.ok);
-
-        if (failed.length === 0) {
-          logInfo(`SANE access confirmed for ${results.length} scanner(s).`);
-          return;
+    checkScanImageVersion()
+      .then(scanImage => {
+        if (scanImage.ok) {
+          logInfo(`scanimage version: ${scanImage.version}`);
+        } else {
+          logWarn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
         }
-
-        logWarn(
-          `SANE access warning for service user ${formatUserInfo(result.user)}. ` +
-          `${results.length - failed.length}/${results.length} scanner(s) confirmed.`
-        );
-
-        failed.forEach(scanImage => {
-          const scanner = this.scanners.find(item => item.systemName === scanImage.deviceName);
-          const scannerLabel = scanner
-            ? `channel ${scanner.channel} (${scanner.systemName})`
-            : scanImage.deviceName;
-
-          logWarn(
-            `SANE access failed for ${scannerLabel}. ` +
-            `Output: ${scanImage.output || "none"}. Error: ${scanImage.error || "none"}.`
-          );
-        });
       })
       .catch(error => {
-        logWarn(`SANE scanner access check failed unexpectedly: ${error.message}`);
+        logWarn(`scanimage version check failed unexpectedly: ${error.message}`);
       });
   }
 

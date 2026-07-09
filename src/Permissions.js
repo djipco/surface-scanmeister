@@ -140,24 +140,23 @@ export function checkScanImageCommand() {
   };
 }
 
-export function checkScanImageDeviceAccess(deviceName) {
+export function checkScanImageVersion() {
   return new Promise(resolve => {
     execFile(
       "scanimage",
-      [`--device-name=${deviceName}`, "--format=pnm", "-A"],
+      ["-V"],
       {
         encoding: "utf8",
-        timeout: 15000,
+        timeout: 5000,
         windowsHide: true
       },
       (error, stdout, stderr) => {
-        const output = stdout.trim();
+        const output = (stdout || stderr).trim();
 
         if (!error) {
           resolve({
             ok: true,
-            deviceName,
-            output,
+            version: output,
             error: null
           });
           return;
@@ -165,9 +164,8 @@ export function checkScanImageDeviceAccess(deviceName) {
 
         resolve({
           ok: false,
-          deviceName,
-          output,
-          error: stderr.trim() || normalizeError(error)
+          version: output,
+          error: output || normalizeError(error)
         });
       }
     );
