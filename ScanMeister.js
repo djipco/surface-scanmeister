@@ -12,12 +12,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 process.on("uncaughtException", error => {
-  console.error(`\x1b[91m Uncaught exception: ${error.stack || error} \x1b[0m`);
+  console.error(`Uncaught exception: ${error.stack || error}`);
   process.exit(1);
 });
 
 process.on("unhandledRejection", reason => {
-  console.error(`\x1b[91m Unhandled rejection: ${reason?.stack || reason} \x1b[0m`);
+  console.error(`Unhandled rejection: ${reason?.stack || reason}`);
   process.exit(1);
 });
 
@@ -27,30 +27,28 @@ if (process.cwd() !== __dirname) {
     process.chdir(__dirname);
     console.log('Working directory changed to: ' + process.cwd());
   } catch (err) {
-    console.error(`\x1b[91m Could not change working directory: ${err} \x1b[0m`);
+    console.error(`Could not change working directory: ${err}`);
     process.exit(1);
   }
 
 }
 
 // Check if external modules have been installed by looking for the 'node_modules' folder. If it
-// exists, start normally. If not, display error with instructions.
-if (existsSync('./node_modules')) {
-
-  const App = (await import(`./src/App.js`)).default;
-  const app = new App();
-  app.start()
-    .catch(async error => {
-      console.error(`\x1b[91m ${error} \x1b[0m`);
-      await app.quit(1);
-    });
-
-} else {
-
+// exists, start normally. If not, display an error with instructions.
+if (!existsSync('./node_modules')) {
   console.error(
-    `\x1b[91m Error: Modules have not been installed. ` +
-    `To install them, use 'npm install' in a Terminal at root of project.\x1b[0m`
+    `Error: Modules have not been installed. ` +
+    `To install them, use 'npm install' in a Terminal at root of project.`
   );
   process.exit(1);
+}
 
+const App = (await import(`./src/App.js`)).default;
+const app = new App();
+
+try {
+  await app.start();
+} catch (error) {
+  console.error(error);
+  await app.quit(1);
 }
