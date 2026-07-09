@@ -1,16 +1,22 @@
-### Node template
-# Log files
-/logs/
+# JetBrains project settings
+/.idea/
+
+# Codex local agent metadata
+/.agents/
+
+# macOS Finder metadata
+.DS_Store
+
+# Windows Explorer metadata
+Thumbs.db
+desktop.ini
 
 # Node.js modules
 /node_modules/
 /.npm-cache/
 
-# JetBrains project settings
-/.idea/*
+# Logs directory
+/logs/
 
-# Images directory
+# Saved scans directory
 /scans/
-
-# NW.js Application (different on different platforms)
-/webclient/nwjs
