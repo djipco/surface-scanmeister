@@ -38,6 +38,7 @@ export class App {
   static STORAGE_UI_OVERLAY_VISIBLE = "scanmeister.uiOverlayVisible";
   static STORAGE_PARAMETERS_POSITION = "scanmeister.parametersPosition";
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
+  static STORAGE_GUERILLA_POSITION = "scanmeister.guerillaPosition";
   static DEFAULT_SERVER_HOST = "127.0.0.1";
   static DEFAULT_SERVER_PORT = "5678";
   static DEFAULT_SCAN_WIDTH = "5000";
@@ -1053,6 +1054,11 @@ export class App {
     this.ui.topInfoLogToggle = document.getElementById("top-info-log-toggle");
     this.ui.topInfoLog = document.getElementById("top-info-log");
     this.ui.commandPanel = document.getElementById("command-panel");
+    this.ui.guerillaPanel = document.getElementById("guerilla-panel");
+    this.ui.guerillaPanelHeader = document.getElementById("guerilla-panel-header");
+    this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
+    this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
+    this.setUpPanelResize(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
     document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
@@ -1175,6 +1181,7 @@ export class App {
     this.restoreCheckboxValue(this.ui.graphToggles.buffer, App.STORAGE_BUFFER_GRAPH_VISIBLE, true);
     this.updateStatsGraphVisibility();
     this.restoreUiOverlayVisibility();
+    this.restoreGuerillaUiVisibility();
 
     this.ui.serverHost.addEventListener("input", () => {
       this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
@@ -1578,10 +1585,10 @@ export class App {
   }
 
   toggleUiOverlay() {
-    this.setUiOverlayVisible(this.ui.controlsPanel.classList.contains("hidden"));
+    this.setUiOverlayVisible(!this.isUiOverlayVisible());
   }
 
-  setUiOverlayVisible(isVisible) {
+  setUiOverlayVisible(isVisible, {persist = true} = {}) {
     document.documentElement.classList.toggle("ui-overlay-hidden", !isVisible);
     this.ui.controlsPanel.classList.toggle("hidden", !isVisible);
     this.ui.topInfoPanel.classList.toggle("hidden", !isVisible);
@@ -1590,16 +1597,18 @@ export class App {
     } else {
       this.cancelUiAutoHide();
     }
-    try {
-      localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
-    } catch (err) {
-      // Keep the interface usable if localStorage is unavailable.
+    if (persist) {
+      try {
+        localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
+      } catch (err) {
+        // Keep the interface usable if localStorage is unavailable.
+      }
     }
     this.updateAuxiliaryOverlayVisibility();
   }
 
   handleMouseActivity() {
-    if (this.ui.controlsPanel.classList.contains("hidden")) {
+    if (!this.isUiOverlayVisible()) {
       this.setUiOverlayVisible(true);
       return;
     }
@@ -1609,7 +1618,7 @@ export class App {
 
   scheduleUiAutoHide() {
     this.cancelUiAutoHide();
-    if (!this.ui.controlsPanel || this.ui.controlsPanel.classList.contains("hidden")) return;
+    if (!this.ui.controlsPanel || !this.isUiOverlayVisible()) return;
     if (!this.autoHideEnabled) return;
     if (!this.ui.autoHideSeconds) return;
 
@@ -1688,11 +1697,12 @@ export class App {
   }
 
   updateAuxiliaryOverlayVisibility() {
-    const isUiOverlayVisible = !this.ui.controlsPanel.classList.contains("hidden");
+    const isUiOverlayVisible = this.isUiOverlayVisible();
+    const areParametersVisible = isUiOverlayVisible && !this.ui.controlsPanel.classList.contains("hidden");
     const isStatsVisible = isUiOverlayVisible && this.ui.debugToggle.checked;
 
     this.renderStatsVisible = isStatsVisible;
-    this.ui.commandPanel.classList.toggle("hidden", !isUiOverlayVisible);
+    this.ui.commandPanel.classList.toggle("hidden", !areParametersVisible);
     this.ui.renderStats.classList.toggle("hidden", !isStatsVisible);
     if (isStatsVisible) this.updateRenderStats();
   }
@@ -2130,6 +2140,7 @@ export class App {
   }
 
   setUpPanelResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
+    this.setUpPanelBottomResize(panel, storageKey, onResize);
     if (!window.ResizeObserver) return;
 
     let isRestoring = true;
@@ -2144,6 +2155,44 @@ export class App {
     });
     resizeObserver.observe(panel);
     this.panelResizeObservers.push(resizeObserver);
+  }
+
+  setUpPanelBottomResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
+    const handle = document.createElement("div");
+    handle.className = "panel-bottom-resize-handle";
+    handle.setAttribute("aria-hidden", "true");
+    panel.appendChild(handle);
+
+    handle.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect = panel.getBoundingClientRect();
+      const startY = event.clientY;
+      const startHeight = rect.height;
+      handle.setPointerCapture(event.pointerId);
+
+      const onPointerMove = moveEvent => {
+        const bounds = this.getPanelUsableVerticalBounds();
+        const maxHeight = Math.max(120, bounds.bottom - rect.top);
+        const minHeight = Math.min(220, maxHeight);
+        const height = this.clamp(startHeight + moveEvent.clientY - startY, minHeight, maxHeight);
+        panel.style.height = height + "px";
+        if (onResize) onResize();
+      };
+
+      const onPointerUp = upEvent => {
+        handle.releasePointerCapture(upEvent.pointerId);
+        this.savePanelPosition(panel, storageKey);
+        handle.removeEventListener("pointermove", onPointerMove);
+        handle.removeEventListener("pointerup", onPointerUp);
+        handle.removeEventListener("pointercancel", onPointerUp);
+      };
+
+      handle.addEventListener("pointermove", onPointerMove);
+      handle.addEventListener("pointerup", onPointerUp);
+      handle.addEventListener("pointercancel", onPointerUp);
+    });
   }
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
@@ -2527,12 +2576,34 @@ export class App {
   }
 
   restoreUiOverlayVisibility() {
+    const launchVisibility = this.getLaunchBooleanOverride("ui");
+    if (launchVisibility !== undefined) {
+      this.setUiOverlayVisible(launchVisibility, {persist: false});
+      return;
+    }
+
     try {
       const storedValue = localStorage.getItem(App.STORAGE_UI_OVERLAY_VISIBLE);
       if (storedValue !== null) this.setUiOverlayVisible(storedValue === "true");
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
+  }
+
+  restoreGuerillaUiVisibility() {
+    const launchVisibility = this.getLaunchBooleanOverride("guerilla");
+    this.ui.guerillaPanel.classList.toggle("hidden", launchVisibility !== true);
+  }
+
+  getLaunchBooleanOverride(name) {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has(name)) return undefined;
+    const value = params.get(name)?.toLowerCase();
+    return value === "" || value === "1" || value === "true";
+  }
+
+  isUiOverlayVisible() {
+    return !document.documentElement.classList.contains("ui-overlay-hidden");
   }
 
   restoreScanWidth() {

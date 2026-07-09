@@ -148,6 +148,20 @@ client:
 http://localhost:8080?kiosk=1
 ```
 
+The `kiosk=1` parameter tells the client to use kiosk-specific behavior. To override the regular UI
+initial visibility, add `ui=0` or `ui=1`. To show the Guerilla panel, add `guerilla=1`:
+
+```sh
+http://localhost:8080?kiosk=1&ui=0
+http://localhost:8080?kiosk=1&ui=1
+http://localhost:8080?kiosk=1&guerilla=1
+http://localhost:8080?kiosk=1&ui=0&guerilla=1
+```
+
+When `ui=0`, the Parameters panel, top strip, bottom command strip, and Stats panel are initially hidden.
+When `ui=0&guerilla=1`, only the Guerilla panel is shown. When `ui=1`, the regular UI is shown,
+but the Guerilla panel is still shown only if `guerilla=1` is present.
+
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:
 

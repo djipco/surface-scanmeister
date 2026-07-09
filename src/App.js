@@ -70,7 +70,7 @@ export default class App {
     this.#checkPathPermissions();
     await this.#checkScannerAccessPermissions();
 
-    // Set up OSC. This must be done before updating the scanners list because scanners need a
+    // Set up OSC. This must be done before updating the scanner list because scanners need a
     // reference to the OSC object to send status.
     try {
       await this.setupOsc()
@@ -87,7 +87,7 @@ export default class App {
       config.network.osc_client.address  + ":" + config.network.osc_client.port  + "."
     );
 
-    // Update scanners list
+    // Update scanner list
     await this.#updateScanners();
 
     // Start HTTP server and call its start() method passing a reference to the list of available
@@ -108,7 +108,7 @@ export default class App {
     this.#callbacks.onUsbDetach = this.#onUsbDetach.bind(this);
     usb.on("detach", this.#callbacks.onUsbDetach);
 
-    // Quitting by closing the window is not a problem but it doesn't leave much time for logging
+    // Quitting by closing the window is not a problem, but it leaves little time for logging
     // information to be written. In that sense, CTRL-C is better.
     logInfo("Press CTRL-C to properly exit.")
 
@@ -222,7 +222,7 @@ export default class App {
 
   async #onUsbAttach(descriptor) {
 
-    // Check if it is a supported scanner. If it is, rebuild scanner list of objects and report
+    // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
     if (this.isSupportedScannerDescriptor(descriptor)) {
       logInfo(
         `Scanner attached to bus ${descriptor.busNumber}, ` +
@@ -235,7 +235,7 @@ export default class App {
 
   async #onUsbDetach(descriptor) {
 
-    // Check if it is a supported scanner. If it is, rebuild scanner list of objects and report
+    // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
     if (this.isSupportedScannerDescriptor(descriptor)) {
       logInfo(
         `Scanner detached from bus ${descriptor.busNumber}, ` +
@@ -298,8 +298,9 @@ export default class App {
     // Sort scanner descriptors by bus and then by port hierarchy
     scannerDescriptors.sort((a, b) => {
 
-      // If number of elements in portNumbers is smaller than 5, we left-pad the array with zeroes.
-      // This allows comparing devices on hubs with both subgroups and without (up to 5 levels).
+      // If the number of elements in portNumbers is smaller than 5, we left-pad the array with
+      // zeroes. This allows comparing devices on hubs with both subgroups and without (up to 5
+      // levels).
       const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
       const paddedB = Array(5 - b.portNumbers.length).fill(0).concat(b.portNumbers);
 
@@ -521,7 +522,7 @@ export default class App {
 
       logInfo("Reboot requested by remote...");
 
-      // Call quit without actually exiting the Node.js process (this will be forced by reboot)
+      // Call quit without actually exiting the Node.js process (reboot will force this)
       await this.quit(0, false);
       const spawner = new Spawner();
       spawner.execute("reboot");
