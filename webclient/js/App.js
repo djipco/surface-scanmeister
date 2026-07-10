@@ -1069,6 +1069,7 @@ export class App {
     this.ui.previousScanButton = document.getElementById("guerilla-previous-scan");
     this.ui.nextScanButton = document.getElementById("guerilla-next-scan");
     this.ui.lastScanButton = document.getElementById("guerilla-last-scan");
+    this.ui.scanHistoryFilename = document.getElementById("guerilla-image-browser-filename");
     this.ui.scanHistoryImage = document.getElementById("scan-history-image");
     this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
@@ -1596,6 +1597,7 @@ export class App {
       if (currentFilename) {
         const currentIndex = this.scanHistory.findIndex(scan => scan.filename === currentFilename);
         this.scanHistoryIndex = currentIndex >= 0 ? currentIndex : this.scanHistory.length;
+        this.setScanHistoryFilename(currentFilename);
       } else if (this.scanHistoryIndex === undefined) {
         this.scanHistoryIndex = this.scanHistory.length;
       } else {
@@ -1657,6 +1659,7 @@ export class App {
     this.scanHistoryIndex = index;
     this.ui.scanHistoryImage.src = this.serverUrl + "/scan-image?" + params;
     this.ui.scanHistoryImage.classList.remove("hidden");
+    this.setScanHistoryFilename(scan.filename);
     document.documentElement.classList.add("scan-history-visible");
     this.updateScanHistoryButtons();
   }
@@ -1665,7 +1668,13 @@ export class App {
     if (!this.ui.scanHistoryImage) return;
     this.ui.scanHistoryImage.classList.add("hidden");
     this.ui.scanHistoryImage.removeAttribute("src");
+    this.setScanHistoryFilename("");
     document.documentElement.classList.remove("scan-history-visible");
+  }
+
+  setScanHistoryFilename(filename) {
+    if (!this.ui.scanHistoryFilename) return;
+    this.ui.scanHistoryFilename.innerText = filename || "";
   }
 
   updateScanHistoryButtons() {

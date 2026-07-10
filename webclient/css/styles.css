@@ -402,8 +402,8 @@ html.kiosk-mode body {
   max-height: 70px;
   flex: 0 0 70px;
   padding: 0 16px;
-  font-size: 22px;
-  line-height: 22px;
+  font-size: 24px;
+  line-height: 24px;
   cursor: grab;
   touch-action: none;
 }
@@ -576,10 +576,25 @@ html.kiosk-mode body {
   grid-column: 1/-1;
   grid-row: 3;
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   color: #aeb8c2;
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+#guerilla-image-browser-filename {
+  min-width: 0;
+  overflow: hidden;
+  color: #d7e7ff;
+  font-weight: 400;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .guerilla-scan-navigation {
