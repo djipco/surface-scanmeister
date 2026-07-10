@@ -61,6 +61,14 @@ html.ui-overlay-hidden * {
   pointer-events: none;
 }
 
+.guerilla-mode .scan-history-image {
+  left: auto;
+  right: 0;
+  max-height: none;
+  height: 100vh;
+  transform: translateY(-50%);
+}
+
 .display-layout-wall #canvas {
   opacity: 0;
   pointer-events: none;
@@ -470,13 +478,13 @@ html.kiosk-mode body {
 }
 
 .touch-drag-icon {
-  width: 34px;
-  height: 42px;
+  width: 58px;
+  height: 58px;
   display: inline-block;
   color: rgba(215, 231, 255, 0.78);
-  background-image: radial-gradient(currentColor 2px, transparent 2px);
-  background-size: 10px 10px;
-  background-position: 2px 2px;
+  background-image: radial-gradient(currentColor 3px, transparent 3px);
+  background-size: 16px 16px;
+  background-position: 5px 5px;
 }
 
 .guerilla-rotate-button {

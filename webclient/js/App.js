@@ -1966,6 +1966,8 @@ export class App {
     if (!this.displayPixelWidth || !this.displayPixelHeight) return;
 
     if (this.isWallDisplayLayout) {
+      this.canvas.style.left = "";
+      this.canvas.style.right = "";
       this.canvas.style.height = "";
       this.canvas.style.transform = "";
       this.updateWallDisplaySize();
@@ -1988,6 +1990,16 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
+    if (this.guerillaModeActive) {
+      this.canvas.style.left = "auto";
+      this.canvas.style.right = "0";
+      this.canvas.style.height = `${availableHeight}px`;
+      this.canvas.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+      return;
+    }
+
+    this.canvas.style.left = "50%";
+    this.canvas.style.right = "";
     this.canvas.style.height = Math.max(1, cssHeight) + "px";
     this.canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
   }
@@ -2792,6 +2804,7 @@ export class App {
   restoreGuerillaUiVisibility() {
     const launchVisibility = this.getLaunchBooleanOverride("guerilla");
     this.guerillaModeActive = launchVisibility === true;
+    document.documentElement.classList.toggle("guerilla-mode", this.guerillaModeActive);
     this.ui.guerillaPanel.classList.toggle("hidden", !this.guerillaModeActive);
     if (this.guerillaModeActive) this.forceGuerillaDisplayLayout();
   }
