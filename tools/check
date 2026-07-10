@@ -99,8 +99,8 @@ async function main() {
   const usersFile = await checkUsersFile(options.file || DEFAULT_USERS_FILE);
   report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);
 
-  printResult(true, "API server", `${config.network.api_server.address}:${config.network.api_server.port}`);
-  printResult(true, "Web client server", `${config.network.files_server.address}:${config.network.files_server.port}`);
+  printResult(true, "HTTP server", `${config.network.files_server.address}:${config.network.files_server.port}`);
+  printResult(true, "API base path", "/api");
   printResult(true, "OSC", `listening on ${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ${config.network.osc_client.address}:${config.network.osc_client.port}`);
 
   process.exit(failures > 0 ? 1 : 0);

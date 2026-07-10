@@ -95,10 +95,6 @@ export default class App {
     // Start HTTP server and call its start() method passing a reference to the list of available
     // scanners.
     await this.#startHtttpServer();
-    logInfo(
-      `API server ready. Listening on ` +
-      `${config.network.api_server.address}:${config.network.api_server.port}.`
-    );
 
     // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
@@ -123,10 +119,7 @@ export default class App {
     this.#callbacks.onHttpServerError = this.#onHttpServerError.bind(this);
     this.#server.addListener("error", this.#callbacks.onHttpServerError);
 
-    await this.#server.start(
-      this.scanners,
-      {address: config.network.api_server.address, port: config.network.api_server.port}
-    );
+    await this.#server.start(this.scanners);
 
   }
 

@@ -6,8 +6,6 @@ export class App {
   static STATE_DATA_PARSED = 3;
 
   static STORAGE_CHANNEL = "scanmeister.channel";
-  static STORAGE_SERVER_HOST = "scanmeister.serverHost";
-  static STORAGE_SERVER_PORT = "scanmeister.serverPort";
   static STORAGE_RESOLUTION = "scanmeister.resolution";
   static STORAGE_BRIGHTNESS = "scanmeister.brightness";
   static STORAGE_CONTRAST = "scanmeister.contrast";
@@ -40,8 +38,6 @@ export class App {
   static STORAGE_STATS_POSITION = "scanmeister.statsPosition";
   static STORAGE_GUERILLA_POSITION = "scanmeister.guerillaPosition";
   static STORAGE_GUERILLA_ROTATION = "scanmeister.guerillaRotation";
-  static DEFAULT_SERVER_HOST = "127.0.0.1";
-  static DEFAULT_SERVER_PORT = "5678";
   static DEFAULT_SCAN_WIDTH = "300";
   static DEFAULT_SCAN_HEIGHT = "216";
   static DEFAULT_RENDER_SPEED = "100";
@@ -855,19 +851,8 @@ export class App {
     return ch >= 1 && ch <= 16;
   }
 
-  get serverHost() {
-    const host = this.ui.serverHost.value.trim();
-    return host || App.DEFAULT_SERVER_HOST;
-  }
-
-  get serverPort() {
-    const port = parseInt(this.ui.serverPort.value);
-    if (isNaN(port)) return parseInt(App.DEFAULT_SERVER_PORT);
-    return this.clampInputValue(this.ui.serverPort, port);
-  }
-
   get serverUrl() {
-    return `http://${this.serverHost}:${this.serverPort}`;
+    return "/api";
   }
 
   get resolution() {
@@ -1090,8 +1075,6 @@ export class App {
     this.ui.scanButton = document.getElementById("scan");
     this.ui.scanButton.addEventListener('click', () => this.activateScanButton());
 
-    this.ui.serverHost = document.getElementById("server-host");
-    this.ui.serverPort = document.getElementById("server-port");
     this.ui.channelInput = document.getElementById('channel');
 
     this.ui.resolution = document.getElementById("resolution");
@@ -1164,9 +1147,6 @@ export class App {
     this.setUpPanelDrag(this.ui.renderStats, this.ui.renderStatsHeader, App.STORAGE_STATS_POSITION);
     this.setUpPanelResize(this.ui.renderStats, App.STORAGE_STATS_POSITION, () => this.redrawStatsGraphs());
 
-    this.restoreTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
-    this.restoreNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT);
-    if (!this.ui.serverPort.value) this.ui.serverPort.value = App.DEFAULT_SERVER_PORT;
     this.restoreSelectValue(this.ui.channelInput, App.STORAGE_CHANNEL);
     this.restoreSelectValue(this.ui.resolution, App.STORAGE_RESOLUTION);
     this.restoreNumericValue(this.ui.brightness, App.STORAGE_BRIGHTNESS);
@@ -1205,28 +1185,6 @@ export class App {
     this.restoreUiOverlayVisibility();
     this.restoreGuerillaUiVisibility();
 
-    this.ui.serverHost.addEventListener("input", () => {
-      this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
-    });
-    this.ui.serverHost.addEventListener("change", () => {
-      this.ui.serverHost.value = this.serverHost;
-      this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
-      this.updateCommandPreview();
-      this.updateScannerAvailability();
-      this.refreshScanHistory();
-      this.connectEventStream();
-    });
-    this.ui.serverPort.addEventListener("input", () => {
-      this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT);
-    });
-    this.ui.serverPort.addEventListener("change", () => {
-      this.ui.serverPort.value = this.clampInputValue(this.ui.serverPort, this.serverPort);
-      this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT, {normalize: true});
-      this.updateCommandPreview();
-      this.updateScannerAvailability();
-      this.refreshScanHistory();
-      this.connectEventStream();
-    });
     this.ui.channelInput.addEventListener("change", () => {
       this.saveControlValue(this.ui.channelInput, App.STORAGE_CHANNEL);
       this.updateExpectedImageSize();

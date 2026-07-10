@@ -6,13 +6,9 @@ export const Configuration = {
   },
 
   network: {
-    api_server: {
-      address: "0.0.0.0",       // IP address the API server will listen on
-      port: 5678,               // Port the API server will listen on (between 1024 and 65535)
-    },
     files_server: {
-      address: "0.0.0.0",       // IP address the server will listen on
-      port: 8080,               // Port the server will listen on (between 1024 and 65535)
+      address: "0.0.0.0",       // IP address the HTTP server will listen on
+      port: 8080,               // Port the HTTP server will listen on (between 1024 and 65535)
     },
     osc_server: {
       address: '0.0.0.0',       // Local IP address to bind to for OSC

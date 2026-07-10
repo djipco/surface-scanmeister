@@ -193,8 +193,9 @@ The expected result is that the service is `enabled` and `active (running)`.
 
 #### Configuration
 
-By default, the **HTTP API** of ScanMeister listens on port **`5678`**, the **HTTP file** server
-listens on port **`8080`** and the **OSC server** listens on port **`8000`**. 
+By default, the **HTTP server** listens on port **`8080`** and serves both the web client and the
+API. API routes live under `/api`, for example `/api/scan/1`, `/api/command/1`, and
+`/api/events`. The **OSC server** listens on port **`8000`**.
 
 Local browser access to the web client is allowed without a password when connecting from
 `localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
@@ -214,7 +215,7 @@ EnvironmentFile=-/etc/scanmeister/scanmeister.env
 ```
 
 The leading `-` means the service can still start if the file does not exist. When the file is
-missing, local web client access still works, but remote web client access is refused.
+missing, local HTTP access still works, but remote HTTP access is refused.
 
 The env file can point to the remote users file:
 
@@ -329,7 +330,7 @@ sudo systemctl restart scanmeister.service
 ```
 
 If the users file is missing, unreadable, or contains no valid users, local access still works, but
-remote web client access is refused.
+remote HTTP access is refused.
 
 To change the IP address and port of the machine OSC messages are sent to, you can modify the 
 configuration file:
@@ -382,10 +383,10 @@ The status of scanners is also broadcasted as:
 * `/device/x/scanning` i 0 (or 1)
 
 The browser client can receive the same outbound OSC information over Server-Sent Events by
-connecting to the API server's `/events` endpoint:
+connecting to the HTTP server's `/api/events` endpoint:
 
 ```js
-const events = new EventSource("http://localhost:5678/events");
+const events = new EventSource("http://localhost:8080/api/events");
 
 events.addEventListener("osc", event => {
   const message = JSON.parse(event.data);

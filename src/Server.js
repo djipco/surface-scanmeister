@@ -1,6 +1,5 @@
 // Node.js standard imports
 import {Configuration as config} from "../config/Configuration.js";
-import http from 'node:http';
 import {scryptSync, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
 import {mkdir, readFile, readdir, stat, writeFile} from 'node:fs/promises';
@@ -24,8 +23,7 @@ export class Server extends EventEmitter {
   #callbacks = {};                  // callback functions used in this class
   #clients = [];                    // List of clients that requested a scan
   #eventClients = new Map();         // Long-lived SSE clients
-  #apiServer = undefined;   // HTTP Server (5678)
-  #express = undefined;             // Express server, for static files (8080)
+  #express = undefined;             // Express server, for API and static files (8080)
   #filesServer = undefined;
   #remoteAuthUsers = new Map();
   #remoteAuthUsersMtimeMs = undefined;
@@ -117,7 +115,7 @@ export class Server extends EventEmitter {
       authUsersStat = await stat(authUsersPath);
     } catch (err) {
       if (this.#remoteAuthUsers.size > 0 || this.#remoteAuthUsersMtimeMs !== undefined) {
-        logWarn(`Remote web client access is disabled because ${authUsersPath} could not be read.`);
+        logWarn(`Remote HTTP access is disabled because ${authUsersPath} could not be read.`);
       }
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
@@ -133,7 +131,7 @@ export class Server extends EventEmitter {
     try {
       content = await readFile(authUsersPath, "utf8");
     } catch (err) {
-      logWarn(`Remote web client access is disabled because ${authUsersPath} could not be read.`);
+      logWarn(`Remote HTTP access is disabled because ${authUsersPath} could not be read.`);
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
       return;
@@ -157,7 +155,7 @@ export class Server extends EventEmitter {
     this.#remoteAuthUsers = users;
     this.#remoteAuthUsersMtimeMs = mtimeMs;
     this.#remoteAuthConfigurationWarningShown = false;
-    logInfo(`Loaded ${users.size} remote web client user(s) from ${authUsersPath}.`);
+    logInfo(`Loaded ${users.size} remote HTTP user(s) from ${authUsersPath}.`);
   }
 
   #verifyPassword(username, password) {
@@ -188,7 +186,7 @@ export class Server extends EventEmitter {
     try {
       await this.#refreshRemoteAuthUsers();
     } catch (err) {
-      logWarn(`Could not refresh remote web client users. Error: ${err}`);
+      logWarn(`Could not refresh remote HTTP users. Error: ${err}`);
       response.status(403).send("Remote access is not configured");
       return;
     }
@@ -196,7 +194,7 @@ export class Server extends EventEmitter {
     if (!this.#hasRemoteAuthConfiguration()) {
       if (!this.#remoteAuthConfigurationWarningShown) {
         logWarn(
-          "Remote web client access is disabled because ScanMeister authentication is not configured."
+          "Remote HTTP access is disabled because ScanMeister authentication is not configured."
         );
         this.#remoteAuthConfigurationWarningShown = true;
       }
@@ -539,14 +537,6 @@ export class Server extends EventEmitter {
     // Stop all scanning processes
     this.#scanners.forEach(async scanner => await scanner.abort());
 
-    // Remove events and stop the HTTP Server
-    if (this.#apiServer) {
-      this.#apiServer.removeAllListeners();
-      this.#apiServer.close();
-      this.#apiServer.closeAllConnections();
-      this.#apiServer.unref();
-    }
-
     // Stop Express server
     if (this.#filesServer) {
       return new Promise(resolve => this.#filesServer.close(resolve));
@@ -554,7 +544,7 @@ export class Server extends EventEmitter {
 
   }
 
-  async start(scanners, options = {address: "0.0.0.0", port: 5678}) {
+  async start(scanners) {
 
     if (!Array.isArray(scanners)) {
       logError("An array of Scanner objects must be specified to start the Server.");
@@ -563,61 +553,41 @@ export class Server extends EventEmitter {
 
     this.#scanners = scanners;
 
-    // Create HTTP server and add callbacks
-    this.#apiServer = http.createServer();
-    this.#callbacks.onHttpRequest = this.#onHttpRequest.bind(this);
-    this.#apiServer.on("request", this.#callbacks.onHttpRequest);
-    this.#callbacks.onServerError = this.#onServerError.bind(this);
-    this.#apiServer.on("error", this.#callbacks.onServerError);
-
-    // Start scanner API server
-    await new Promise((resolve, reject) => {
-
-      this.#apiServer.listen(options, err => {
-        if (err) {
-          reject("Could not start HTTP server. " + err);
-          this.quit();
-        } else {
-          resolve();
-        }
-      });
-
-    });
-
-    // Set up server for static web client files (using Express) and specify the directory to serve
-    // files from.
+    // Set up server for API routes and static web client files.
     await this.#refreshRemoteAuthUsers();
     this.#express = express();
+    this.#callbacks.onHttpRequest = this.#onHttpRequest.bind(this);
+    this.#callbacks.onServerError = this.#onServerError.bind(this);
     this.#express.use(this.#authenticateRemoteFileRequest.bind(this));
+    this.#express.use("/api", this.#callbacks.onHttpRequest);
     this.#express.use(express.static('webclient'));
 
     if (this.#hasRemoteAuthConfiguration()) {
-      logInfo(`Remote web client access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
+      logInfo(`Remote HTTP access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
     } else {
       logWarn(
-        `Remote web client access is disabled until ${this.#authUsersPath()} contains at least ` +
+        `Remote HTTP access is disabled until ${this.#authUsersPath()} contains at least ` +
         "one valid user."
       );
     }
 
-    // Start the static files server
+    // Start the HTTP server
     return new Promise((resolve, reject) => {
 
       this.#filesServer = this.#express.listen(
         config.network.files_server.port,
         config.network.files_server.address,
-        err => {
-
-          if (err) reject(err);
-
+        () => {
           logInfo(
-            `Static file server is ready. Listening on ` +
+            `HTTP server is ready. Listening on ` +
             `${config.network.files_server.address}:${config.network.files_server.port}.`
           );
 
           resolve();
 
       });
+
+      this.#filesServer.once("error", reject);
 
     });
 
