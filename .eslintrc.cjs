@@ -9,7 +9,8 @@ module.exports = {
             "files": [
                 "ScanMeister.js",
                 "src/**/*.js",
-                "config/**/*.js"
+                "config/**/*.js",
+                "tools/*"
             ],
             "env": {
                 "es2021": true,

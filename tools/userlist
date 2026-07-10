@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+import {
+  fail,
+  parseCommonArguments,
+  parseUsers,
+  readUsersFile
+} from './auth-users.js';
+
+function printHelp() {
+  console.log(`Usage: ./tools/userlist [--file PATH]
+
+Lists remote web client users from the ScanMeister users file.
+
+Options:
+  --file PATH   Users file path. Default: /etc/scanmeister/users
+`);
+}
+
+async function main() {
+  const {options, positional} = parseCommonArguments(process.argv.slice(2));
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  if (positional.length !== 0) {
+    printHelp();
+    process.exit(1);
+  }
+
+  const users = parseUsers(await readUsersFile(options.file));
+  if (users.length === 0) {
+    console.log(`No users found in ${options.file}.`);
+    return;
+  }
+
+  users.forEach(user => console.log(user.username));
+}
+
+main().catch(fail);

@@ -1,0 +1,64 @@
+#!/usr/bin/env node
+import {
+  fail,
+  hashPassword,
+  parseCommonArguments,
+  parseUsers,
+  readHidden,
+  readUsersFile,
+  validateUsername,
+  writeUsersFile
+} from './auth-users.js';
+
+function printHelp() {
+  console.log(`Usage: ./tools/useradd [--file PATH] [--replace] USERNAME
+
+Adds a remote web client user to the ScanMeister users file.
+
+Options:
+  --file PATH   Users file path. Default: /etc/scanmeister/users
+  --replace     Replace the user if it already exists
+`);
+}
+
+async function main() {
+  const {options, positional} = parseCommonArguments(process.argv.slice(2));
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  const [username] = positional;
+  if (!username || positional.length !== 1) {
+    printHelp();
+    process.exit(1);
+  }
+
+  validateUsername(username);
+
+  const password = await readHidden("Password: ");
+  const confirmation = await readHidden("Confirm password: ");
+  if (password !== confirmation) throw new Error("Passwords do not match");
+  if (password.length === 0) throw new Error("Password cannot be empty");
+
+  const content = await readUsersFile(options.file);
+  const users = parseUsers(content);
+  const exists = users.some(user => user.username === username);
+  if (exists && !options.replace) {
+    throw new Error(`User '${username}' already exists. Use --replace to update it.`);
+  }
+
+  const keptLines = content
+    .split(/\r?\n/)
+    .filter(line => {
+      const [lineUsername] = line.trim().split(":");
+      return lineUsername !== username;
+    })
+    .filter((line, index, lines) => line.trim() !== "" || index < lines.length - 1);
+
+  keptLines.push(hashPassword(username, password));
+  await writeUsersFile(options.file, keptLines);
+  console.log(`${exists ? "Updated" : "Added"} user '${username}' in ${options.file}.`);
+}
+
+main().catch(fail);

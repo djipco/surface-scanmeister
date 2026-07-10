@@ -1,0 +1,3 @@
+tools/useradd text eol=lf
+tools/userdel text eol=lf
+tools/userlist text eol=lf

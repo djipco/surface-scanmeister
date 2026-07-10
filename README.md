@@ -238,30 +238,58 @@ Create the configuration directory:
 sudo mkdir -p /etc/scanmeister
 ```
 
-Generate a password hash:
+Add the first remote user:
 
 ```sh
-node -e 'const {randomBytes,scryptSync}=require("node:crypto"); const user=process.argv[1]; const password=process.argv[2]; const salt=randomBytes(16).toString("hex"); const hash=scryptSync(password,salt,64).toString("hex"); console.log(`${user}:scrypt:${salt}:${hash}`);' 'admin' 'your-password'
+cd /home/scanmeister/Desktop/surface-scanmeister
+sudo ./tools/useradd admin
 ```
 
-Create `/etc/scanmeister/users`:
+The tool prompts for the password and writes the hashed user entry to `/etc/scanmeister/users`.
+The password itself is not stored.
 
-```sh
-sudo nano /etc/scanmeister/users
-```
-
-Add one generated line per remote user:
-
-```text
-admin:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
-operator:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
-```
-
-Then secure the users file:
+After creating the users file for the first time, secure it so the service can read it:
 
 ```sh
 sudo chown root:scanmeister /etc/scanmeister/users
 sudo chmod 640 /etc/scanmeister/users
+```
+
+To add more users:
+
+```sh
+sudo ./tools/useradd operator
+```
+
+To replace an existing user's password:
+
+```sh
+sudo ./tools/useradd --replace admin
+```
+
+To delete a user:
+
+```sh
+sudo ./tools/userdel operator
+```
+
+To list remote users:
+
+```sh
+sudo ./tools/userlist
+```
+
+If the tools are not executable on the Pi, run:
+
+```sh
+chmod +x tools/useradd tools/userdel tools/userlist
+```
+
+The users file can also be edited manually. It contains one generated line per remote user:
+
+```text
+admin:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
+operator:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
 ```
 
 If you want to use a different users file path, create `/etc/scanmeister/scanmeister.env`:

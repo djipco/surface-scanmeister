@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+import {
+  fail,
+  parseCommonArguments,
+  readUsersFile,
+  validateUsername,
+  writeUsersFile
+} from './auth-users.js';
+
+function printHelp() {
+  console.log(`Usage: ./tools/userdel [--file PATH] USERNAME
+
+Deletes a remote web client user from the ScanMeister users file.
+
+Options:
+  --file PATH   Users file path. Default: /etc/scanmeister/users
+`);
+}
+
+async function main() {
+  const {options, positional} = parseCommonArguments(process.argv.slice(2));
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  const [username] = positional;
+  if (!username || positional.length !== 1) {
+    printHelp();
+    process.exit(1);
+  }
+
+  validateUsername(username);
+
+  const content = await readUsersFile(options.file);
+  let removed = false;
+  const keptLines = content
+    .split(/\r?\n/)
+    .filter(line => {
+      const [lineUsername] = line.trim().split(":");
+      if (lineUsername === username) {
+        removed = true;
+        return false;
+      }
+      return true;
+    })
+    .filter((line, index, lines) => line.trim() !== "" || index < lines.length - 1);
+
+  if (!removed) throw new Error(`User '${username}' does not exist.`);
+
+  await writeUsersFile(options.file, keptLines);
+  console.log(`Deleted user '${username}' from ${options.file}.`);
+}
+
+main().catch(fail);
