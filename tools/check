@@ -106,6 +106,7 @@ async function main() {
   report(tlsCert.ok, "HTTPS certificate", tlsCert.ok ? config.network.files_server.cert : `${config.network.files_server.cert} (${tlsCert.error})`);
 
   printResult(true, "HTTPS server", `${config.network.files_server.address}:${config.network.files_server.port}`);
+  printResult(true, "HTTP redirect server", `${config.network.redirect_server.address}:${config.network.redirect_server.port}`);
   printResult(true, "API base path", "/api");
   printResult(true, "OSC", `listening on ${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ${config.network.osc_client.address}:${config.network.osc_client.port}`);
 

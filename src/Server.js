@@ -1,5 +1,6 @@
 // Node.js standard imports
 import {Configuration as config} from "../config/Configuration.js";
+import http from 'node:http';
 import https from 'node:https';
 import {scryptSync, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
@@ -23,6 +24,7 @@ export class Server extends EventEmitter {
   #eventClients = new Map();         // Long-lived SSE clients
   #express = undefined;             // Express app, for API and static files
   #filesServer = undefined;
+  #redirectServer = undefined;
   #remoteAuthUsers = new Map();
   #remoteAuthUsersMtimeMs = undefined;
   #remoteAuthConfigurationWarningShown = false;
@@ -444,6 +446,16 @@ export class Server extends EventEmitter {
     this.quit();
   }
 
+  #onRedirectRequest(request, response) {
+    const host = (request.headers.host || "").replace(/:\d+$/, "");
+    const targetHost = host || "localhost";
+    response.writeHead(308, {
+      Location: `https://${targetHost}${request.url}`,
+      'Content-Type': 'text/plain'
+    });
+    response.end('Redirecting to HTTPS');
+  }
+
   #startEventStream(request, response) {
     const id = `${request.socket.remoteAddress}:${request.socket.remotePort}`;
 
@@ -577,11 +589,36 @@ export class Server extends EventEmitter {
     // Stop all scanning processes
     this.#scanners.forEach(async scanner => await scanner.abort());
 
-    // Stop Express server
-    if (this.#filesServer) {
-      return new Promise(resolve => this.#filesServer.close(resolve));
+    // Stop HTTP redirect server
+    if (this.#redirectServer) {
+      await new Promise(resolve => this.#redirectServer.close(resolve));
+      this.#redirectServer = undefined;
     }
 
+    // Stop HTTPS server
+    if (this.#filesServer) {
+      await new Promise(resolve => this.#filesServer.close(resolve));
+      this.#filesServer = undefined;
+    }
+
+  }
+
+  async #startRedirectServer() {
+    return new Promise((resolve, reject) => {
+      this.#redirectServer = http.createServer(this.#onRedirectRequest.bind(this));
+      this.#redirectServer.once("error", reject);
+      this.#redirectServer.listen(
+        config.network.redirect_server.port,
+        config.network.redirect_server.address,
+        () => {
+          logInfo(
+            `HTTP redirect server is ready. Listening on ` +
+            `${config.network.redirect_server.address}:${config.network.redirect_server.port}.`
+          );
+          resolve();
+        }
+      );
+    });
   }
 
   async start(scanners) {
@@ -612,7 +649,7 @@ export class Server extends EventEmitter {
     }
 
     // Start the HTTPS server
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       this.#loadTlsOptions()
         .then(tlsOptions => {
           this.#filesServer = https.createServer(tlsOptions, this.#express);
@@ -634,6 +671,8 @@ export class Server extends EventEmitter {
         .catch(reject);
 
     });
+
+    await this.#startRedirectServer();
 
   }
 

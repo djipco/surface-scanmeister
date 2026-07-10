@@ -12,6 +12,10 @@ export const Configuration = {
       key: "/etc/scanmeister/certs/server.key",
       cert: "/etc/scanmeister/certs/server.crt",
     },
+    redirect_server: {
+      address: "0.0.0.0",       // IP address the HTTP redirect server will listen on
+      port: 80,                 // Port the HTTP redirect server will listen on
+    },
     osc_server: {
       address: '0.0.0.0',       // Local IP address to bind to for OSC
       port: 8000,               // Local port to listen on for OSC

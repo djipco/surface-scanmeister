@@ -194,7 +194,9 @@ The expected result is that the service is `enabled` and `active (running)`.
 #### Configuration
 
 By default, the **HTTPS server** listens on port **`443`** and serves both the web client and the
-API. API routes live under `/api`. The **OSC server** listens on port **`8000`**.
+API. API routes live under `/api`. A small **HTTP redirect server** listens on port **`80`** and
+redirects requests to HTTPS with `308 Permanent Redirect`. The **OSC server** listens on port
+**`8000`**.
 
 The main API routes are:
 
@@ -247,7 +249,8 @@ sudo chmod 640 /etc/scanmeister/certs/server.key /etc/scanmeister/certs/server.c
 The kiosk launcher uses Chromium's `--allow-insecure-localhost` option so the local
 `https://localhost?kiosk=1` page can open with a self-signed certificate.
 
-Because port `443` is privileged on Linux, allow the Node.js binary to bind to low-numbered ports:
+Because ports `80` and `443` are privileged on Linux, allow the Node.js binary to bind to
+low-numbered ports:
 
 ```sh
 sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(command -v node)")"
