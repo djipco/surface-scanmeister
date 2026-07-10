@@ -2306,10 +2306,9 @@ export class App {
       handle.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
-        const left = this.clamp(moveEvent.clientX - offsetX, 0, Math.max(0, window.innerWidth - rect.width));
-        const top = this.clamp(moveEvent.clientY - offsetY, 0, Math.max(0, window.innerHeight - rect.height));
-        panel.style.left = left + "px";
-        panel.style.top = top + "px";
+        const visualLeft = this.clamp(moveEvent.clientX - offsetX, 0, Math.max(0, window.innerWidth - rect.width));
+        const visualTop = this.clamp(moveEvent.clientY - offsetY, 0, Math.max(0, window.innerHeight - rect.height));
+        this.setPanelVisualPosition(panel, visualLeft, visualTop);
       };
 
       const onPointerUp = upEvent => {
@@ -2394,20 +2393,70 @@ export class App {
         const height = this.clamp(position.height || rect.height, minHeight, usableBounds.height);
         panel.style.width = width + "px";
         panel.style.height = height + "px";
-        const left = this.clamp(position.left ?? rect.left, 0, Math.max(0, window.innerWidth - width));
+        const visualSize = this.getPanelVisualSize(panel);
+        const left = this.clamp(position.left ?? rect.left, 0, Math.max(0, window.innerWidth - visualSize.width));
         const top = this.clamp(
           position.top ?? rect.top,
-          usableBounds.top,
-          Math.max(usableBounds.top, usableBounds.bottom - height)
+          panel === this.ui.guerillaPanel ? 0 : usableBounds.top,
+          panel === this.ui.guerillaPanel
+            ? Math.max(0, window.innerHeight - visualSize.height)
+            : Math.max(usableBounds.top, usableBounds.bottom - visualSize.height)
         );
         panel.style.right = "auto";
         panel.style.bottom = "auto";
-        panel.style.left = left + "px";
-        panel.style.top = top + "px";
+        this.setPanelVisualPosition(panel, left, top);
+        this.keepPanelFullyVisible(panel);
       });
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
+  }
+
+  getPanelRotation(panel) {
+    if (panel.classList.contains("rotation-90")) return 90;
+    if (panel.classList.contains("rotation-180")) return 180;
+    if (panel.classList.contains("rotation-270")) return 270;
+    return 0;
+  }
+
+  getPanelVisualOffset(panel) {
+    const rotation = this.getPanelRotation(panel);
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
+
+    if (rotation === 90 || rotation === 270) {
+      return {
+        x: (width - height) / 2,
+        y: (height - width) / 2
+      };
+    }
+
+    return {x: 0, y: 0};
+  }
+
+  getPanelVisualSize(panel) {
+    const rotation = this.getPanelRotation(panel);
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
+
+    return rotation === 90 || rotation === 270
+      ? {width: height, height: width}
+      : {width, height};
+  }
+
+  setPanelVisualPosition(panel, visualLeft, visualTop) {
+    const offset = this.getPanelVisualOffset(panel);
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    panel.style.left = `${visualLeft - offset.x}px`;
+    panel.style.top = `${visualTop - offset.y}px`;
+  }
+
+  keepPanelFullyVisible(panel) {
+    const rect = panel.getBoundingClientRect();
+    const left = this.clamp(rect.left, 0, Math.max(0, window.innerWidth - rect.width));
+    const top = this.clamp(rect.top, 0, Math.max(0, window.innerHeight - rect.height));
+    this.setPanelVisualPosition(panel, left, top);
   }
 
   getPanelUsableVerticalBounds() {
@@ -2445,8 +2494,8 @@ export class App {
       localStorage.setItem(storageKey, JSON.stringify({
         left: Math.round(rect.left),
         top: Math.round(rect.top),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height)
+        width: Math.round(panel.offsetWidth),
+        height: Math.round(panel.offsetHeight)
       }));
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
@@ -2866,6 +2915,7 @@ export class App {
     [0, 90, 180, 270].forEach(angle => {
       this.ui.guerillaPanel.classList.toggle(`rotation-${angle}`, normalizedRotation === angle);
     });
+    requestAnimationFrame(() => this.keepPanelFullyVisible(this.ui.guerillaPanel));
   }
 
   getLaunchBooleanOverride(name) {
