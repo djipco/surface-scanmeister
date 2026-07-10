@@ -42,7 +42,7 @@ export class App {
   static STORAGE_GUERILLA_ROTATION = "scanmeister.guerillaRotation";
   static DEFAULT_SERVER_HOST = "127.0.0.1";
   static DEFAULT_SERVER_PORT = "5678";
-  static DEFAULT_SCAN_WIDTH = "5000";
+  static DEFAULT_SCAN_WIDTH = "300";
   static DEFAULT_SCAN_HEIGHT = "216";
   static DEFAULT_RENDER_SPEED = "100";
   static DEFAULT_AUTO_HIDE_SECONDS = "3";
