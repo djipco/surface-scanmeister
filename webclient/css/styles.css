@@ -356,6 +356,16 @@ html.kiosk-mode body {
   touch-action: none;
 }
 
+.panel-corner-resize-handle::before {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, transparent 42%, rgba(215, 231, 255, 0.48) 43% 57%, transparent 58%) 8px 8px/6px 6px no-repeat, linear-gradient(135deg, transparent 42%, rgba(215, 231, 255, 0.48) 43% 57%, transparent 58%) 4px 4px/10px 10px no-repeat, linear-gradient(135deg, transparent 42%, rgba(215, 231, 255, 0.48) 43% 57%, transparent 58%) 0 0/14px 14px no-repeat;
+  content: "";
+}
+
 .rotation-90 .panel-corner-resize-handle {
   top: 0;
   right: 0;
@@ -654,8 +664,8 @@ label.guerilla-toggle-switch input:checked + span::after {
 .guerilla-image-browser-title {
   grid-column: 1/-1;
   grid-row: 3;
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 12px;
+  padding-top: 16px;
   border-top: 1px solid rgba(154, 164, 173, 0.28);
   display: flex;
   align-items: center;

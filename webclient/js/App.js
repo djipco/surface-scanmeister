@@ -2525,6 +2525,21 @@ export class App {
     this.setPanelVisualPosition(panel, left, top);
   }
 
+  fitPanelFullyInsideViewport(panel) {
+    const rect = panel.getBoundingClientRect();
+    const width = Math.min(rect.width, window.innerWidth);
+    const height = Math.min(rect.height, window.innerHeight);
+    const left = this.clamp(rect.left, 0, Math.max(0, window.innerWidth - width));
+    const top = this.clamp(rect.top, 0, Math.max(0, window.innerHeight - height));
+
+    if (width !== rect.width || height !== rect.height) {
+      this.resizePanelToVisualSize(panel, left, top, width, height);
+      return;
+    }
+
+    this.setPanelVisualPosition(panel, left, top);
+  }
+
   getPanelUsableVerticalBounds() {
     const margin = 8;
     let top = margin;
@@ -2981,7 +2996,7 @@ export class App {
     [0, 90, 180, 270].forEach(angle => {
       this.ui.guerillaPanel.classList.toggle(`rotation-${angle}`, normalizedRotation === angle);
     });
-    requestAnimationFrame(() => this.keepPanelFullyVisible(this.ui.guerillaPanel));
+    requestAnimationFrame(() => this.fitPanelFullyInsideViewport(this.ui.guerillaPanel));
   }
 
   getLaunchBooleanOverride(name) {
