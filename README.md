@@ -43,6 +43,21 @@ sudo apt install -y nodejs
 
 #### Installation
 
+For a guided Raspberry Pi install, run the interactive setup script from the project folder:
+
+```sh
+./tools/initial-setup
+```
+
+It explains each step, asks before changing anything, then verifies the result. To preview the
+commands without changing the system:
+
+```sh
+./tools/initial-setup --dry-run
+```
+
+The manual steps below describe what the script does.
+
 To install `scanmeister`, open a terminal, go to desktop and clone from GitHub repo:
 
 ```sh
@@ -359,7 +374,7 @@ ScanMeister.
 If the tools are not executable on the Pi, run:
 
 ```sh
-chmod +x tools/check tools/scanners tools/useradd tools/userdel tools/userlist
+chmod +x tools/check tools/initial-setup tools/scanners tools/useradd tools/userdel tools/userlist
 ```
 
 The users file can also be edited manually. It contains one generated line per remote user:

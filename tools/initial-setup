@@ -1,0 +1,559 @@
+#!/usr/bin/env node
+import {spawnSync} from "node:child_process";
+import {existsSync, mkdirSync, readlinkSync, statSync} from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
+import readline from "node:readline/promises";
+
+const PROJECT_REPOSITORY = "https://github.com/djipco/surface-scanmeister";
+const SERVICE_USER = "scanmeister";
+const SERVICE_GROUP = "scanmeister";
+const TARGET_DIRECTORY = "/home/scanmeister/Desktop/surface-scanmeister";
+const SERVICE_SOURCE = "system/scanmeister.service";
+const SERVICE_TARGET = "/etc/systemd/system/scanmeister.service";
+const AUTOSTART_DIRECTORY = "/home/scanmeister/.config/autostart";
+const CLIENT_DESKTOP = "ScanMeister Client.desktop";
+const GUERILLA_DESKTOP = "ScanMeister Guerilla.desktop";
+const CLIENT_AUTOSTART = path.join(AUTOSTART_DIRECTORY, "scanmeister-client.desktop");
+const CERT_DIRECTORY = "/etc/scanmeister/certs";
+const CERT_KEY = path.join(CERT_DIRECTORY, "server.key");
+const CERT_CRT = path.join(CERT_DIRECTORY, "server.crt");
+const USERS_FILE = "/etc/scanmeister/users";
+const REQUIRED_GROUPS = [
+  "adm",
+  "lp",
+  "dialout",
+  "audio",
+  "video",
+  "plugdev",
+  "input",
+  "render",
+  "netdev",
+  "lpadmin",
+  "scanner",
+  "gpio",
+  "i2c",
+  "spi"
+];
+const SYSTEM_PACKAGES = [
+  "ca-certificates",
+  "curl",
+  "git",
+  "openssl",
+  "sane-utils",
+  "usbutils",
+  "v4l-utils"
+];
+
+const args = new Set(process.argv.slice(2));
+const dryRun = args.has("--dry-run");
+const help = args.has("--help") || args.has("-h");
+const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+
+function printHelp() {
+  console.log(`Usage: ./tools/initial-setup [--dry-run]
+
+Interactively prepares a Raspberry Pi for ScanMeister.
+
+The script explains each step, asks before doing it, then verifies the result.
+
+Options:
+  --dry-run   Show commands without changing the system
+  -h, --help  Show this help
+`);
+}
+
+function printHeader(title) {
+  console.log(`\n=== ${title} ===`);
+}
+
+function formatCommand(command, commandArgs = []) {
+  return [command, ...commandArgs].map(part => {
+    if (/^[A-Za-z0-9_./:=+@%,-]+$/.test(part)) return part;
+    return `'${String(part).replaceAll("'", "'\\''")}'`;
+  }).join(" ");
+}
+
+function run(command, commandArgs = [], options = {}) {
+  const actualCommand = options.sudo ? "sudo" : command;
+  const actualArgs = options.sudo ? [command, ...commandArgs] : commandArgs;
+  console.log(`$ ${formatCommand(actualCommand, actualArgs)}`);
+
+  if (dryRun) {
+    console.log("DRY RUN: command not executed.");
+    return {ok: true, status: 0, stdout: "", stderr: ""};
+  }
+
+  const result = spawnSync(actualCommand, actualArgs, {
+    cwd: options.cwd,
+    encoding: "utf8",
+    stdio: options.capture ? "pipe" : "inherit"
+  });
+
+  return {
+    ok: result.status === 0,
+    status: result.status,
+    stdout: result.stdout || "",
+    stderr: result.stderr || ""
+  };
+}
+
+function capture(command, commandArgs = [], options = {}) {
+  return run(command, commandArgs, {...options, capture: true});
+}
+
+function commandExists(command) {
+  return capture("sh", ["-lc", `command -v ${command}`]).ok;
+}
+
+function fileExists(file) {
+  try {
+    return existsSync(file) && statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function directoryExists(directory) {
+  try {
+    return existsSync(directory) && statSync(directory).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+async function confirm(question) {
+  const answer = (await rl.question(`${question} [y/N] `)).trim().toLowerCase();
+  return answer === "y" || answer === "yes" || answer === "o" || answer === "oui";
+}
+
+function ok(message) {
+  console.log(`[OK ] ${message}`);
+}
+
+function warn(message) {
+  console.log(`[WARN] ${message}`);
+}
+
+function fail(message) {
+  console.log(`[FAIL] ${message}`);
+}
+
+async function runStep(title, description, action, verify) {
+  printHeader(title);
+  console.log(description.trim());
+  const shouldRun = await confirm("Run this step?");
+
+  if (shouldRun) {
+    await action();
+  } else {
+    console.log("Skipped.");
+  }
+
+  const result = await verify();
+  if (result.ok) {
+    ok(result.message);
+  } else if (shouldRun) {
+    fail(result.message);
+  } else {
+    warn(result.message);
+  }
+}
+
+function nodeMajorVersion() {
+  const result = capture("node", ["--version"]);
+  if (!result.ok) return 0;
+  const match = result.stdout.trim().match(/^v?(\d+)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function realNodePath() {
+  const result = capture("sh", ["-lc", 'readlink -f "$(command -v node)"']);
+  return result.ok ? result.stdout.trim() : "";
+}
+
+function getGroups(username) {
+  const result = capture("id", ["-nG", username]);
+  return result.ok ? result.stdout.trim().split(/\s+/).filter(Boolean) : [];
+}
+
+function existingGroups(groups) {
+  return groups.filter(group => capture("getent", ["group", group]).ok);
+}
+
+function chooseAutostartLauncher() {
+  return process.env.SCANMEISTER_GUERILLA === "1" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
+}
+
+async function verifyAutostart() {
+  if (!fileExists(CLIENT_AUTOSTART)) {
+    return {ok: false, message: `${CLIENT_AUTOSTART} does not exist.`};
+  }
+
+  try {
+    const target = readlinkSync(CLIENT_AUTOSTART);
+    return {
+      ok: target.includes("ScanMeister"),
+      message: `${CLIENT_AUTOSTART} points to ${target}.`
+    };
+  } catch {
+    return {ok: true, message: `${CLIENT_AUTOSTART} exists.`};
+  }
+}
+
+async function main() {
+  if (help) {
+    printHelp();
+    return;
+  }
+
+  console.log("ScanMeister initial setup");
+  console.log(`Dry run: ${dryRun ? "yes" : "no"}`);
+  console.log("Each step asks before making changes and verifies the result afterward.");
+  const finalChecks = {
+    health: false,
+    scanners: false,
+    service: false
+  };
+
+  await runStep(
+    "1. Check Raspberry Pi / Linux context",
+    `This checks the current platform and user before touching the system.
+
+Current platform: ${process.platform}/${process.arch}
+Current user: ${os.userInfo().username}
+Current directory: ${process.cwd()}`,
+    async () => {
+      console.log("No changes required for this step.");
+    },
+    async () => ({
+      ok: process.platform === "linux",
+      message: process.platform === "linux"
+        ? "Running on Linux."
+        : `This script is intended for Linux/Raspberry Pi, not ${process.platform}.`
+    })
+  );
+
+  await runStep(
+    "2. Create scanmeister user",
+    `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing.`,
+    async () => {
+      if (capture("id", [SERVICE_USER]).ok) {
+        console.log(`${SERVICE_USER} already exists.`);
+        return;
+      }
+      run("useradd", ["-m", "-s", "/bin/bash", SERVICE_USER], {sudo: true});
+    },
+    async () => ({
+      ok: capture("id", [SERVICE_USER]).ok,
+      message: capture("id", [SERVICE_USER]).ok
+        ? `${SERVICE_USER} exists.`
+        : `${SERVICE_USER} does not exist.`
+    })
+  );
+
+  await runStep(
+    "3. Add scanmeister to hardware groups",
+    `This adds ${SERVICE_USER} to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
+
+Requested groups:
+${REQUIRED_GROUPS.join(", ")}`,
+    async () => {
+      const groups = existingGroups(REQUIRED_GROUPS);
+      if (groups.length === 0) {
+        warn("None of the requested groups exist on this system.");
+        return;
+      }
+      run("usermod", ["-aG", groups.join(","), SERVICE_USER], {sudo: true});
+    },
+    async () => {
+      const groups = existingGroups(REQUIRED_GROUPS);
+      const current = getGroups(SERVICE_USER);
+      const missing = groups.filter(group => !current.includes(group));
+      return {
+        ok: missing.length === 0,
+        message: missing.length === 0
+          ? `${SERVICE_USER} is in all existing requested groups.`
+          : `${SERVICE_USER} is missing groups: ${missing.join(", ")}. Log out/in may be required.`
+      };
+    }
+  );
+
+  await runStep(
+    "4. Install base system packages",
+    `This installs packages used by ScanMeister and the setup process:
+${SYSTEM_PACKAGES.join(", ")}`,
+    async () => {
+      run("apt-get", ["update"], {sudo: true});
+      run("apt-get", ["install", "-y", ...SYSTEM_PACKAGES], {sudo: true});
+    },
+    async () => {
+      const missing = SYSTEM_PACKAGES.filter(pkg => !capture("dpkg-query", ["-W", "-f=${Status}", pkg]).stdout.includes("install ok installed"));
+      return {
+        ok: missing.length === 0,
+        message: missing.length === 0
+          ? "All base packages are installed."
+          : `Missing packages: ${missing.join(", ")}.`
+      };
+    }
+  );
+
+  await runStep(
+    "5. Install or verify Node.js",
+    "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing.",
+    async () => {
+      if (nodeMajorVersion() >= 20) {
+        console.log(`Node is already acceptable: ${process.version}`);
+        return;
+      }
+      run("sh", ["-lc", "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"]);
+      run("apt-get", ["install", "-y", "nodejs"], {sudo: true});
+    },
+    async () => ({
+      ok: nodeMajorVersion() >= 20,
+      message: nodeMajorVersion() >= 20
+        ? `Node.js is ${capture("node", ["--version"]).stdout.trim()}.`
+        : "Node.js 20 or newer is not available."
+    })
+  );
+
+  await runStep(
+    "6. Enable SSH and VNC",
+    "This uses raspi-config non-interactive commands when available.",
+    async () => {
+      if (!commandExists("raspi-config")) {
+        warn("raspi-config is not available; cannot enable SSH/VNC automatically.");
+        return;
+      }
+      run("raspi-config", ["nonint", "do_ssh", "0"], {sudo: true});
+      run("raspi-config", ["nonint", "do_vnc", "0"], {sudo: true});
+    },
+    async () => {
+      if (!commandExists("raspi-config")) {
+        return {ok: false, message: "raspi-config is not available; SSH/VNC status was not changed."};
+      }
+      const ssh = capture("systemctl", ["is-enabled", "ssh"]);
+      const vnc = capture("systemctl", ["is-enabled", "vncserver-x11-serviced"]);
+      return {
+        ok: ssh.ok || vnc.ok,
+        message: `SSH enabled: ${ssh.ok ? "yes" : "unknown/no"}, VNC enabled: ${vnc.ok ? "yes" : "unknown/no"}.`
+      };
+    }
+  );
+
+  await runStep(
+    "7. Clone or update project",
+    `Target directory:
+${TARGET_DIRECTORY}
+
+If it does not exist, this clones ${PROJECT_REPOSITORY}.
+If it exists, this offers a git pull only when the worktree is clean.`,
+    async () => {
+      if (!directoryExists(TARGET_DIRECTORY)) {
+        mkdirSync(path.dirname(TARGET_DIRECTORY), {recursive: true});
+        run("git", ["clone", PROJECT_REPOSITORY, TARGET_DIRECTORY], {sudo: os.userInfo().username !== SERVICE_USER});
+        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, TARGET_DIRECTORY], {sudo: true});
+        return;
+      }
+
+      const status = capture("git", ["status", "--short"], {cwd: TARGET_DIRECTORY});
+      if (!status.ok) {
+        warn(`${TARGET_DIRECTORY} exists but is not a git repository.`);
+        return;
+      }
+      if (status.stdout.trim()) {
+        warn("Project has local changes. Skipping git pull to avoid overwriting work.");
+        return;
+      }
+      run("git", ["pull"], {cwd: TARGET_DIRECTORY});
+    },
+    async () => ({
+      ok: fileExists(path.join(TARGET_DIRECTORY, "ScanMeister.js")),
+      message: fileExists(path.join(TARGET_DIRECTORY, "ScanMeister.js"))
+        ? `Project exists at ${TARGET_DIRECTORY}.`
+        : `Project is missing at ${TARGET_DIRECTORY}.`
+    })
+  );
+
+  await runStep(
+    "8. Install Node dependencies",
+    "This runs npm ci when package-lock.json exists, otherwise npm install.",
+    async () => {
+      const npmCommand = fileExists(path.join(TARGET_DIRECTORY, "package-lock.json")) ? "ci" : "install";
+      run("npm", [npmCommand], {cwd: TARGET_DIRECTORY});
+    },
+    async () => ({
+      ok: directoryExists(path.join(TARGET_DIRECTORY, "node_modules")),
+      message: directoryExists(path.join(TARGET_DIRECTORY, "node_modules"))
+        ? "node_modules exists."
+        : "node_modules is missing."
+    })
+  );
+
+  await runStep(
+    "9. Create runtime directories",
+    "This creates logs and scans in the project folder and makes them writable by scanmeister.",
+    async () => {
+      ["logs", "scans"].forEach(directory => {
+        const fullPath = path.join(TARGET_DIRECTORY, directory);
+        run("mkdir", ["-p", fullPath], {sudo: true});
+        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, fullPath], {sudo: true});
+      });
+    },
+    async () => {
+      const missing = ["logs", "scans"].filter(directory => !directoryExists(path.join(TARGET_DIRECTORY, directory)));
+      return {
+        ok: missing.length === 0,
+        message: missing.length === 0
+          ? "logs and scans directories exist."
+          : `Missing directories: ${missing.join(", ")}.`
+      };
+    }
+  );
+
+  await runStep(
+    "10. Create HTTPS certificate",
+    `This creates a self-signed certificate unless both files already exist:
+${CERT_KEY}
+${CERT_CRT}`,
+    async () => {
+      if (fileExists(CERT_KEY) && fileExists(CERT_CRT)) {
+        console.log("Certificate files already exist.");
+      } else {
+        run("mkdir", ["-p", CERT_DIRECTORY], {sudo: true});
+        run("openssl", [
+          "req", "-x509", "-newkey", "rsa:4096", "-sha256", "-days", "3650", "-nodes",
+          "-keyout", CERT_KEY,
+          "-out", CERT_CRT,
+          "-subj", "/CN=scanmeister.local",
+          "-addext", "subjectAltName=DNS:localhost,DNS:scanmeister.local,DNS:scanmeister01.local,IP:127.0.0.1"
+        ], {sudo: true});
+      }
+      run("chown", ["root:scanmeister", CERT_KEY, CERT_CRT], {sudo: true});
+      run("chmod", ["640", CERT_KEY, CERT_CRT], {sudo: true});
+    },
+    async () => ({
+      ok: fileExists(CERT_KEY) && fileExists(CERT_CRT),
+      message: fileExists(CERT_KEY) && fileExists(CERT_CRT)
+        ? "HTTPS certificate files exist."
+        : "HTTPS certificate files are missing."
+    })
+  );
+
+  await runStep(
+    "11. Configure remote web users file",
+    `This prepares ${USERS_FILE}. It can also launch tools/useradd to create the first user.`,
+    async () => {
+      run("mkdir", ["-p", path.dirname(USERS_FILE)], {sudo: true});
+      if (!fileExists(USERS_FILE)) {
+        const addUser = await confirm("No users file exists. Add first remote user now?");
+        if (addUser) run("./tools/useradd", ["admin"], {cwd: TARGET_DIRECTORY, sudo: true});
+      }
+      if (fileExists(USERS_FILE)) {
+        run("chown", ["root:scanmeister", USERS_FILE], {sudo: true});
+        run("chmod", ["640", USERS_FILE], {sudo: true});
+      }
+    },
+    async () => ({
+      ok: fileExists(USERS_FILE),
+      message: fileExists(USERS_FILE)
+        ? `${USERS_FILE} exists.`
+        : `${USERS_FILE} does not exist. Remote HTTPS access will be refused.`
+    })
+  );
+
+  await runStep(
+    "12. Allow Node to bind ports 80 and 443",
+    "This applies cap_net_bind_service to the real Node.js binary, so ScanMeister can run as scanmeister instead of root.",
+    async () => {
+      const nodePath = realNodePath();
+      if (!nodePath) {
+        warn("Could not resolve node path.");
+        return;
+      }
+      run("setcap", ["cap_net_bind_service=+ep", nodePath], {sudo: true});
+    },
+    async () => {
+      const nodePath = realNodePath();
+      const caps = nodePath ? capture("getcap", [nodePath]) : {ok: false, stdout: ""};
+      return {
+        ok: caps.stdout.includes("cap_net_bind_service=ep"),
+        message: caps.stdout.trim() || "cap_net_bind_service is not set on Node."
+      };
+    }
+  );
+
+  await runStep(
+    "13. Install and enable systemd service",
+    `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
+    async () => {
+      run("cp", [path.join(TARGET_DIRECTORY, SERVICE_SOURCE), SERVICE_TARGET], {sudo: true});
+      run("systemctl", ["daemon-reload"], {sudo: true});
+      run("systemctl", ["enable", "scanmeister.service"], {sudo: true});
+      const startNow = await confirm("Start or restart scanmeister.service now?");
+      if (startNow) run("systemctl", ["restart", "scanmeister.service"], {sudo: true});
+    },
+    async () => {
+      const enabled = capture("systemctl", ["is-enabled", "scanmeister.service"]);
+      return {
+        ok: fileExists(SERVICE_TARGET) && enabled.ok,
+        message: fileExists(SERVICE_TARGET)
+          ? `Service file installed. Enabled: ${enabled.ok ? "yes" : "no"}.`
+          : `${SERVICE_TARGET} is missing.`
+      };
+    }
+  );
+
+  await runStep(
+    "14. Configure client autostart",
+    `This creates an autostart symlink for the ${SERVICE_USER} desktop session.
+
+Default launcher: ${CLIENT_DESKTOP}
+Set SCANMEISTER_GUERILLA=1 before running this script to use ${GUERILLA_DESKTOP}.`,
+    async () => {
+      const launcher = path.join(TARGET_DIRECTORY, chooseAutostartLauncher());
+      run("mkdir", ["-p", AUTOSTART_DIRECTORY], {sudo: true});
+      run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, AUTOSTART_DIRECTORY], {sudo: true});
+      run("ln", ["-sf", launcher, CLIENT_AUTOSTART], {sudo: os.userInfo().username !== SERVICE_USER});
+      run("chmod", ["+x", launcher], {sudo: os.userInfo().username !== SERVICE_USER});
+      run("chown", ["-h", `${SERVICE_USER}:${SERVICE_GROUP}`, CLIENT_AUTOSTART], {sudo: true});
+    },
+    verifyAutostart
+  );
+
+  await runStep(
+    "15. Final verification",
+    "This runs the project health checks and scanner listing tools.",
+    async () => {
+      finalChecks.health = run("./tools/check", [], {cwd: TARGET_DIRECTORY}).ok;
+      finalChecks.scanners = run("./tools/scanners", [], {cwd: TARGET_DIRECTORY}).ok;
+      finalChecks.service = run("systemctl", ["status", "scanmeister.service", "--no-pager"], {sudo: true}).ok;
+    },
+    async () => {
+      const failed = Object.entries(finalChecks)
+        .filter(([, passed]) => !passed)
+        .map(([name]) => name);
+      return {
+        ok: failed.length === 0,
+        message: failed.length === 0
+          ? "Project health, scanner listing, and service status checks passed."
+          : `Some final checks failed or were skipped: ${failed.join(", ")}. Review the output above.`
+      };
+    }
+  );
+
+  console.log("\nInitial setup finished.");
+  console.log("Useful URLs:");
+  console.log("  https://localhost");
+  console.log("  https://scanmeister01.local");
+}
+
+main()
+  .catch(error => {
+    console.error(`Error: ${error.message || error}`);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    rl.close();
+  });
