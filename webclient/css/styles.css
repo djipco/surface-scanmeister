@@ -320,6 +320,41 @@ html.kiosk-mode body {
   touch-action: none;
 }
 
+.panel-corner-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.rotation-90 .panel-corner-resize-handle {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: auto;
+  cursor: nesw-resize;
+}
+
+.rotation-180 .panel-corner-resize-handle {
+  top: 0;
+  right: auto;
+  bottom: auto;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.rotation-270 .panel-corner-resize-handle {
+  top: auto;
+  right: auto;
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
 .controls-panel h1,
 .guerilla-panel h1,
 .render-stats h1 {
@@ -440,13 +475,23 @@ html.kiosk-mode body {
 }
 
 .touch-drag-icon {
+  position: relative;
   width: 58px;
   height: 58px;
   display: inline-block;
   color: rgba(215, 231, 255, 0.78);
-  background-image: radial-gradient(currentColor 3px, transparent 3px);
-  background-size: 16px 16px;
-  background-position: 14px 5px;
+}
+
+.touch-drag-icon::before {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 14px 0 currentColor, 28px 0 currentColor, 0 14px currentColor, 14px 14px currentColor, 28px 14px currentColor, 0 28px currentColor, 14px 28px currentColor, 28px 28px currentColor;
+  content: "";
 }
 
 .guerilla-rotate-button {

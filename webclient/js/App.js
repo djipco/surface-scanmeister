@@ -1676,7 +1676,7 @@ export class App {
 
   setScanHistoryFilename(filename) {
     if (!this.ui.scanHistoryFilename) return;
-    this.ui.scanHistoryFilename.innerText = filename || "No image";
+    this.ui.scanHistoryFilename.innerText = filename || "No Image";
   }
 
   updateScanHistoryFilename() {
@@ -2327,6 +2327,7 @@ export class App {
 
   setUpPanelResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
     this.setUpPanelBottomResize(panel, storageKey, onResize);
+    this.setUpPanelCornerResize(panel, storageKey, onResize);
     if (!window.ResizeObserver) return;
 
     let isRestoring = true;
@@ -2355,16 +2356,17 @@ export class App {
 
       const rect = panel.getBoundingClientRect();
       const startY = event.clientY;
-      const startHeight = rect.height;
       handle.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
-        const bounds = this.getPanelUsableVerticalBounds();
-        const maxHeight = Math.max(120, bounds.bottom - rect.top);
-        const minHeight = Math.min(220, maxHeight);
-        const height = this.clamp(startHeight + moveEvent.clientY - startY, minHeight, maxHeight);
-        panel.style.height = height + "px";
-        if (onResize) onResize();
+        this.resizePanelToVisualSize(
+          panel,
+          rect.left,
+          rect.top,
+          rect.width,
+          rect.height + moveEvent.clientY - startY,
+          onResize
+        );
       };
 
       const onPointerUp = upEvent => {
@@ -2379,6 +2381,67 @@ export class App {
       handle.addEventListener("pointerup", onPointerUp);
       handle.addEventListener("pointercancel", onPointerUp);
     });
+  }
+
+  setUpPanelCornerResize(panel, storageKey = App.STORAGE_PARAMETERS_POSITION, onResize = undefined) {
+    const handle = document.createElement("div");
+    handle.className = "panel-corner-resize-handle";
+    handle.setAttribute("aria-hidden", "true");
+    panel.appendChild(handle);
+
+    handle.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect = panel.getBoundingClientRect();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      handle.setPointerCapture(event.pointerId);
+
+      const onPointerMove = moveEvent => {
+        this.resizePanelToVisualSize(
+          panel,
+          rect.left,
+          rect.top,
+          rect.width + moveEvent.clientX - startX,
+          rect.height + moveEvent.clientY - startY,
+          onResize
+        );
+      };
+
+      const onPointerUp = upEvent => {
+        handle.releasePointerCapture(upEvent.pointerId);
+        this.savePanelPosition(panel, storageKey);
+        handle.removeEventListener("pointermove", onPointerMove);
+        handle.removeEventListener("pointerup", onPointerUp);
+        handle.removeEventListener("pointercancel", onPointerUp);
+      };
+
+      handle.addEventListener("pointermove", onPointerMove);
+      handle.addEventListener("pointerup", onPointerUp);
+      handle.addEventListener("pointercancel", onPointerUp);
+    });
+  }
+
+  resizePanelToVisualSize(panel, visualLeft, visualTop, visualWidth, visualHeight, onResize = undefined) {
+    const rotation = this.getPanelRotation(panel);
+    const minCssWidth = 280;
+    const minCssHeight = 220;
+    const minVisualWidth = rotation === 90 || rotation === 270 ? minCssHeight : minCssWidth;
+    const minVisualHeight = rotation === 90 || rotation === 270 ? minCssWidth : minCssHeight;
+    const width = this.clamp(visualWidth, minVisualWidth, Math.max(minVisualWidth, window.innerWidth - visualLeft));
+    const height = this.clamp(visualHeight, minVisualHeight, Math.max(minVisualHeight, window.innerHeight - visualTop));
+
+    if (rotation === 90 || rotation === 270) {
+      panel.style.width = `${height}px`;
+      panel.style.height = `${width}px`;
+    } else {
+      panel.style.width = `${width}px`;
+      panel.style.height = `${height}px`;
+    }
+
+    this.setPanelVisualPosition(panel, visualLeft, visualTop);
+    if (onResize) onResize();
   }
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
