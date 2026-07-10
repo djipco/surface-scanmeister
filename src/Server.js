@@ -2,7 +2,7 @@
 import {Configuration as config} from "../config/Configuration.js";
 import http from 'node:http';
 import path from 'node:path';
-import {mkdir, writeFile} from 'node:fs/promises';
+import {mkdir, readFile, readdir, stat, writeFile} from 'node:fs/promises';
 import express from 'express';
 
 // Application imports
@@ -14,7 +14,7 @@ import {Scanner} from "./Scanner.js";
 export class Server extends EventEmitter {
 
   // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command", "scanners", "save", "cancel", "events"];
+  static COMMANDS = ["scan", "command", "scanners", "save", "cancel", "events", "scans", "scan-image"];
 
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
@@ -128,6 +128,34 @@ export class Server extends EventEmitter {
       return;
     }
 
+    if (parsed.command === "scans") {
+      try {
+        response.writeHead(200, {'Content-Type': 'application/json'});
+        response.end(JSON.stringify({scans: await this.#listSavedScans()}));
+      } catch (err) {
+        logWarn(`Could not list scans. Error: ${err}`);
+        response.writeHead(500, {'Content-Type': 'text/plain'});
+        response.end('Could not list scans');
+      }
+      return;
+    }
+
+    if (parsed.command === "scan-image") {
+      try {
+        const image = await this.#readSavedScan(parsed.filename);
+        response.writeHead(200, {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'no-cache'
+        });
+        response.end(image);
+      } catch (err) {
+        logWarn(`Could not read scan ${parsed.filename}. Error: ${err}`);
+        response.writeHead(404, {'Content-Type': 'text/plain'});
+        response.end('Scan not found');
+      }
+      return;
+    }
+
     if (parsed.command === "save") {
       if (request.method !== 'POST') {
         response.writeHead(405, {'Content-Type': 'text/plain'});
@@ -144,7 +172,7 @@ export class Server extends EventEmitter {
         await writeFile(filePath, body);
         logInfo(`Saved scan to ${filePath}.`);
         response.writeHead(200, {'Content-Type': 'application/json'});
-        response.end(JSON.stringify({path: filePath}));
+        response.end(JSON.stringify({filename, path: filePath}));
       } catch (err) {
         logWarn(`Could not save scan as ${parsed.filename}. Error: ${err}`);
         response.writeHead(500, {'Content-Type': 'text/plain'});
@@ -293,6 +321,36 @@ export class Server extends EventEmitter {
     }
 
     return Buffer.concat(chunks);
+  }
+
+  async #listSavedScans() {
+    let entries;
+    try {
+      entries = await readdir(config.paths.scans, {withFileTypes: true});
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
+
+    const scans = await Promise.all(entries
+      .filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.png'))
+      .map(async entry => {
+        const filename = this.#sanitizeFilename(entry.name);
+        const info = await stat(path.join(config.paths.scans, filename));
+        return {
+          filename,
+          size: info.size,
+          modifiedAt: info.mtime.toISOString()
+        };
+      }));
+
+    return scans.sort((a, b) => new Date(a.modifiedAt) - new Date(b.modifiedAt));
+  }
+
+  async #readSavedScan(filename) {
+    const safeFilename = this.#sanitizeFilename(filename);
+    if (!safeFilename.toLowerCase().endsWith('.png')) throw new Error('Only PNG scans are allowed.');
+    return readFile(path.join(config.paths.scans, safeFilename));
   }
 
   #sanitizeFilename(filename) {

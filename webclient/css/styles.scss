@@ -36,6 +36,31 @@ html.ui-overlay-hidden * {
   opacity: 0;
 }
 
+.scan-history-image {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.scan-history-image.hidden {
+  display: none;
+}
+
+.scan-history-visible #canvas,
+.scan-history-visible .wall-display {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .display-layout-wall #canvas {
   opacity: 0;
   pointer-events: none;
@@ -373,7 +398,7 @@ html.kiosk-mode body {
   z-index: 18;
   width: 760px;
   min-width: 760px;
-  min-height: 220px;
+  min-height: 210px;
   max-width: calc(100vw - 16px);
   max-height: calc(100vh - 16px);
   border: 1px solid #343a40;
@@ -476,31 +501,39 @@ html.kiosk-mode body {
   line-height: 1.35;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
-  gap: 14px;
+  grid-template-rows: auto auto auto;
+  gap: 10px 14px;
+  align-items: center;
 }
 
-.guerilla-control {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 0;
-}
-
-.guerilla-control label {
+.guerilla-field label {
   color: #aeb8c2;
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.guerilla-toggle-control {
+.guerilla-force-calibration-field,
+.guerilla-force-calibration-control {
   justify-items: center;
   text-align: center;
 }
 
+.guerilla-brightness-field { grid-column: 1; grid-row: 1; }
+.guerilla-force-calibration-field { grid-column: 2; grid-row: 1; }
+.guerilla-contrast-field { grid-column: 3; grid-row: 1; }
+.guerilla-brightness-control { grid-column: 1; grid-row: 2; }
+.guerilla-force-calibration-control {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+}
+.guerilla-contrast-control { grid-column: 3; grid-row: 2; }
+
 .guerilla-toggle-switch {
   width: 72px;
   height: 38px;
-  margin-top: 10px;
 }
 
 .guerilla-toggle-switch span {
@@ -540,6 +573,22 @@ html.kiosk-mode body {
   font-size: 28px;
   font-weight: 700;
   text-align: center;
+}
+
+.guerilla-scan-navigation {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.guerilla-navigation-button {
+  height: 68px;
+  border-radius: 8px;
+  font-size: 34px;
+  font-weight: 700;
+  touch-action: manipulation;
 }
 
 .controls-panel.hidden,

@@ -87,6 +87,8 @@ export class App {
     this.topInfoLog = [];
     this.topInfoLogVisible = false;
     this.guerillaModeActive = false;
+    this.scanHistory = [];
+    this.scanHistoryIndex = undefined;
     this.clearCanvasFadePromise = undefined;
     this.clearCanvasFadeTimer = undefined;
     this.panelResizeObservers = [];
@@ -1061,12 +1063,18 @@ export class App {
     this.ui.guerillaPanelHeader = document.getElementById("guerilla-panel-header");
     this.ui.guerillaRotateButton = document.getElementById("guerilla-rotate");
     this.ui.guerillaBrightness = document.getElementById("guerilla-brightness");
+    this.ui.guerillaForceCalibration = document.getElementById("guerilla-force-calibration");
     this.ui.guerillaContrast = document.getElementById("guerilla-contrast");
+    this.ui.previousScanButton = document.getElementById("guerilla-previous-scan");
+    this.ui.nextScanButton = document.getElementById("guerilla-next-scan");
+    this.ui.scanHistoryImage = document.getElementById("scan-history-image");
     this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelResize(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.restoreGuerillaRotation();
     this.ui.guerillaRotateButton.addEventListener("click", () => this.rotateGuerillaPanel());
+    this.ui.previousScanButton.addEventListener("click", () => this.showPreviousSavedScan());
+    this.ui.nextScanButton.addEventListener("click", () => this.showNextSavedScan());
     this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
     document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
@@ -1165,6 +1173,7 @@ export class App {
     this.restoreRevealMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
     this.restoreCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
+    this.syncGuerillaCheckbox(this.ui.guerillaForceCalibration, this.ui.forceCalibration);
     this.restoreCheckboxValue(this.ui.saveImages, App.STORAGE_SAVE_IMAGES, true);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
     this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, true);
@@ -1195,6 +1204,7 @@ export class App {
       this.saveTextValue(this.ui.serverHost, App.STORAGE_SERVER_HOST, App.DEFAULT_SERVER_HOST);
       this.updateCommandPreview();
       this.updateScannerAvailability();
+      this.refreshScanHistory();
       this.connectEventStream();
     });
     this.ui.serverPort.addEventListener("input", () => {
@@ -1205,6 +1215,7 @@ export class App {
       this.saveNumericValue(this.ui.serverPort, App.STORAGE_SERVER_PORT, {normalize: true});
       this.updateCommandPreview();
       this.updateScannerAvailability();
+      this.refreshScanHistory();
       this.connectEventStream();
     });
     this.ui.channelInput.addEventListener("change", () => {
@@ -1219,6 +1230,12 @@ export class App {
       this.updateCommandPreview();
     });
     this.ui.forceCalibration.addEventListener("change", () => {
+      this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
+      this.syncGuerillaCheckbox(this.ui.guerillaForceCalibration, this.ui.forceCalibration);
+      this.updateCommandPreview();
+    });
+    this.ui.guerillaForceCalibration.addEventListener("change", () => {
+      this.ui.forceCalibration.checked = this.ui.guerillaForceCalibration.checked;
       this.saveCheckboxValue(this.ui.forceCalibration, App.STORAGE_FORCE_CALIBRATION);
       this.updateCommandPreview();
     });
@@ -1407,6 +1424,7 @@ export class App {
     this.updateOverlayGridState();
     this.updateAuxiliaryOverlayVisibility();
     this.updateScannerAvailability();
+    this.refreshScanHistory();
     this.connectEventStream();
     setInterval(() => this.updateScannerAvailability(), 5000);
     this.scheduleDisplayFrameMonitor();
@@ -1562,6 +1580,82 @@ export class App {
       row.append(time, message);
       this.ui.topInfoLog.appendChild(row);
     });
+  }
+
+  async refreshScanHistory({currentFilename = undefined} = {}) {
+    try {
+      const response = await fetch(this.serverUrl + "/scans");
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      this.scanHistory = Array.isArray(data.scans) ? data.scans : [];
+
+      if (currentFilename) {
+        const currentIndex = this.scanHistory.findIndex(scan => scan.filename === currentFilename);
+        this.scanHistoryIndex = currentIndex >= 0 ? currentIndex : this.scanHistory.length;
+      } else if (this.scanHistoryIndex === undefined) {
+        this.scanHistoryIndex = this.scanHistory.length;
+      } else {
+        this.scanHistoryIndex = this.clamp(this.scanHistoryIndex, 0, this.scanHistory.length);
+      }
+    } catch (err) {
+      this.scanHistory = [];
+      this.scanHistoryIndex = undefined;
+    }
+
+    this.updateScanHistoryButtons();
+  }
+
+  async showPreviousSavedScan() {
+    await this.ensureScanHistoryLoaded();
+    if (this.scanHistory.length === 0) return;
+
+    const index = this.scanHistoryIndex === undefined
+      ? this.scanHistory.length - 1
+      : this.scanHistoryIndex - 1;
+    this.showSavedScanAt(index);
+  }
+
+  async showNextSavedScan() {
+    await this.ensureScanHistoryLoaded();
+    if (this.scanHistory.length === 0 || this.scanHistoryIndex === undefined) return;
+
+    this.showSavedScanAt(this.scanHistoryIndex + 1);
+  }
+
+  async ensureScanHistoryLoaded() {
+    if (this.scanHistory.length === 0) await this.refreshScanHistory();
+  }
+
+  showSavedScanAt(index) {
+    if (index < 0 || index >= this.scanHistory.length) {
+      this.hideScanHistoryImage();
+      this.scanHistoryIndex = this.clamp(index, 0, this.scanHistory.length);
+      this.updateScanHistoryButtons();
+      return;
+    }
+
+    const scan = this.scanHistory[index];
+    const params = new URLSearchParams({filename: scan.filename});
+    this.scanHistoryIndex = index;
+    this.ui.scanHistoryImage.src = this.serverUrl + "/scan-image?" + params;
+    this.ui.scanHistoryImage.classList.remove("hidden");
+    document.documentElement.classList.add("scan-history-visible");
+    this.updateScanHistoryButtons();
+  }
+
+  hideScanHistoryImage() {
+    if (!this.ui.scanHistoryImage) return;
+    this.ui.scanHistoryImage.classList.add("hidden");
+    this.ui.scanHistoryImage.removeAttribute("src");
+    document.documentElement.classList.remove("scan-history-visible");
+  }
+
+  updateScanHistoryButtons() {
+    if (!this.ui.previousScanButton || !this.ui.nextScanButton) return;
+
+    const index = this.scanHistoryIndex ?? this.scanHistory.length;
+    this.ui.previousScanButton.disabled = this.scanHistory.length === 0 || index <= 0;
+    this.ui.nextScanButton.disabled = this.scanHistory.length === 0 || index >= this.scanHistory.length - 1;
   }
 
   setUpEnterToValidateParameters() {
@@ -2462,6 +2556,11 @@ export class App {
     guerillaInput.value = sourceInput.value;
   }
 
+  syncGuerillaCheckbox(guerillaInput, sourceInput) {
+    if (!guerillaInput || !sourceInput) return;
+    guerillaInput.checked = sourceInput.checked;
+  }
+
   inputStep(input) {
     return parseFloat(input.step) || 1;
   }
@@ -2874,6 +2973,7 @@ export class App {
     }
 
     this.reset();
+    this.hideScanHistoryImage();
     if (this.clearCanvasBeforeScan) this.startCanvasClearFade();
     this.state = App.STATE_REQUEST_SENT;
     this.updateScanButtonState();
@@ -3174,6 +3274,9 @@ export class App {
         const errorText = await response.text();
         console.error("Could not save scan:", errorText);
         this.setCommandPreviewText("Could not save scan", true);
+      } else {
+        const result = await response.json();
+        await this.refreshScanHistory({currentFilename: result.filename});
       }
     } catch (err) {
       console.error("Could not save scan:", err);

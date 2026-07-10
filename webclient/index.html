@@ -246,35 +246,48 @@
         </span>
       </h1>
       <div class="guerilla-panel-content">
-        <div class="guerilla-control">
+        <div class="guerilla-field guerilla-brightness-field">
           <label for="guerilla-brightness">Brightness</label>
-          <div class="guerilla-stepper">
-            <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="-1" aria-label="Decrease brightness">-</button>
-            <input type="number" min="-100" max="100" step="1" value="25" id="guerilla-brightness" aria-label="Brightness">
-            <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="1" aria-label="Increase brightness">+</button>
-          </div>
         </div>
 
-        <div class="guerilla-control guerilla-toggle-control">
+        <div class="guerilla-field guerilla-force-calibration-field">
           <label for="guerilla-force-calibration">Force Calibration</label>
+        </div>
+
+        <div class="guerilla-field guerilla-contrast-field">
+          <label for="guerilla-contrast">Contrast</label>
+        </div>
+
+        <div class="guerilla-stepper guerilla-brightness-control">
+          <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="-1" aria-label="Decrease brightness">-</button>
+          <input type="number" min="-100" max="100" step="1" value="25" id="guerilla-brightness" aria-label="Brightness">
+          <button type="button" class="guerilla-stepper-button" data-guerilla-target="brightness" data-step="1" aria-label="Increase brightness">+</button>
+        </div>
+
+        <div class="guerilla-force-calibration-control">
           <label class="toggle-switch guerilla-toggle-switch">
             <input type="checkbox" id="guerilla-force-calibration">
             <span></span>
           </label>
         </div>
 
-        <div class="guerilla-control">
-          <label for="guerilla-contrast">Contrast</label>
+        <div class="guerilla-contrast-control">
           <div class="guerilla-stepper">
             <button type="button" class="guerilla-stepper-button" data-guerilla-target="contrast" data-step="-1" aria-label="Decrease contrast">-</button>
             <input type="number" min="-100" max="100" step="1" value="30" id="guerilla-contrast" aria-label="Contrast">
             <button type="button" class="guerilla-stepper-button" data-guerilla-target="contrast" data-step="1" aria-label="Increase contrast">+</button>
           </div>
         </div>
+
+        <div class="guerilla-scan-navigation">
+          <button type="button" id="guerilla-previous-scan" class="guerilla-navigation-button" aria-label="Previous scan" disabled>&larr;</button>
+          <button type="button" id="guerilla-next-scan" class="guerilla-navigation-button" aria-label="Next scan" disabled>&rarr;</button>
+        </div>
       </div>
     </section>
 
     <canvas id="canvas" width="319" height="439"></canvas>
+    <img id="scan-history-image" class="scan-history-image hidden" alt="Saved scan">
     <div id="wall-display" class="wall-display hidden" aria-hidden="true">
       <canvas class="wall-output wall-output-1" data-wall-index="0" width="1920" height="1080"></canvas>
       <canvas class="wall-output wall-output-2" data-wall-index="1" width="1920" height="1080"></canvas>
