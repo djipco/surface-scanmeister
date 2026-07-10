@@ -62,7 +62,8 @@ html.ui-overlay-hidden * {
   pointer-events: none;
 }
 
-.guerilla-mode .scan-history-image {
+.guerilla-mode .scan-history-image,
+.display-layout-guerilla .scan-history-image {
   left: auto;
   right: 0;
   max-height: none;

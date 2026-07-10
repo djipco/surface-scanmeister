@@ -928,14 +928,18 @@ export class App {
   }
 
   get displayLayout() {
-    if (this.guerillaModeActive) return "single";
+    if (this.guerillaModeActive) return "guerilla";
     if (this.ui.displayLayout.value === "wall-4-horizontal") return "wall-4-horizontal";
     if (this.ui.displayLayout.value === "wall-8-horizontal") return "wall-8-horizontal";
     return "single";
   }
 
+  get isGuerillaDisplayLayout() {
+    return this.displayLayout === "guerilla";
+  }
+
   get isWallDisplayLayout() {
-    return this.displayLayout !== "single";
+    return this.displayLayout === "wall-4-horizontal" || this.displayLayout === "wall-8-horizontal";
   }
 
   get wallOutputCount() {
@@ -2015,7 +2019,7 @@ export class App {
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
-    if (this.guerillaModeActive) {
+    if (this.isGuerillaDisplayLayout) {
       this.canvas.style.left = "auto";
       this.canvas.style.right = "0";
       this.canvas.style.height = `${availableHeight}px`;
@@ -2063,6 +2067,7 @@ export class App {
     document.documentElement.classList.toggle("display-layout-wall", isWall);
     document.documentElement.classList.toggle("display-layout-wall-4", this.displayLayout === "wall-4-horizontal");
     document.documentElement.classList.toggle("display-layout-wall-8", this.displayLayout === "wall-8-horizontal");
+    document.documentElement.classList.toggle("display-layout-guerilla", this.isGuerillaDisplayLayout);
     if (this.ui.wallDisplay) {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
@@ -2962,7 +2967,7 @@ export class App {
   }
 
   forceGuerillaDisplayLayout() {
-    this.ui.displayLayout.value = "single";
+    this.ui.displayLayout.value = "guerilla";
     this.ui.displayLayout.disabled = true;
     this.updateDisplayLayoutState();
     this.updateCanvasDisplaySize();
