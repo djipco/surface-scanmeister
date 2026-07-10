@@ -1619,9 +1619,8 @@ export class App {
     }
 
     const scan = this.scanHistory[index];
-    const params = new URLSearchParams({filename: scan.filename});
     this.scanHistoryIndex = index;
-    this.ui.scanHistoryImage.src = this.serverUrl + "/scan-image?" + params;
+    this.ui.scanHistoryImage.src = this.serverUrl + "/scans/" + encodeURIComponent(scan.filename);
     this.ui.scanHistoryImage.classList.remove("hidden");
     this.setScanHistoryFilename(scan.filename);
     document.documentElement.classList.add("scan-history-visible");
@@ -3046,7 +3045,7 @@ export class App {
     this.setCommandPreviewText("", false);
     try {
       const response = await fetch(
-        this.serverUrl + "/command/" + this.channel + "?" + this.getScanParams()
+        this.serverUrl + "/scanners/" + this.channel + "/command?" + this.getScanParams()
       );
       const commandPreview = await response.text();
       const isChannelOutOfBounds = commandPreview.toLowerCase().includes("channel out of bounds");
@@ -3087,7 +3086,7 @@ export class App {
 
     this.cancelInProgress = true;
     this.finishCancelledScan();
-    fetch(this.serverUrl + "/cancel/" + this.channel, {method: "POST"})
+    fetch(this.serverUrl + "/scanners/" + this.channel + "/cancel", {method: "POST"})
       .catch(() => {
         this.setCommandPreviewText("Cancel request failed", true);
       })
@@ -3135,8 +3134,11 @@ export class App {
     this.scanAbortController = new AbortController();
     try {
       this.response = await fetch(
-        this.serverUrl + "/scan/" + this.channel + "?" + this.getScanParams(),
-        {signal: this.scanAbortController.signal}
+        this.serverUrl + "/scanners/" + this.channel + "/scan?" + this.getScanParams(),
+        {
+          method: "POST",
+          signal: this.scanAbortController.signal
+        }
       );
     } catch (err) {
       if (this.scanCancelled || err.name === "AbortError") {
@@ -3416,7 +3418,7 @@ export class App {
         filename
       });
       const response = await fetch(
-        this.serverUrl + "/save?" + params,
+        this.serverUrl + "/scans?" + params,
         {
           method: "POST",
           headers: {"Content-Type": "image/png"},

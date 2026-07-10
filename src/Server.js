@@ -13,9 +13,6 @@ import {Scanner} from "./Scanner.js";
 
 export class Server extends EventEmitter {
 
-  // Valid API commands (first part of the URL)
-  static COMMANDS = ["scan", "command", "scanners", "save", "cancel", "events", "scans", "scan-image"];
-
   // Acceptable static files to be served
   static ALLOWED_STATIC_FILE_EXTENSIONS = [".html", ".css", ".js", ".png", ".jpg"]
 
@@ -34,24 +31,52 @@ export class Server extends EventEmitter {
     super();
   }
 
-  #parseHttpRequest(request) {
+  #parseApiRequest(request) {
 
     // Result object
     const parsed = {};
 
-    // Construct a URL object for easier parsing of the command, channel and other parameters.
+    // Construct a URL object for easier parsing of the route and query parameters.
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
 
-    // Check validity of request (expecting at least one valid command)
-    if (segments.length < 1 || ! Server.COMMANDS.includes(segments[0]) ) {
-      throw new Error(`Invalid command received: ${url.href}`);
+    if (segments[0] === "events" && segments.length === 1) {
+      if (request.method !== "GET") throw new Error("Method not allowed");
+      parsed.command = "events";
+    } else if (segments[0] === "scanners" && segments.length === 1) {
+      if (request.method !== "GET") throw new Error("Method not allowed");
+      parsed.command = "list-scanners";
+    } else if (segments[0] === "scanners" && segments.length === 3) {
+      parsed.channel = parseInt(segments[1]) || 1;
+
+      if (segments[2] === "command" && request.method === "GET") {
+        parsed.command = "preview-command";
+      } else if (segments[2] === "scan" && request.method === "POST") {
+        parsed.command = "start-scan";
+      } else if (segments[2] === "cancel" && request.method === "POST") {
+        parsed.command = "cancel-scan";
+      } else {
+        throw new Error("Invalid scanner route");
+      }
+    } else if (segments[0] === "scans" && segments.length === 1) {
+      if (request.method === "GET") {
+        parsed.command = "list-scans";
+      } else if (request.method === "POST") {
+        parsed.command = "save-scan";
+      } else {
+        throw new Error("Method not allowed");
+      }
+    } else if (segments[0] === "scans" && segments.length === 2) {
+      if (request.method !== "GET") throw new Error("Method not allowed");
+      parsed.command = "read-scan";
+      parsed.filename = this.#sanitizeFilename(decodeURIComponent(segments[1]));
+    } else {
+      throw new Error(`Invalid API request received: ${url.href}`);
     }
 
-    // If we make it here, command is valid. Channel defaults to 1 if not specified.
-    parsed.command = segments[0];
-    parsed.channel = parseInt(segments[1]) || 1;
-    parsed.filename = this.#sanitizeFilename(url.searchParams.get('filename') || 'scan.png');
+    if (!parsed.filename) {
+      parsed.filename = this.#sanitizeFilename(url.searchParams.get('filename') || 'scan.png');
+    }
 
     // Parse query string for valid resolution
     const resolution = parseInt(url.searchParams.get('resolution'));
@@ -246,7 +271,7 @@ export class Server extends EventEmitter {
     // Try to parse the request
     let parsed;
     try {
-      parsed = this.#parseHttpRequest(request);
+      parsed = this.#parseApiRequest(request);
     } catch (err) {
       logInfo(
         `Invalid request from ${request.socket.remoteAddress}:${request.socket.remotePort}: ` +
@@ -264,7 +289,7 @@ export class Server extends EventEmitter {
       return;
     }
 
-    if (parsed.command === "scanners") {
+    if (parsed.command === "list-scanners") {
       response.writeHead(200, {'Content-Type': 'application/json'});
       response.end(JSON.stringify({
         scanners: this.#scanners.map(scanner => ({
@@ -277,7 +302,7 @@ export class Server extends EventEmitter {
       return;
     }
 
-    if (parsed.command === "scans") {
+    if (parsed.command === "list-scans") {
       try {
         response.writeHead(200, {'Content-Type': 'application/json'});
         response.end(JSON.stringify({scans: await this.#listSavedScans()}));
@@ -289,7 +314,7 @@ export class Server extends EventEmitter {
       return;
     }
 
-    if (parsed.command === "scan-image") {
+    if (parsed.command === "read-scan") {
       try {
         const image = await this.#readSavedScan(parsed.filename);
         response.writeHead(200, {
@@ -305,13 +330,7 @@ export class Server extends EventEmitter {
       return;
     }
 
-    if (parsed.command === "save") {
-      if (request.method !== 'POST') {
-        response.writeHead(405, {'Content-Type': 'text/plain'});
-        response.end('Method not allowed');
-        return;
-      }
-
+    if (parsed.command === "save-scan") {
       try {
         const body = await this.#readRequestBody(request);
         await mkdir(config.paths.scans, {recursive: true});
@@ -339,7 +358,7 @@ export class Server extends EventEmitter {
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('Channel out of bounds.');
       return;
-    } else if (parsed.command === "cancel") {
+    } else if (parsed.command === "cancel-scan") {
       const wasScanning = scanner.scanning;
       logInfo(
         `Cancel request received for channel ${parsed.channel} from ` +
@@ -348,6 +367,11 @@ export class Server extends EventEmitter {
       if (wasScanning) await scanner.abort();
       response.writeHead(200, {'Content-Type': 'application/json'});
       response.end(JSON.stringify({cancelled: wasScanning}));
+      return;
+    } else if (parsed.command === "preview-command") {
+      const args = scanner.getScanCommandArgs(config, parsed);
+      response.writeHead(200, {'Content-Type': 'text/plain'});
+      response.end(this.#formatShellCommand("scanimage", args));
       return;
     } else if (scanner.scanning) {
       logWarn(
@@ -359,10 +383,9 @@ export class Server extends EventEmitter {
       return;
     }
 
-    if (parsed.command === "command") {
-      const args = scanner.getScanCommandArgs(config, parsed);
-      response.writeHead(200, {'Content-Type': 'text/plain'});
-      response.end(this.#formatShellCommand("scanimage", args));
+    if (parsed.command !== "start-scan") {
+      response.writeHead(404, {'Content-Type': 'text/plain'});
+      response.end('Not found');
       return;
     }
 

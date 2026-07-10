@@ -194,8 +194,22 @@ The expected result is that the service is `enabled` and `active (running)`.
 #### Configuration
 
 By default, the **HTTP server** listens on port **`8080`** and serves both the web client and the
-API. API routes live under `/api`, for example `/api/scan/1`, `/api/command/1`, and
-`/api/events`. The **OSC server** listens on port **`8000`**.
+API. API routes live under `/api`. The **OSC server** listens on port **`8000`**.
+
+The main API routes are:
+
+```text
+GET  /api/scanners
+GET  /api/scanners/:channel/command
+POST /api/scanners/:channel/scan
+POST /api/scanners/:channel/cancel
+
+GET  /api/scans
+GET  /api/scans/:filename
+POST /api/scans?filename=...
+
+GET  /api/events
+```
 
 Local browser access to the web client is allowed without a password when connecting from
 `localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
