@@ -50,7 +50,7 @@ node tools/initial-setup
 ```
 
 It explains each step, asks before changing anything, then verifies the result. One of the first
-steps makes the project tools and desktop launchers executable, so afterward this also works:
+steps makes the project command-line tools executable, so afterward this also works:
 
 ```sh
 ./tools/initial-setup
@@ -191,7 +191,6 @@ the user's autostart folder:
 mkdir -p ~/.config/autostart
 ln -sf "/home/scanmeister/Desktop/surface-scanmeister/ScanMeister Client.desktop" \
        ~/.config/autostart/scanmeister-client.desktop
-chmod +x "/home/scanmeister/Desktop/surface-scanmeister/ScanMeister Client.desktop"
 ```
 
 Verify that the autostart entry exists:

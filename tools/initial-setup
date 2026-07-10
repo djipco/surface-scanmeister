@@ -51,9 +51,7 @@ const EXECUTABLE_FILES = [
   "tools/scanners",
   "tools/useradd",
   "tools/userdel",
-  "tools/userlist",
-  CLIENT_DESKTOP,
-  GUERILLA_DESKTOP
+  "tools/userlist"
 ];
 
 const args = new Set(process.argv.slice(2));
@@ -255,8 +253,8 @@ Current directory: ${process.cwd()}`,
   );
 
   await runStep(
-    "2. Make project launchers and tools executable",
-    `This applies chmod +x to the command-line tools and desktop launchers in the current project folder:
+    "2. Make project tools executable",
+    `This applies chmod +x to the command-line tools in the current project folder:
 ${EXECUTABLE_FILES.join("\n")}`,
     async () => {
       run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd()});
@@ -267,7 +265,7 @@ ${EXECUTABLE_FILES.join("\n")}`,
       return {
         ok: missing.length === 0 && notExecutable.length === 0,
         message: missing.length === 0 && notExecutable.length === 0
-          ? "Project tools and desktop launchers are executable."
+          ? "Project command-line tools are executable."
           : `Missing: ${missing.join(", ") || "none"}. Not executable: ${notExecutable.join(", ") || "none"}.`
       };
     }
