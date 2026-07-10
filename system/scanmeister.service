@@ -33,6 +33,7 @@ Type=simple
 User=scanmeister
 Group=scanmeister
 WorkingDirectory=/home/scanmeister/Desktop/surface-scanmeister
+EnvironmentFile=-/etc/scanmeister/scanmeister.env
 ExecStart=/usr/bin/node /home/scanmeister/Desktop/surface-scanmeister/ScanMeister.js
 Restart=on-failure
 RestartSec=3

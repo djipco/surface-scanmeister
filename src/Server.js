@@ -1,6 +1,7 @@
 // Node.js standard imports
 import {Configuration as config} from "../config/Configuration.js";
 import http from 'node:http';
+import {scryptSync, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
 import {mkdir, readFile, readdir, stat, writeFile} from 'node:fs/promises';
 import express from 'express';
@@ -26,6 +27,7 @@ export class Server extends EventEmitter {
   #apiServer = undefined;   // HTTP Server (5678)
   #express = undefined;             // Express server, for static files (8080)
   #filesServer = undefined;
+  #remoteAuthConfigurationWarningShown = false;
   #scanners = undefined;            // List of available scanners
 
   constructor() {
@@ -78,6 +80,110 @@ export class Server extends EventEmitter {
       if (/^[A-Za-z0-9_./:=+-]+$/.test(arg)) return arg;
       return "'" + arg.replaceAll("'", "'\\''") + "'";
     }).join(" ");
+  }
+
+  #isLocalAddress(address = "") {
+    const normalized = address
+      .replace(/^::ffff:/, '')
+      .replace(/^\[/, '')
+      .replace(/]$/, '')
+      .toLowerCase();
+
+    return normalized === "127.0.0.1" ||
+      normalized === "::1" ||
+      normalized === "localhost";
+  }
+
+  #isLocalRequest(request) {
+    return this.#isLocalAddress(request.ip) ||
+      this.#isLocalAddress(request.socket?.remoteAddress);
+  }
+
+  #authUser() {
+    return process.env.SCANMEISTER_AUTH_USER || "";
+  }
+
+  #hasRemoteAuthConfiguration() {
+    return Boolean(
+      this.#authUser() &&
+      (process.env.SCANMEISTER_AUTH_PASSWORD || process.env.SCANMEISTER_AUTH_PASSWORD_HASH)
+    );
+  }
+
+  #safeEqual(value, expected) {
+    const valueBuffer = Buffer.from(value);
+    const expectedBuffer = Buffer.from(expected);
+    return valueBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(valueBuffer, expectedBuffer);
+  }
+
+  #verifyPassword(password) {
+    const scryptHash = process.env.SCANMEISTER_AUTH_PASSWORD_HASH || "";
+    if (scryptHash) {
+      const [algorithm, salt, expectedHash] = scryptHash.split(":");
+      if (algorithm !== "scrypt" || !salt || !expectedHash) return false;
+
+      try {
+        const expectedBuffer = Buffer.from(expectedHash, "hex");
+        const actualBuffer = scryptSync(password, salt, expectedBuffer.length);
+        return actualBuffer.length === expectedBuffer.length &&
+          timingSafeEqual(actualBuffer, expectedBuffer);
+      } catch (err) {
+        return false;
+      }
+    }
+
+    const plainPassword = process.env.SCANMEISTER_AUTH_PASSWORD || "";
+    return plainPassword !== "" && this.#safeEqual(password, plainPassword);
+  }
+
+  #sendAuthenticationChallenge(response) {
+    response.setHeader("WWW-Authenticate", 'Basic realm="ScanMeister"');
+    response.status(401).send("Authentication required");
+  }
+
+  #authenticateRemoteFileRequest(request, response, next) {
+    if (this.#isLocalRequest(request)) {
+      next();
+      return;
+    }
+
+    if (!this.#hasRemoteAuthConfiguration()) {
+      if (!this.#remoteAuthConfigurationWarningShown) {
+        logWarn(
+          "Remote web client access is disabled because ScanMeister authentication is not configured."
+        );
+        this.#remoteAuthConfigurationWarningShown = true;
+      }
+      response.status(403).send("Remote access is not configured");
+      return;
+    }
+
+    const authHeader = request.headers.authorization || "";
+    const [scheme, encodedCredentials] = authHeader.split(" ");
+    if (scheme !== "Basic" || !encodedCredentials) {
+      this.#sendAuthenticationChallenge(response);
+      return;
+    }
+
+    let decodedCredentials;
+    try {
+      decodedCredentials = Buffer.from(encodedCredentials, "base64").toString("utf8");
+    } catch (err) {
+      this.#sendAuthenticationChallenge(response);
+      return;
+    }
+
+    const separatorIndex = decodedCredentials.indexOf(":");
+    const username = separatorIndex >= 0 ? decodedCredentials.slice(0, separatorIndex) : "";
+    const password = separatorIndex >= 0 ? decodedCredentials.slice(separatorIndex + 1) : "";
+
+    if (this.#safeEqual(username, this.#authUser()) && this.#verifyPassword(password)) {
+      next();
+      return;
+    }
+
+    this.#sendAuthenticationChallenge(response);
   }
 
   async #onHttpRequest(request, response)  {
@@ -436,7 +542,17 @@ export class Server extends EventEmitter {
     // Set up server for static web client files (using Express) and specify the directory to serve
     // files from.
     this.#express = express();
+    this.#express.use(this.#authenticateRemoteFileRequest.bind(this));
     this.#express.use(express.static('webclient'));
+
+    if (this.#hasRemoteAuthConfiguration()) {
+      logInfo("Remote web client access requires authentication.");
+    } else {
+      logWarn(
+        "Remote web client access is disabled until SCANMEISTER_AUTH_USER and " +
+        "SCANMEISTER_AUTH_PASSWORD_HASH are configured."
+      );
+    }
 
     // Start the static files server
     return new Promise((resolve, reject) => {

@@ -15,6 +15,9 @@ desktop.ini
 /node_modules/
 /.npm-cache/
 
+# Local development secrets
+/.env
+
 # Logs directory
 /logs/
 

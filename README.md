@@ -196,6 +196,78 @@ The expected result is that the service is `enabled` and `active (running)`.
 By default, the **HTTP API** of ScanMeister listens on port **`5678`**, the **HTTP file** server
 listens on port **`8080`** and the **OSC server** listens on port **`8000`**. 
 
+Local browser access to the web client is allowed without a password when connecting from
+`localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
+
+##### Web Client Password
+
+The ScanMeister service loads optional authentication settings from:
+
+```text
+/etc/scanmeister/scanmeister.env
+```
+
+This file is referenced by `system/scanmeister.service` with:
+
+```ini
+EnvironmentFile=-/etc/scanmeister/scanmeister.env
+```
+
+The leading `-` means the service can still start if the file does not exist. When the file is
+missing, local web client access still works, but remote web client access is refused.
+
+Supported variables:
+
+```sh
+SCANMEISTER_AUTH_USER=admin
+SCANMEISTER_AUTH_PASSWORD_HASH=scrypt:...
+```
+
+`SCANMEISTER_AUTH_PASSWORD_HASH` is recommended for production. It stores a hash of the password,
+not the password itself. For temporary development only, `SCANMEISTER_AUTH_PASSWORD` can be used
+instead, but that stores the password in clear text.
+
+Create the configuration directory:
+
+```sh
+sudo mkdir -p /etc/scanmeister
+```
+
+Generate a password hash:
+
+```sh
+node -e 'const {randomBytes,scryptSync}=require("node:crypto"); const password=process.argv[1]; const salt=randomBytes(16).toString("hex"); const hash=scryptSync(password,salt,64).toString("hex"); console.log(`scrypt:${salt}:${hash}`);' 'your-password'
+```
+
+Create `/etc/scanmeister/scanmeister.env`:
+
+```sh
+sudo nano /etc/scanmeister/scanmeister.env
+```
+
+With:
+
+```sh
+SCANMEISTER_AUTH_USER=admin
+SCANMEISTER_AUTH_PASSWORD_HASH=PASTE_GENERATED_HASH_HERE
+```
+
+Then secure the file:
+
+```sh
+sudo chown root:scanmeister /etc/scanmeister/scanmeister.env
+sudo chmod 640 /etc/scanmeister/scanmeister.env
+```
+
+Restart the service after changing authentication settings:
+
+```sh
+sudo systemctl restart scanmeister.service
+```
+
+If `SCANMEISTER_AUTH_USER` and `SCANMEISTER_AUTH_PASSWORD_HASH` are not configured, local access
+still works, but remote web client access is refused.
+
 To change the IP address and port of the machine OSC messages are sent to, you can modify the 
 configuration file:
 
