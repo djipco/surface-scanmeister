@@ -401,7 +401,7 @@ html.kiosk-mode body {
   min-height: 70px;
   max-height: 70px;
   flex: 0 0 70px;
-  padding: 0 16px;
+  padding: 0 14px 0 16px;
   font-size: 24px;
   line-height: 24px;
   cursor: grab;
@@ -477,7 +477,7 @@ html.kiosk-mode body {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
   grid-template-rows: auto auto auto auto;
-  gap: 10px 14px;
+  gap: 6px 14px;
   align-items: center;
 }
 
@@ -526,24 +526,26 @@ html.kiosk-mode body {
   grid-row: 2;
 }
 
-.guerilla-toggle-switch {
+label.guerilla-toggle-switch {
+  width: 110px;
+  height: 58px;
+  justify-self: center;
+}
+
+label.guerilla-toggle-switch span {
+  inset: 0;
   width: 110px;
   height: 58px;
 }
 
-.guerilla-toggle-switch span {
-  width: 110px;
-  height: 58px;
-}
-
-.guerilla-toggle-switch span::after {
+label.guerilla-toggle-switch span::after {
   top: 5px;
   left: 5px;
   width: 46px;
   height: 46px;
 }
 
-.guerilla-toggle-switch input:checked + span::after {
+label.guerilla-toggle-switch input:checked + span::after {
   transform: translateX(52px);
 }
 
@@ -608,9 +610,15 @@ html.kiosk-mode body {
 .guerilla-navigation-button {
   height: 88px;
   border-radius: 8px;
-  font-size: 44px;
   font-weight: 700;
   touch-action: manipulation;
+}
+
+.guerilla-navigation-button svg {
+  width: 44px;
+  height: 44px;
+  fill: currentColor;
+  pointer-events: none;
 }
 
 .controls-panel.hidden,
