@@ -446,7 +446,7 @@ html.kiosk-mode body {
   color: rgba(215, 231, 255, 0.78);
   background-image: radial-gradient(currentColor 3px, transparent 3px);
   background-size: 16px 16px;
-  background-position: 5px 5px;
+  background-position: 14px 5px;
 }
 
 .guerilla-rotate-button {
@@ -481,15 +481,15 @@ html.kiosk-mode body {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
   grid-template-rows: auto auto auto auto;
-  gap: 2px 14px;
+  gap: 0 14px;
   align-items: center;
 }
 
 .guerilla-field label {
   color: #aeb8c2;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 20px;
   text-transform: uppercase;
 }
 
@@ -588,7 +588,7 @@ label.guerilla-toggle-switch input:checked + span::after {
   justify-content: space-between;
   gap: 16px;
   color: #aeb8c2;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -613,15 +613,15 @@ label.guerilla-toggle-switch input:checked + span::after {
 }
 
 .guerilla-navigation-button {
-  height: 88px;
+  height: 58px;
   border-radius: 8px;
   font-weight: 700;
   touch-action: manipulation;
 }
 
 .guerilla-navigation-button svg {
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   fill: currentColor;
   pointer-events: none;
   transform: translateY(2px);
