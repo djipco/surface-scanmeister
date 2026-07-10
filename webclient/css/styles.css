@@ -320,6 +320,31 @@ html.kiosk-mode body {
   touch-action: none;
 }
 
+.rotation-90 .panel-bottom-resize-handle {
+  top: 0;
+  right: 0;
+  bottom: 18px;
+  left: auto;
+  width: 8px;
+  height: auto;
+}
+
+.rotation-180 .panel-bottom-resize-handle {
+  top: 0;
+  right: 18px;
+  bottom: auto;
+  left: 0;
+}
+
+.rotation-270 .panel-bottom-resize-handle {
+  top: 18px;
+  right: auto;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  height: auto;
+}
+
 .panel-corner-resize-handle {
   position: absolute;
   right: 0;
@@ -408,7 +433,7 @@ html.kiosk-mode body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  resize: both;
+  resize: none;
   background: rgba(27, 31, 35, 0.92);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   color: #d7e7ff;
@@ -526,7 +551,8 @@ html.kiosk-mode body {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
   grid-template-rows: auto auto auto auto;
-  gap: 0 14px;
+  row-gap: 6px;
+  column-gap: 14px;
   align-content: start;
   align-items: center;
 }
@@ -628,7 +654,9 @@ label.guerilla-toggle-switch input:checked + span::after {
 .guerilla-image-browser-title {
   grid-column: 1/-1;
   grid-row: 3;
-  margin-top: 4px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(154, 164, 173, 0.28);
   display: flex;
   align-items: center;
   justify-content: space-between;

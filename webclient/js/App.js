@@ -1680,14 +1680,17 @@ export class App {
   }
 
   updateScanHistoryFilename() {
-    if (this.scanHistory.length === 0) {
+    if (
+      this.scanHistory.length === 0 ||
+      this.scanHistoryIndex === undefined ||
+      this.scanHistoryIndex < 0 ||
+      this.scanHistoryIndex >= this.scanHistory.length
+    ) {
       this.setScanHistoryFilename("");
       return;
     }
 
-    const selectedIndex = this.scanHistoryIndex ?? this.scanHistory.length - 1;
-    const visibleIndex = this.clamp(selectedIndex, 0, this.scanHistory.length - 1);
-    this.setScanHistoryFilename(this.scanHistory[visibleIndex]?.filename || "");
+    this.setScanHistoryFilename(this.scanHistory[this.scanHistoryIndex]?.filename || "");
   }
 
   updateScanHistoryButtons() {
@@ -2354,17 +2357,17 @@ export class App {
       event.preventDefault();
       event.stopPropagation();
 
-      const rect = panel.getBoundingClientRect();
+      const startRect = panel.getBoundingClientRect();
       const startY = event.clientY;
       handle.setPointerCapture(event.pointerId);
 
       const onPointerMove = moveEvent => {
         this.resizePanelToVisualSize(
           panel,
-          rect.left,
-          rect.top,
-          rect.width,
-          rect.height + moveEvent.clientY - startY,
+          startRect.left,
+          startRect.top,
+          startRect.width,
+          startRect.height + moveEvent.clientY - startY,
           onResize
         );
       };
@@ -2393,7 +2396,7 @@ export class App {
       event.preventDefault();
       event.stopPropagation();
 
-      const rect = panel.getBoundingClientRect();
+      const startRect = panel.getBoundingClientRect();
       const startX = event.clientX;
       const startY = event.clientY;
       handle.setPointerCapture(event.pointerId);
@@ -2401,10 +2404,10 @@ export class App {
       const onPointerMove = moveEvent => {
         this.resizePanelToVisualSize(
           panel,
-          rect.left,
-          rect.top,
-          rect.width + moveEvent.clientX - startX,
-          rect.height + moveEvent.clientY - startY,
+          startRect.left,
+          startRect.top,
+          startRect.width + moveEvent.clientX - startX,
+          startRect.height + moveEvent.clientY - startY,
           onResize
         );
       };
