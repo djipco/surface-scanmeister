@@ -436,8 +436,8 @@ html.kiosk-mode body {
   max-height: 70px;
   flex: 0 0 70px;
   padding: 0 16px;
-  font-size: 18px;
-  line-height: 18px;
+  font-size: 22px;
+  line-height: 22px;
   cursor: grab;
   touch-action: none;
 }
@@ -454,10 +454,10 @@ html.kiosk-mode body {
 
 .guerilla-title span {
   font-weight: 400;
+  font-size: 16px;
 }
 
-.guerilla-rotate-button,
-.touch-drag-icon {
+.guerilla-rotate-button {
   width: 58px;
   height: 58px;
   border: 1px solid rgba(154, 164, 173, 0.35);
@@ -467,6 +467,16 @@ html.kiosk-mode body {
   justify-content: center;
   background: rgba(154, 164, 173, 0.08);
   color: #d7e7ff;
+}
+
+.touch-drag-icon {
+  width: 34px;
+  height: 42px;
+  display: inline-block;
+  color: rgba(215, 231, 255, 0.78);
+  background-image: radial-gradient(currentColor 2px, transparent 2px);
+  background-size: 10px 10px;
+  background-position: 2px 2px;
 }
 
 .guerilla-rotate-button {
@@ -479,8 +489,7 @@ html.kiosk-mode body {
   background: rgba(130, 180, 255, 0.14);
 }
 
-.guerilla-rotate-button svg,
-.touch-drag-icon svg {
+.guerilla-rotate-button svg {
   width: 30px;
   height: 30px;
   fill: none;
