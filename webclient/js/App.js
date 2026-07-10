@@ -2020,10 +2020,13 @@ export class App {
     const angle = (baseAngle + directionOffset) % 360;
 
     if (this.isGuerillaDisplayLayout) {
-      this.canvas.style.left = "auto";
-      this.canvas.style.right = "0";
+      const cssWidth = cssHeight * canvasRatio;
+      const visualWidth = angle % 180 === 0 ? cssWidth : cssHeight;
+      const centerX = availableWidth - visualWidth / 2;
+      this.canvas.style.left = `${centerX}px`;
+      this.canvas.style.right = "";
       this.canvas.style.height = Math.max(1, cssHeight) + "px";
-      this.canvas.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+      this.canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
       return;
     }
 
