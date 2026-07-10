@@ -45,6 +45,16 @@ const SYSTEM_PACKAGES = [
   "usbutils",
   "v4l-utils"
 ];
+const EXECUTABLE_FILES = [
+  "tools/check",
+  "tools/initial-setup",
+  "tools/scanners",
+  "tools/useradd",
+  "tools/userdel",
+  "tools/userlist",
+  CLIENT_DESKTOP,
+  GUERILLA_DESKTOP
+];
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
@@ -52,7 +62,8 @@ const help = args.has("--help") || args.has("-h");
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 
 function printHelp() {
-  console.log(`Usage: ./tools/initial-setup [--dry-run]
+  console.log(`Usage: node tools/initial-setup [--dry-run]
+       ./tools/initial-setup [--dry-run]
 
 Interactively prepares a Raspberry Pi for ScanMeister.
 
@@ -118,6 +129,14 @@ function fileExists(file) {
 function directoryExists(directory) {
   try {
     return existsSync(directory) && statSync(directory).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function isExecutable(file) {
+  try {
+    return Boolean(statSync(file).mode & 0o111);
   } catch {
     return false;
   }
@@ -236,7 +255,26 @@ Current directory: ${process.cwd()}`,
   );
 
   await runStep(
-    "2. Create scanmeister user",
+    "2. Make project launchers and tools executable",
+    `This applies chmod +x to the command-line tools and desktop launchers in the current project folder:
+${EXECUTABLE_FILES.join("\n")}`,
+    async () => {
+      run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd()});
+    },
+    async () => {
+      const missing = EXECUTABLE_FILES.filter(file => !fileExists(path.join(process.cwd(), file)));
+      const notExecutable = EXECUTABLE_FILES.filter(file => fileExists(path.join(process.cwd(), file)) && !isExecutable(path.join(process.cwd(), file)));
+      return {
+        ok: missing.length === 0 && notExecutable.length === 0,
+        message: missing.length === 0 && notExecutable.length === 0
+          ? "Project tools and desktop launchers are executable."
+          : `Missing: ${missing.join(", ") || "none"}. Not executable: ${notExecutable.join(", ") || "none"}.`
+      };
+    }
+  );
+
+  await runStep(
+    "3. Create scanmeister user",
     `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing.`,
     async () => {
       if (capture("id", [SERVICE_USER]).ok) {
@@ -254,7 +292,7 @@ Current directory: ${process.cwd()}`,
   );
 
   await runStep(
-    "3. Add scanmeister to hardware groups",
+    "4. Add scanmeister to hardware groups",
     `This adds ${SERVICE_USER} to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
 
 Requested groups:
@@ -281,7 +319,7 @@ ${REQUIRED_GROUPS.join(", ")}`,
   );
 
   await runStep(
-    "4. Install base system packages",
+    "5. Install base system packages",
     `This installs packages used by ScanMeister and the setup process:
 ${SYSTEM_PACKAGES.join(", ")}`,
     async () => {
@@ -300,7 +338,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   await runStep(
-    "5. Install or verify Node.js",
+    "6. Install or verify Node.js",
     "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing.",
     async () => {
       if (nodeMajorVersion() >= 20) {
@@ -319,7 +357,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   await runStep(
-    "6. Enable SSH and VNC",
+    "7. Enable SSH and VNC",
     "This uses raspi-config non-interactive commands when available.",
     async () => {
       if (!commandExists("raspi-config")) {
@@ -343,7 +381,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   await runStep(
-    "7. Clone or update project",
+    "8. Clone or update project",
     `Target directory:
 ${TARGET_DIRECTORY}
 
@@ -377,7 +415,7 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "8. Install Node dependencies",
+    "9. Install Node dependencies",
     "This runs npm ci when package-lock.json exists, otherwise npm install.",
     async () => {
       const npmCommand = fileExists(path.join(TARGET_DIRECTORY, "package-lock.json")) ? "ci" : "install";
@@ -392,7 +430,7 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "9. Create runtime directories",
+    "10. Create runtime directories",
     "This creates logs and scans in the project folder and makes them writable by scanmeister.",
     async () => {
       ["logs", "scans"].forEach(directory => {
@@ -413,7 +451,7 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "10. Create HTTPS certificate",
+    "11. Create HTTPS certificate",
     `This creates a self-signed certificate unless both files already exist:
 ${CERT_KEY}
 ${CERT_CRT}`,
@@ -442,7 +480,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "11. Configure remote web users file",
+    "12. Configure remote web users file",
     `This prepares ${USERS_FILE}. It can also launch tools/useradd to create the first user.`,
     async () => {
       run("mkdir", ["-p", path.dirname(USERS_FILE)], {sudo: true});
@@ -464,7 +502,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "12. Allow Node to bind ports 80 and 443",
+    "13. Allow Node to bind ports 80 and 443",
     "This applies cap_net_bind_service to the real Node.js binary, so ScanMeister can run as scanmeister instead of root.",
     async () => {
       const nodePath = realNodePath();
@@ -485,7 +523,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "13. Install and enable systemd service",
+    "14. Install and enable systemd service",
     `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
     async () => {
       run("cp", [path.join(TARGET_DIRECTORY, SERVICE_SOURCE), SERVICE_TARGET], {sudo: true});
@@ -506,7 +544,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "14. Configure client autostart",
+    "15. Configure client autostart",
     `This creates an autostart symlink for the ${SERVICE_USER} desktop session.
 
 Default launcher: ${CLIENT_DESKTOP}
@@ -523,7 +561,7 @@ Set SCANMEISTER_GUERILLA=1 before running this script to use ${GUERILLA_DESKTOP}
   );
 
   await runStep(
-    "15. Final verification",
+    "16. Final verification",
     "This runs the project health checks and scanner listing tools.",
     async () => {
       finalChecks.health = run("./tools/check", [], {cwd: TARGET_DIRECTORY}).ok;

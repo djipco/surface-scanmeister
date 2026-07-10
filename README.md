@@ -46,14 +46,20 @@ sudo apt install -y nodejs
 For a guided Raspberry Pi install, run the interactive setup script from the project folder:
 
 ```sh
+node tools/initial-setup
+```
+
+It explains each step, asks before changing anything, then verifies the result. One of the first
+steps makes the project tools and desktop launchers executable, so afterward this also works:
+
+```sh
 ./tools/initial-setup
 ```
 
-It explains each step, asks before changing anything, then verifies the result. To preview the
-commands without changing the system:
+To preview the commands without changing the system:
 
 ```sh
-./tools/initial-setup --dry-run
+node tools/initial-setup --dry-run
 ```
 
 The manual steps below describe what the script does.
