@@ -354,7 +354,7 @@ html.kiosk-mode body {
 .panel-bottom-resize-handle {
   position: absolute;
   left: 0;
-  right: 0;
+  right: 18px;
   bottom: 0;
   z-index: 2;
   height: 8px;
@@ -524,6 +524,7 @@ html.kiosk-mode body {
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
   grid-template-rows: auto auto auto auto;
   gap: 0 14px;
+  align-content: start;
   align-items: center;
 }
 
