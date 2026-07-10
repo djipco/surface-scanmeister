@@ -2022,7 +2022,7 @@ export class App {
     if (this.isGuerillaDisplayLayout) {
       this.canvas.style.left = "auto";
       this.canvas.style.right = "0";
-      this.canvas.style.height = `${availableHeight}px`;
+      this.canvas.style.height = Math.max(1, cssHeight) + "px";
       this.canvas.style.transform = `translateY(-50%) rotate(${angle}deg)`;
       return;
     }

@@ -66,6 +66,8 @@ html.ui-overlay-hidden * {
 .display-layout-guerilla .scan-history-image {
   left: auto;
   right: 0;
+  width: auto;
+  max-width: none;
   max-height: none;
   height: 100vh;
   transform: translateY(-50%);
