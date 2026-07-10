@@ -279,10 +279,24 @@ To list remote users:
 sudo ./tools/userlist
 ```
 
+Other useful command-line tools:
+
+```sh
+./tools/check
+./tools/scanners
+```
+
+`check` verifies the common runtime requirements without starting the daemon or launching a scan:
+Node version, writable `logs` / `scans` directories, scanner-related groups, `scanimage -V`,
+remote users file readability, and configured network ports.
+
+`scanners` lists supported scanners using the same USB discovery and channel assignment rules as
+ScanMeister.
+
 If the tools are not executable on the Pi, run:
 
 ```sh
-chmod +x tools/useradd tools/userdel tools/userlist
+chmod +x tools/check tools/scanners tools/useradd tools/userdel tools/userlist
 ```
 
 The users file can also be edited manually. It contains one generated line per remote user:

@@ -8,9 +8,7 @@ import { usb } from 'usb';
 import {Configuration as config} from "../config/Configuration.js";
 import {logInfo, logError, logWarn} from "./Logger.js"
 import {Scanner} from './Scanner.js';
-import {ScannerMappings} from "../config/ScannerMappings.js";
 import {Server} from "./Server.js";
-import {SupportedScanners} from "../config/SupportedScanners.js";
 import {Spawner} from "./Spawner.js";
 import {
   checkScannerAccessGroups,
@@ -21,6 +19,10 @@ import {
   formatUserInfo,
   formatWritableDirectoryError
 } from "./Permissions.js";
+import {
+  getScannerDescriptors,
+  isSupportedScannerDescriptor
+} from "./ScannerDiscovery.js";
 
 export default class App {
 
@@ -192,7 +194,13 @@ export default class App {
     this.#scanners.length = 0; // me must not destroy the reference
 
     // Retrieve list of objects describing scanner ports and device numbers
-    const scannerDescriptors = this.getScannerDescriptors();
+    const {scanners: scannerDescriptors, mapping} = getScannerDescriptors();
+
+    if (mapping) {
+      logInfo(`Assigning channels according to map '${mapping}'.`);
+    } else {
+      logInfo("Assigning channels according to port hierarchy (no mapping used)");
+    }
 
     // Create new scanner objects
     scannerDescriptors.forEach(descriptor => {
@@ -223,7 +231,7 @@ export default class App {
   async #onUsbAttach(descriptor) {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
-    if (this.isSupportedScannerDescriptor(descriptor)) {
+    if (isSupportedScannerDescriptor(descriptor)) {
       logInfo(
         `Scanner attached to bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`
@@ -236,119 +244,13 @@ export default class App {
   async #onUsbDetach(descriptor) {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
-    if (this.isSupportedScannerDescriptor(descriptor)) {
+    if (isSupportedScannerDescriptor(descriptor)) {
       logInfo(
         `Scanner detached from bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`
       );
       await this.#updateScanners();
     }
-
-  }
-
-  isSupportedScannerDescriptor(descriptor) {
-
-    // Get flat list of supported scanners
-    const identifiers = SupportedScanners.map(model => `${model.idVendor}:${model.idProduct}`);
-
-    // Build id for current descriptor
-    const idVendor = descriptor.deviceDescriptor.idVendor.toString(16).padStart(4, '0');
-    const idProduct = descriptor.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
-    const id = `${idVendor}:${idProduct}`;
-
-    // Check result
-    return identifiers.includes(id);
-
-  }
-
-  getScannerDescriptors() {
-
-    // Get all USB devices
-    const descriptors = usb.getDeviceList();
-
-    // Add top-level identifier using idVendor and idProduct (e.g. '04a9:2213')
-    descriptors.forEach(device => {
-      device.idVendor = device.deviceDescriptor.idVendor.toString(16).padStart(4, '0');
-      device.idProduct = device.deviceDescriptor.idProduct.toString(16).padStart(4, '0');
-      device.identifier = `${device.idVendor}:${device.idProduct}`;
-    });
-
-    // Filter the descriptors to retain only the ones for supported scanners
-    let scannerDescriptors = descriptors.filter(dev => this.isSupportedScannerDescriptor(dev));
-
-    // Assign additional useful information to scanner descriptors
-    scannerDescriptors.forEach(scanner => {
-
-      // Get scanner details from our own database
-      const details = this.getScannerDetails(scanner.idVendor, scanner.idProduct);
-
-      // System name (e.g. genesys:libusb:001:034)
-      scanner.systemName = details.driverPrefix + scanner.busNumber.toString().padStart(3, '0') +
-        ":" + scanner.deviceAddress.toString().padStart(3, '0');
-
-      // Add vendor and product names
-      scanner.vendor = details.vendor;
-      scanner.product = details.product;
-
-      // Hierarchy (prepended with bus number)
-      scanner.hierarchy = [scanner.busNumber].concat(scanner.portNumbers).join("-");
-
-    });
-
-    // Sort scanner descriptors by bus and then by port hierarchy
-    scannerDescriptors.sort((a, b) => {
-
-      // If the number of elements in portNumbers is smaller than 5, we left-pad the array with
-      // zeroes. This allows comparing devices on hubs with both subgroups and without (up to 5
-      // levels).
-      const paddedA = Array(5 - a.portNumbers.length).fill(0).concat(a.portNumbers);
-      const paddedB = Array(5 - b.portNumbers.length).fill(0).concat(b.portNumbers);
-
-      // Prepend bus number to port hierarchy
-      let hierarchyA = [a.busNumber].concat(paddedA);
-      let hierarchyB = [b.busNumber].concat(paddedB);
-
-      // Multiply the values of each level so they can be flattened and directly compared. By using
-      // 32 as a base, we guarantee support for at least 32 end-level ports.
-      hierarchyA = hierarchyA.map((val, i, arr) => val * (32 ** (arr.length - i)));
-      hierarchyB = hierarchyB.map((val, i, arr) => val * (32 ** (arr.length - i)));
-
-      // We add the multiplied levels and compare the two values
-      const totalA = hierarchyA.reduce((t, v) => t + v);
-      const totalB = hierarchyB.reduce((t, v) => t + v);
-
-      return totalA - totalB;
-
-    });
-
-    // If a channel mapping has been defined, use it to assign channels. Otherwise, base the channel
-    // number on the previous sort.
-    if (config.devices.mapping) {
-
-      logInfo(`Assigning channels according to map '${config.devices.mapping}'.`);
-
-      const newList = [];
-      const mapping = ScannerMappings[config.devices.mapping];
-
-      Object.entries(mapping).forEach(([key, value]) => {
-        const found = scannerDescriptors.find(s => s.hierarchy === key);
-        if (found) {
-          found.channel = value;
-          newList.push(found);
-        }
-      });
-
-      newList.sort((a, b) => a.channel - b.channel);
-      scannerDescriptors = newList;
-
-    } else {
-
-      logInfo(`Assigning channels according to port hierarchy (no mapping used)`);
-      scannerDescriptors.forEach((descriptor, index) => descriptor.channel = index + 1)
-
-    }
-
-    return scannerDescriptors;
 
   }
 
@@ -469,10 +371,6 @@ export default class App {
   async #onExitRequest(signal) {
     logInfo(`Termination signal received: ${signal}`);
     await this.quit();
-  }
-
-  getScannerDetails(idVendor, idProduct) {
-    return SupportedScanners.find(model => model.idVendor === idVendor && model.idProduct === idProduct);
   }
 
   async #onOscError(error) {

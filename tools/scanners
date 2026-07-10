@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+import process from "node:process";
+
+import {getScannerDescriptors} from "../src/ScannerDiscovery.js";
+
+function printHelp() {
+  console.log(`Usage: ./tools/scanners
+
+Lists scanners using the same USB discovery and channel assignment as ScanMeister.
+`);
+}
+
+function main() {
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    printHelp();
+    return;
+  }
+
+  const unexpected = process.argv.slice(2).filter(arg => arg !== "--help" && arg !== "-h");
+  if (unexpected.length > 0) {
+    printHelp();
+    process.exit(1);
+  }
+
+  const {scanners, mapping} = getScannerDescriptors();
+  console.log(mapping ? `Channel mapping: ${mapping}` : "Channel mapping: port hierarchy");
+
+  if (scanners.length === 0) {
+    console.log("No supported scanners found.");
+    return;
+  }
+
+  scanners.forEach(scanner => {
+    console.log(
+      [
+        `Channel ${scanner.channel.toString().padStart(2, " ")}`,
+        `${scanner.vendor} ${scanner.product}`,
+        scanner.systemName,
+        `bus ${scanner.busNumber}`,
+        `ports ${scanner.portNumbers.join("-") || "none"}`,
+        `hierarchy ${scanner.hierarchy}`
+      ].join(" | ")
+    );
+  });
+}
+
+try {
+  main();
+} catch (error) {
+  console.error(`Error: ${error.message || error}`);
+  process.exit(1);
+}

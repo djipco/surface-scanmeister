@@ -1,3 +1,5 @@
+tools/check text eol=lf
+tools/scanners text eol=lf
 tools/useradd text eol=lf
 tools/userdel text eol=lf
 tools/userlist text eol=lf

@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+import {access, stat} from "node:fs/promises";
+import {constants} from "node:fs";
+import process from "node:process";
+
+import {Configuration as config} from "../config/Configuration.js";
+import {
+  checkScannerAccessGroups,
+  checkScanImageCommand,
+  checkScanImageVersion,
+  checkWritableDirectory,
+  formatScannerAccessGroupWarning,
+  formatUserInfo,
+  formatWritableDirectoryError,
+  getCurrentUserInfo
+} from "../src/Permissions.js";
+import {DEFAULT_USERS_FILE, parseCommonArguments, parseUsers, readUsersFile} from "./auth-users.js";
+
+function printHelp() {
+  console.log(`Usage: ./tools/check [--file PATH]
+
+Checks common ScanMeister runtime requirements without starting the daemon.
+
+Options:
+  --file PATH   Remote users file path. Default: /etc/scanmeister/users
+`);
+}
+
+function printResult(ok, label, details = "") {
+  const marker = ok ? "OK " : "ERR";
+  console.log(`[${marker}] ${label}${details ? `: ${details}` : ""}`);
+}
+
+async function checkReadableFile(file) {
+  try {
+    const stats = await stat(file);
+    if (!stats.isFile()) {
+      return {ok: false, error: "Path exists but is not a file"};
+    }
+    await access(file, constants.R_OK);
+    return {ok: true, error: null};
+  } catch (err) {
+    return {ok: false, error: err.code ? `${err.code}: ${err.message}` : err.message};
+  }
+}
+
+async function checkUsersFile(file) {
+  const readable = await checkReadableFile(file);
+  if (!readable.ok) return {...readable, users: []};
+
+  try {
+    const users = parseUsers(await readUsersFile(file));
+    return {
+      ok: users.length > 0,
+      users,
+      error: users.length > 0 ? null : "No valid users found"
+    };
+  } catch (err) {
+    return {ok: false, users: [], error: err.message};
+  }
+}
+
+async function main() {
+  const {options, positional} = parseCommonArguments(process.argv.slice(2));
+  if (options.help) {
+    printHelp();
+    return;
+  }
+  if (positional.length !== 0) {
+    printHelp();
+    process.exit(1);
+  }
+
+  let failures = 0;
+  const report = (ok, label, details = "") => {
+    if (!ok) failures += 1;
+    printResult(ok, label, details);
+  };
+
+  const user = getCurrentUserInfo();
+  printResult(true, "Current user", formatUserInfo(user));
+  report(Number(process.versions.node.split(".")[0]) >= 20, "Node version", process.version);
+
+  const logs = checkWritableDirectory("Logs", config.paths.logs);
+  report(logs.ok, "Logs directory writable", logs.ok ? logs.absolutePath : formatWritableDirectoryError(logs));
+
+  const scans = checkWritableDirectory("Scans", config.paths.scans);
+  report(scans.ok, "Scans directory writable", scans.ok ? scans.absolutePath : formatWritableDirectoryError(scans));
+
+  const groups = checkScannerAccessGroups();
+  report(groups.ok, "Scanner access groups", groups.ok ? "scanner/lp and plugdev look available" : formatScannerAccessGroupWarning(groups));
+
+  const scanimage = checkScanImageCommand();
+  report(scanimage.ok, "scanimage command", scanimage.ok ? scanimage.executable : "not found in PATH");
+
+  const scanimageVersion = await checkScanImageVersion();
+  report(scanimageVersion.ok, "scanimage version", scanimageVersion.ok ? scanimageVersion.version : scanimageVersion.error);
+
+  const usersFile = await checkUsersFile(options.file || DEFAULT_USERS_FILE);
+  report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);
+
+  printResult(true, "API server", `${config.network.api_server.address}:${config.network.api_server.port}`);
+  printResult(true, "Web client server", `${config.network.files_server.address}:${config.network.files_server.port}`);
+  printResult(true, "OSC", `listening on ${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ${config.network.osc_client.address}:${config.network.osc_client.port}`);
+
+  process.exit(failures > 0 ? 1 : 0);
+}
+
+main().catch(error => {
+  console.error(`Error: ${error.message || error}`);
+  process.exit(1);
+});
