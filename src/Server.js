@@ -27,6 +27,8 @@ export class Server extends EventEmitter {
   #apiServer = undefined;   // HTTP Server (5678)
   #express = undefined;             // Express server, for static files (8080)
   #filesServer = undefined;
+  #remoteAuthUsers = new Map();
+  #remoteAuthUsersMtimeMs = undefined;
   #remoteAuthConfigurationWarningShown = false;
   #scanners = undefined;            // List of available scanners
 
@@ -99,42 +101,77 @@ export class Server extends EventEmitter {
       this.#isLocalAddress(request.socket?.remoteAddress);
   }
 
-  #authUser() {
-    return process.env.SCANMEISTER_AUTH_USER || "";
+  #authUsersPath() {
+    return process.env.SCANMEISTER_AUTH_USERS_FILE || "/etc/scanmeister/users";
   }
 
   #hasRemoteAuthConfiguration() {
-    return Boolean(
-      this.#authUser() &&
-      (process.env.SCANMEISTER_AUTH_PASSWORD || process.env.SCANMEISTER_AUTH_PASSWORD_HASH)
-    );
+    return this.#remoteAuthUsers.size > 0;
   }
 
-  #safeEqual(value, expected) {
-    const valueBuffer = Buffer.from(value);
-    const expectedBuffer = Buffer.from(expected);
-    return valueBuffer.length === expectedBuffer.length &&
-      timingSafeEqual(valueBuffer, expectedBuffer);
-  }
+  async #refreshRemoteAuthUsers() {
+    const authUsersPath = this.#authUsersPath();
+    let authUsersStat;
 
-  #verifyPassword(password) {
-    const scryptHash = process.env.SCANMEISTER_AUTH_PASSWORD_HASH || "";
-    if (scryptHash) {
-      const [algorithm, salt, expectedHash] = scryptHash.split(":");
-      if (algorithm !== "scrypt" || !salt || !expectedHash) return false;
-
-      try {
-        const expectedBuffer = Buffer.from(expectedHash, "hex");
-        const actualBuffer = scryptSync(password, salt, expectedBuffer.length);
-        return actualBuffer.length === expectedBuffer.length &&
-          timingSafeEqual(actualBuffer, expectedBuffer);
-      } catch (err) {
-        return false;
+    try {
+      authUsersStat = await stat(authUsersPath);
+    } catch (err) {
+      if (this.#remoteAuthUsers.size > 0 || this.#remoteAuthUsersMtimeMs !== undefined) {
+        logWarn(`Remote web client access is disabled because ${authUsersPath} could not be read.`);
       }
+      this.#remoteAuthUsers.clear();
+      this.#remoteAuthUsersMtimeMs = undefined;
+      return;
     }
 
-    const plainPassword = process.env.SCANMEISTER_AUTH_PASSWORD || "";
-    return plainPassword !== "" && this.#safeEqual(password, plainPassword);
+    if (authUsersStat.mtimeMs === this.#remoteAuthUsersMtimeMs) return;
+    await this.#loadRemoteAuthUsers(authUsersPath, authUsersStat.mtimeMs);
+  }
+
+  async #loadRemoteAuthUsers(authUsersPath = this.#authUsersPath(), mtimeMs = undefined) {
+    let content;
+    try {
+      content = await readFile(authUsersPath, "utf8");
+    } catch (err) {
+      logWarn(`Remote web client access is disabled because ${authUsersPath} could not be read.`);
+      this.#remoteAuthUsers.clear();
+      this.#remoteAuthUsersMtimeMs = undefined;
+      return;
+    }
+
+    const users = new Map();
+    const lines = content.split(/\r?\n/);
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return;
+
+      const [username, algorithm, salt, hash] = trimmed.split(":");
+      if (!username || algorithm !== "scrypt" || !salt || !hash) {
+        logWarn(`Ignoring invalid remote auth entry at ${authUsersPath}:${index + 1}.`);
+        return;
+      }
+
+      users.set(username, {algorithm, salt, hash});
+    });
+
+    this.#remoteAuthUsers = users;
+    this.#remoteAuthUsersMtimeMs = mtimeMs;
+    this.#remoteAuthConfigurationWarningShown = false;
+    logInfo(`Loaded ${users.size} remote web client user(s) from ${authUsersPath}.`);
+  }
+
+  #verifyPassword(username, password) {
+    const user = this.#remoteAuthUsers.get(username);
+    if (!user || user.algorithm !== "scrypt") return false;
+
+    try {
+      const expectedBuffer = Buffer.from(user.hash, "hex");
+      const actualBuffer = scryptSync(password, user.salt, expectedBuffer.length);
+      return actualBuffer.length === expectedBuffer.length &&
+        timingSafeEqual(actualBuffer, expectedBuffer);
+    } catch (err) {
+      return false;
+    }
   }
 
   #sendAuthenticationChallenge(response) {
@@ -142,9 +179,17 @@ export class Server extends EventEmitter {
     response.status(401).send("Authentication required");
   }
 
-  #authenticateRemoteFileRequest(request, response, next) {
+  async #authenticateRemoteFileRequest(request, response, next) {
     if (this.#isLocalRequest(request)) {
       next();
+      return;
+    }
+
+    try {
+      await this.#refreshRemoteAuthUsers();
+    } catch (err) {
+      logWarn(`Could not refresh remote web client users. Error: ${err}`);
+      response.status(403).send("Remote access is not configured");
       return;
     }
 
@@ -178,7 +223,7 @@ export class Server extends EventEmitter {
     const username = separatorIndex >= 0 ? decodedCredentials.slice(0, separatorIndex) : "";
     const password = separatorIndex >= 0 ? decodedCredentials.slice(separatorIndex + 1) : "";
 
-    if (this.#safeEqual(username, this.#authUser()) && this.#verifyPassword(password)) {
+    if (this.#verifyPassword(username, password)) {
       next();
       return;
     }
@@ -541,16 +586,17 @@ export class Server extends EventEmitter {
 
     // Set up server for static web client files (using Express) and specify the directory to serve
     // files from.
+    await this.#refreshRemoteAuthUsers();
     this.#express = express();
     this.#express.use(this.#authenticateRemoteFileRequest.bind(this));
     this.#express.use(express.static('webclient'));
 
     if (this.#hasRemoteAuthConfiguration()) {
-      logInfo("Remote web client access requires authentication.");
+      logInfo(`Remote web client access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
     } else {
       logWarn(
-        "Remote web client access is disabled until SCANMEISTER_AUTH_USER and " +
-        "SCANMEISTER_AUTH_PASSWORD_HASH are configured."
+        `Remote web client access is disabled until ${this.#authUsersPath()} contains at least ` +
+        "one valid user."
       );
     }
 

@@ -199,7 +199,7 @@ listens on port **`8080`** and the **OSC server** listens on port **`8000`**.
 Local browser access to the web client is allowed without a password when connecting from
 `localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
 
-##### Web Client Password
+##### Web Client Remote Users
 
 The ScanMeister service loads optional authentication settings from:
 
@@ -216,16 +216,21 @@ EnvironmentFile=-/etc/scanmeister/scanmeister.env
 The leading `-` means the service can still start if the file does not exist. When the file is
 missing, local web client access still works, but remote web client access is refused.
 
-Supported variables:
+The env file can point to the remote users file:
 
 ```sh
-SCANMEISTER_AUTH_USER=admin
-SCANMEISTER_AUTH_PASSWORD_HASH=scrypt:...
+SCANMEISTER_AUTH_USERS_FILE=/etc/scanmeister/users
 ```
 
-`SCANMEISTER_AUTH_PASSWORD_HASH` is recommended for production. It stores a hash of the password,
-not the password itself. For temporary development only, `SCANMEISTER_AUTH_PASSWORD` can be used
-instead, but that stores the password in clear text.
+If `SCANMEISTER_AUTH_USERS_FILE` is omitted, ScanMeister uses `/etc/scanmeister/users`.
+
+The users file contains one user per line:
+
+```text
+username:scrypt:salt:hash
+```
+
+Passwords are not stored in clear text. Each line stores a `scrypt` password hash.
 
 Create the configuration directory:
 
@@ -236,10 +241,30 @@ sudo mkdir -p /etc/scanmeister
 Generate a password hash:
 
 ```sh
-node -e 'const {randomBytes,scryptSync}=require("node:crypto"); const password=process.argv[1]; const salt=randomBytes(16).toString("hex"); const hash=scryptSync(password,salt,64).toString("hex"); console.log(`scrypt:${salt}:${hash}`);' 'your-password'
+node -e 'const {randomBytes,scryptSync}=require("node:crypto"); const user=process.argv[1]; const password=process.argv[2]; const salt=randomBytes(16).toString("hex"); const hash=scryptSync(password,salt,64).toString("hex"); console.log(`${user}:scrypt:${salt}:${hash}`);' 'admin' 'your-password'
 ```
 
-Create `/etc/scanmeister/scanmeister.env`:
+Create `/etc/scanmeister/users`:
+
+```sh
+sudo nano /etc/scanmeister/users
+```
+
+Add one generated line per remote user:
+
+```text
+admin:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
+operator:scrypt:PASTE_GENERATED_SALT:PASTE_GENERATED_HASH
+```
+
+Then secure the users file:
+
+```sh
+sudo chown root:scanmeister /etc/scanmeister/users
+sudo chmod 640 /etc/scanmeister/users
+```
+
+If you want to use a different users file path, create `/etc/scanmeister/scanmeister.env`:
 
 ```sh
 sudo nano /etc/scanmeister/scanmeister.env
@@ -248,25 +273,21 @@ sudo nano /etc/scanmeister/scanmeister.env
 With:
 
 ```sh
-SCANMEISTER_AUTH_USER=admin
-SCANMEISTER_AUTH_PASSWORD_HASH=PASTE_GENERATED_HASH_HERE
+SCANMEISTER_AUTH_USERS_FILE=/path/to/users
 ```
 
-Then secure the file:
+Changes to `/etc/scanmeister/users` are picked up automatically. You do not need to restart
+ScanMeister after adding, removing, or changing a user in that file.
 
-```sh
-sudo chown root:scanmeister /etc/scanmeister/scanmeister.env
-sudo chmod 640 /etc/scanmeister/scanmeister.env
-```
-
-Restart the service after changing authentication settings:
+Restart the service only after changing `/etc/scanmeister/scanmeister.env`, such as when changing
+`SCANMEISTER_AUTH_USERS_FILE`:
 
 ```sh
 sudo systemctl restart scanmeister.service
 ```
 
-If `SCANMEISTER_AUTH_USER` and `SCANMEISTER_AUTH_PASSWORD_HASH` are not configured, local access
-still works, but remote web client access is refused.
+If the users file is missing, unreadable, or contains no valid users, local access still works, but
+remote web client access is refused.
 
 To change the IP address and port of the machine OSC messages are sent to, you can modify the 
 configuration file:
