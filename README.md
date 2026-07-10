@@ -145,17 +145,17 @@ launcher in the project folder. It opens Chromium in kiosk mode and points it to
 client:
 
 ```sh
-http://localhost:8080?kiosk=1
+https://localhost:8080?kiosk=1
 ```
 
 The `kiosk=1` parameter tells the client to use kiosk-specific behavior. To override the regular UI
 initial visibility, add `ui=0` or `ui=1`. To show the Guerilla panel, add `guerilla=1`:
 
 ```sh
-http://localhost:8080?kiosk=1&ui=0
-http://localhost:8080?kiosk=1&ui=1
-http://localhost:8080?kiosk=1&guerilla=1
-http://localhost:8080?kiosk=1&ui=0&guerilla=1
+https://localhost:8080?kiosk=1&ui=0
+https://localhost:8080?kiosk=1&ui=1
+https://localhost:8080?kiosk=1&guerilla=1
+https://localhost:8080?kiosk=1&ui=0&guerilla=1
 ```
 
 When `ui=0`, the Parameters panel, top strip, bottom command strip, and Stats panel are initially hidden.
@@ -193,7 +193,7 @@ The expected result is that the service is `enabled` and `active (running)`.
 
 #### Configuration
 
-By default, the **HTTP server** listens on port **`8080`** and serves both the web client and the
+By default, the **HTTPS server** listens on port **`8080`** and serves both the web client and the
 API. API routes live under `/api`. The **OSC server** listens on port **`8000`**.
 
 The main API routes are:
@@ -214,6 +214,39 @@ GET  /api/events
 Local browser access to the web client is allowed without a password when connecting from
 `localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
 
+##### HTTPS Certificate
+
+ScanMeister expects an HTTPS key and certificate at:
+
+```text
+/etc/scanmeister/certs/server.key
+/etc/scanmeister/certs/server.crt
+```
+
+For a private installation, a self-signed certificate is enough. Browsers will show a warning unless
+the certificate is trusted locally.
+
+Create the certificate files on the Pi:
+
+```sh
+sudo mkdir -p /etc/scanmeister/certs
+sudo openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+  -keyout /etc/scanmeister/certs/server.key \
+  -out /etc/scanmeister/certs/server.crt \
+  -subj "/CN=scanmeister.local" \
+  -addext "subjectAltName=DNS:localhost,DNS:scanmeister.local,DNS:scanmeister01.local,IP:127.0.0.1"
+```
+
+Then secure the files so the `scanmeister` service can read them:
+
+```sh
+sudo chown root:scanmeister /etc/scanmeister/certs/server.key /etc/scanmeister/certs/server.crt
+sudo chmod 640 /etc/scanmeister/certs/server.key /etc/scanmeister/certs/server.crt
+```
+
+The kiosk launcher uses Chromium's `--allow-insecure-localhost` option so the local
+`https://localhost:8080?kiosk=1` page can open with a self-signed certificate.
+
 ##### Web Client Remote Users
 
 The ScanMeister service loads optional authentication settings from:
@@ -229,7 +262,7 @@ EnvironmentFile=-/etc/scanmeister/scanmeister.env
 ```
 
 The leading `-` means the service can still start if the file does not exist. When the file is
-missing, local HTTP access still works, but remote HTTP access is refused.
+missing, local HTTPS access still works, but remote HTTPS access is refused.
 
 The env file can point to the remote users file:
 
@@ -344,7 +377,7 @@ sudo systemctl restart scanmeister.service
 ```
 
 If the users file is missing, unreadable, or contains no valid users, local access still works, but
-remote HTTP access is refused.
+remote HTTPS access is refused.
 
 To change the IP address and port of the machine OSC messages are sent to, you can modify the 
 configuration file:
@@ -397,10 +430,10 @@ The status of scanners is also broadcasted as:
 * `/device/x/scanning` i 0 (or 1)
 
 The browser client can receive the same outbound OSC information over Server-Sent Events by
-connecting to the HTTP server's `/api/events` endpoint:
+connecting to the HTTPS server's `/api/events` endpoint:
 
 ```js
-const events = new EventSource("http://localhost:8080/api/events");
+const events = new EventSource("https://localhost:8080/api/events");
 
 events.addEventListener("osc", event => {
   const message = JSON.parse(event.data);

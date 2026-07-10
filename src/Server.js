@@ -1,5 +1,6 @@
 // Node.js standard imports
 import {Configuration as config} from "../config/Configuration.js";
+import https from 'node:https';
 import {scryptSync, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
 import {mkdir, readFile, readdir, stat, writeFile} from 'node:fs/promises';
@@ -20,7 +21,7 @@ export class Server extends EventEmitter {
   #callbacks = {};                  // callback functions used in this class
   #clients = [];                    // List of clients that requested a scan
   #eventClients = new Map();         // Long-lived SSE clients
-  #express = undefined;             // Express server, for API and static files (8080)
+  #express = undefined;             // Express app, for API and static files (8080)
   #filesServer = undefined;
   #remoteAuthUsers = new Map();
   #remoteAuthUsersMtimeMs = undefined;
@@ -140,7 +141,7 @@ export class Server extends EventEmitter {
       authUsersStat = await stat(authUsersPath);
     } catch (err) {
       if (this.#remoteAuthUsers.size > 0 || this.#remoteAuthUsersMtimeMs !== undefined) {
-        logWarn(`Remote HTTP access is disabled because ${authUsersPath} could not be read.`);
+        logWarn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
       }
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
@@ -156,7 +157,7 @@ export class Server extends EventEmitter {
     try {
       content = await readFile(authUsersPath, "utf8");
     } catch (err) {
-      logWarn(`Remote HTTP access is disabled because ${authUsersPath} could not be read.`);
+      logWarn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
       return;
@@ -180,7 +181,7 @@ export class Server extends EventEmitter {
     this.#remoteAuthUsers = users;
     this.#remoteAuthUsersMtimeMs = mtimeMs;
     this.#remoteAuthConfigurationWarningShown = false;
-    logInfo(`Loaded ${users.size} remote HTTP user(s) from ${authUsersPath}.`);
+    logInfo(`Loaded ${users.size} remote HTTPS user(s) from ${authUsersPath}.`);
   }
 
   #verifyPassword(username, password) {
@@ -211,7 +212,7 @@ export class Server extends EventEmitter {
     try {
       await this.#refreshRemoteAuthUsers();
     } catch (err) {
-      logWarn(`Could not refresh remote HTTP users. Error: ${err}`);
+      logWarn(`Could not refresh remote HTTPS users. Error: ${err}`);
       response.status(403).send("Remote access is not configured");
       return;
     }
@@ -219,7 +220,7 @@ export class Server extends EventEmitter {
     if (!this.#hasRemoteAuthConfiguration()) {
       if (!this.#remoteAuthConfigurationWarningShown) {
         logWarn(
-          "Remote HTTP access is disabled because ScanMeister authentication is not configured."
+          "Remote HTTPS access is disabled because ScanMeister authentication is not configured."
         );
         this.#remoteAuthConfigurationWarningShown = true;
       }
@@ -439,7 +440,7 @@ export class Server extends EventEmitter {
   }
 
   #onServerError(err) {
-    this.emit("error", `HTTP server error. ${err}.`);
+    this.emit("error", `HTTPS server error. ${err}.`);
     this.quit();
   }
 
@@ -525,6 +526,22 @@ export class Server extends EventEmitter {
     return readFile(path.join(config.paths.scans, safeFilename));
   }
 
+  async #loadTlsOptions() {
+    try {
+      return {
+        key: await readFile(config.network.files_server.key),
+        cert: await readFile(config.network.files_server.cert)
+      };
+    } catch (err) {
+      throw new Error(
+        `Could not read HTTPS certificate files. ` +
+        `Key: ${config.network.files_server.key}. ` +
+        `Certificate: ${config.network.files_server.cert}. ` +
+        `Error: ${err.message || err}`
+      );
+    }
+  }
+
   #sanitizeFilename(filename) {
     const reservedCharacters = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*']);
     return path.basename(filename)
@@ -586,31 +603,35 @@ export class Server extends EventEmitter {
     this.#express.use(express.static('webclient'));
 
     if (this.#hasRemoteAuthConfiguration()) {
-      logInfo(`Remote HTTP access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
+      logInfo(`Remote HTTPS access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
     } else {
       logWarn(
-        `Remote HTTP access is disabled until ${this.#authUsersPath()} contains at least ` +
+        `Remote HTTPS access is disabled until ${this.#authUsersPath()} contains at least ` +
         "one valid user."
       );
     }
 
-    // Start the HTTP server
+    // Start the HTTPS server
     return new Promise((resolve, reject) => {
+      this.#loadTlsOptions()
+        .then(tlsOptions => {
+          this.#filesServer = https.createServer(tlsOptions, this.#express);
+          this.#filesServer.once("error", reject);
 
-      this.#filesServer = this.#express.listen(
-        config.network.files_server.port,
-        config.network.files_server.address,
-        () => {
-          logInfo(
-            `HTTP server is ready. Listening on ` +
-            `${config.network.files_server.address}:${config.network.files_server.port}.`
+          this.#filesServer.listen(
+            config.network.files_server.port,
+            config.network.files_server.address,
+            () => {
+              logInfo(
+                `HTTPS server is ready. Listening on ` +
+                `${config.network.files_server.address}:${config.network.files_server.port}.`
+              );
+
+              resolve();
+            }
           );
-
-          resolve();
-
-      });
-
-      this.#filesServer.once("error", reject);
+        })
+        .catch(reject);
 
     });
 

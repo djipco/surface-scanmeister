@@ -99,7 +99,13 @@ async function main() {
   const usersFile = await checkUsersFile(options.file || DEFAULT_USERS_FILE);
   report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);
 
-  printResult(true, "HTTP server", `${config.network.files_server.address}:${config.network.files_server.port}`);
+  const tlsKey = await checkReadableFile(config.network.files_server.key);
+  report(tlsKey.ok, "HTTPS key", tlsKey.ok ? config.network.files_server.key : `${config.network.files_server.key} (${tlsKey.error})`);
+
+  const tlsCert = await checkReadableFile(config.network.files_server.cert);
+  report(tlsCert.ok, "HTTPS certificate", tlsCert.ok ? config.network.files_server.cert : `${config.network.files_server.cert} (${tlsCert.error})`);
+
+  printResult(true, "HTTPS server", `${config.network.files_server.address}:${config.network.files_server.port}`);
   printResult(true, "API base path", "/api");
   printResult(true, "OSC", `listening on ${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ${config.network.osc_client.address}:${config.network.osc_client.port}`);
 

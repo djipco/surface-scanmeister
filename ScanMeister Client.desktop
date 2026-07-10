@@ -2,7 +2,7 @@
 Type=Application
 Name=ScanMeister Client
 Comment=Open ScanMeister Client in kiosk mode
-Exec=chromium-browser --kiosk --noerrdialogs --disable-infobars http://localhost:8080?kiosk=1
+Exec=chromium-browser --kiosk --noerrdialogs --disable-infobars --allow-insecure-localhost https://localhost:8080?kiosk=1
 Icon=/home/scanmeister/Desktop/surface-scanmeister/webclient/images/scanmeister-client.png
 Terminal=false
 Categories=Utility;

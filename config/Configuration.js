@@ -7,8 +7,10 @@ export const Configuration = {
 
   network: {
     files_server: {
-      address: "0.0.0.0",       // IP address the HTTP server will listen on
-      port: 8080,               // Port the HTTP server will listen on (between 1024 and 65535)
+      address: "0.0.0.0",       // IP address the HTTPS server will listen on
+      port: 8080,               // Port the HTTPS server will listen on (between 1024 and 65535)
+      key: "/etc/scanmeister/certs/server.key",
+      cert: "/etc/scanmeister/certs/server.crt",
     },
     osc_server: {
       address: '0.0.0.0',       // Local IP address to bind to for OSC

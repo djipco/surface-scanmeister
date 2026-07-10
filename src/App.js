@@ -92,7 +92,7 @@ export default class App {
     // Update scanner list
     await this.#updateScanners();
 
-    // Start HTTP server and call its start() method passing a reference to the list of available
+    // Start HTTPS server and call its start() method passing a reference to the list of available
     // scanners.
     await this.#startHtttpServer();
 
@@ -277,7 +277,7 @@ export default class App {
 
     }
 
-    // Quit HTTP server
+    // Quit HTTPS server
     if (this.#server) {
       await this.#server.quit();
       this.#server = undefined;
