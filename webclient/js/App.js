@@ -41,7 +41,7 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "300";
   static DEFAULT_SCAN_HEIGHT = "216";
   static DEFAULT_RENDER_SPEED = "100";
-  static DEFAULT_AUTO_HIDE_SECONDS = "3";
+  static DEFAULT_AUTO_HIDE_SECONDS = "10";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static DEFAULT_OVERLAY_GRID_SPACING = "100";
   static DEFAULT_GRAPH_SAMPLING = "15";
@@ -1165,7 +1165,7 @@ export class App {
     this.syncGuerillaCheckbox(this.ui.guerillaForceCalibration, this.ui.forceCalibration);
     this.restoreCheckboxValue(this.ui.saveImages, App.STORAGE_SAVE_IMAGES, true);
     this.restoreCheckboxValue(this.ui.debugToggle, App.STORAGE_DEBUG_VISIBLE, false);
-    this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, true);
+    this.restoreCheckboxValue(this.ui.autoHideToggle, App.STORAGE_AUTO_HIDE_ENABLED, false);
     this.restoreNumericValue(this.ui.autoHideSeconds, App.STORAGE_AUTO_HIDE_SECONDS);
     if (!this.ui.autoHideSeconds.value) this.ui.autoHideSeconds.value = App.DEFAULT_AUTO_HIDE_SECONDS;
     this.restoreCheckboxValue(this.ui.autoScanToggle, App.STORAGE_AUTO_SCAN_ENABLED, false);

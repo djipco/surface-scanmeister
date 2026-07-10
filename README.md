@@ -145,17 +145,17 @@ launcher in the project folder. It opens Chromium in kiosk mode and points it to
 client:
 
 ```sh
-https://localhost:8080?kiosk=1
+https://localhost?kiosk=1
 ```
 
 The `kiosk=1` parameter tells the client to use kiosk-specific behavior. To override the regular UI
 initial visibility, add `ui=0` or `ui=1`. To show the Guerilla panel, add `guerilla=1`:
 
 ```sh
-https://localhost:8080?kiosk=1&ui=0
-https://localhost:8080?kiosk=1&ui=1
-https://localhost:8080?kiosk=1&guerilla=1
-https://localhost:8080?kiosk=1&ui=0&guerilla=1
+https://localhost?kiosk=1&ui=0
+https://localhost?kiosk=1&ui=1
+https://localhost?kiosk=1&guerilla=1
+https://localhost?kiosk=1&ui=0&guerilla=1
 ```
 
 When `ui=0`, the Parameters panel, top strip, bottom command strip, and Stats panel are initially hidden.
@@ -193,7 +193,7 @@ The expected result is that the service is `enabled` and `active (running)`.
 
 #### Configuration
 
-By default, the **HTTPS server** listens on port **`8080`** and serves both the web client and the
+By default, the **HTTPS server** listens on port **`443`** and serves both the web client and the
 API. API routes live under `/api`. The **OSC server** listens on port **`8000`**.
 
 The main API routes are:
@@ -245,7 +245,19 @@ sudo chmod 640 /etc/scanmeister/certs/server.key /etc/scanmeister/certs/server.c
 ```
 
 The kiosk launcher uses Chromium's `--allow-insecure-localhost` option so the local
-`https://localhost:8080?kiosk=1` page can open with a self-signed certificate.
+`https://localhost?kiosk=1` page can open with a self-signed certificate.
+
+Because port `443` is privileged on Linux, allow the Node.js binary to bind to low-numbered ports:
+
+```sh
+sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(command -v node)")"
+```
+
+You can verify the capability with:
+
+```sh
+getcap "$(readlink -f "$(command -v node)")"
+```
 
 ##### Web Client Remote Users
 
@@ -433,7 +445,7 @@ The browser client can receive the same outbound OSC information over Server-Sen
 connecting to the HTTPS server's `/api/events` endpoint:
 
 ```js
-const events = new EventSource("https://localhost:8080/api/events");
+const events = new EventSource("https://localhost/api/events");
 
 events.addEventListener("osc", event => {
   const message = JSON.parse(event.data);

@@ -8,7 +8,7 @@ export const Configuration = {
   network: {
     files_server: {
       address: "0.0.0.0",       // IP address the HTTPS server will listen on
-      port: 8080,               // Port the HTTPS server will listen on (between 1024 and 65535)
+      port: 443,                // Port the HTTPS server will listen on
       key: "/etc/scanmeister/certs/server.key",
       cert: "/etc/scanmeister/certs/server.crt",
     },

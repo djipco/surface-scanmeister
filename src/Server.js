@@ -21,7 +21,7 @@ export class Server extends EventEmitter {
   #callbacks = {};                  // callback functions used in this class
   #clients = [];                    // List of clients that requested a scan
   #eventClients = new Map();         // Long-lived SSE clients
-  #express = undefined;             // Express app, for API and static files (8080)
+  #express = undefined;             // Express app, for API and static files
   #filesServer = undefined;
   #remoteAuthUsers = new Map();
   #remoteAuthUsersMtimeMs = undefined;
