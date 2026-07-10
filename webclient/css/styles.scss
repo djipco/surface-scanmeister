@@ -450,6 +450,10 @@ html.kiosk-mode body {
   touch-action: none;
 }
 
+.guerilla-title {
+  transform: translateY(2px);
+}
+
 .guerilla-panel h1:active {
   cursor: grabbing;
 }
@@ -519,7 +523,7 @@ html.kiosk-mode body {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
   grid-template-rows: auto auto auto auto;
-  gap: 6px 14px;
+  gap: 2px 14px;
   align-items: center;
 }
 
@@ -527,6 +531,7 @@ html.kiosk-mode body {
   color: #aeb8c2;
   font-size: 16px;
   font-weight: 700;
+  line-height: 18px;
   text-transform: uppercase;
 }
 
@@ -637,10 +642,11 @@ label.guerilla-toggle-switch input:checked + span::after {
 }
 
 .guerilla-navigation-button svg {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   fill: currentColor;
   pointer-events: none;
+  transform: translateY(2px);
 }
 
 .controls-panel.hidden,

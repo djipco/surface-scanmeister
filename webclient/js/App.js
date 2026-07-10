@@ -1603,9 +1603,11 @@ export class App {
       } else {
         this.scanHistoryIndex = this.clamp(this.scanHistoryIndex, 0, this.scanHistory.length);
       }
+      this.updateScanHistoryFilename();
     } catch (err) {
       this.scanHistory = [];
       this.scanHistoryIndex = undefined;
+      this.setScanHistoryFilename("");
     }
 
     this.updateScanHistoryButtons();
@@ -1674,7 +1676,18 @@ export class App {
 
   setScanHistoryFilename(filename) {
     if (!this.ui.scanHistoryFilename) return;
-    this.ui.scanHistoryFilename.innerText = filename || "";
+    this.ui.scanHistoryFilename.innerText = filename || "No image";
+  }
+
+  updateScanHistoryFilename() {
+    if (this.scanHistory.length === 0) {
+      this.setScanHistoryFilename("");
+      return;
+    }
+
+    const selectedIndex = this.scanHistoryIndex ?? this.scanHistory.length - 1;
+    const visibleIndex = this.clamp(selectedIndex, 0, this.scanHistory.length - 1);
+    this.setScanHistoryFilename(this.scanHistory[visibleIndex]?.filename || "");
   }
 
   updateScanHistoryButtons() {
