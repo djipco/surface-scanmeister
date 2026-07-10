@@ -1065,16 +1065,20 @@ export class App {
     this.ui.guerillaBrightness = document.getElementById("guerilla-brightness");
     this.ui.guerillaForceCalibration = document.getElementById("guerilla-force-calibration");
     this.ui.guerillaContrast = document.getElementById("guerilla-contrast");
+    this.ui.firstScanButton = document.getElementById("guerilla-first-scan");
     this.ui.previousScanButton = document.getElementById("guerilla-previous-scan");
     this.ui.nextScanButton = document.getElementById("guerilla-next-scan");
+    this.ui.lastScanButton = document.getElementById("guerilla-last-scan");
     this.ui.scanHistoryImage = document.getElementById("scan-history-image");
     this.restorePanelPosition(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelDrag(this.ui.guerillaPanel, this.ui.guerillaPanelHeader, App.STORAGE_GUERILLA_POSITION);
     this.setUpPanelResize(this.ui.guerillaPanel, App.STORAGE_GUERILLA_POSITION);
     this.restoreGuerillaRotation();
     this.ui.guerillaRotateButton.addEventListener("click", () => this.rotateGuerillaPanel());
+    this.ui.firstScanButton.addEventListener("click", () => this.showFirstSavedScan());
     this.ui.previousScanButton.addEventListener("click", () => this.showPreviousSavedScan());
     this.ui.nextScanButton.addEventListener("click", () => this.showNextSavedScan());
+    this.ui.lastScanButton.addEventListener("click", () => this.showLastSavedScan());
     this.ui.topInfoLogToggle.addEventListener("click", () => this.toggleTopInfoLog());
     document.addEventListener("pointerdown", event => this.handleTopInfoOutsidePointerDown(event));
 
@@ -1615,6 +1619,20 @@ export class App {
     this.showSavedScanAt(index);
   }
 
+  async showFirstSavedScan() {
+    await this.ensureScanHistoryLoaded();
+    if (this.scanHistory.length === 0) return;
+
+    this.showSavedScanAt(0);
+  }
+
+  async showLastSavedScan() {
+    await this.ensureScanHistoryLoaded();
+    if (this.scanHistory.length === 0) return;
+
+    this.showSavedScanAt(this.scanHistory.length - 1);
+  }
+
   async showNextSavedScan() {
     await this.ensureScanHistoryLoaded();
     if (this.scanHistory.length === 0 || this.scanHistoryIndex === undefined) return;
@@ -1651,11 +1669,15 @@ export class App {
   }
 
   updateScanHistoryButtons() {
-    if (!this.ui.previousScanButton || !this.ui.nextScanButton) return;
+    if (!this.ui.firstScanButton || !this.ui.previousScanButton || !this.ui.nextScanButton || !this.ui.lastScanButton) return;
 
     const index = this.scanHistoryIndex ?? this.scanHistory.length;
-    this.ui.previousScanButton.disabled = this.scanHistory.length === 0 || index <= 0;
-    this.ui.nextScanButton.disabled = this.scanHistory.length === 0 || index >= this.scanHistory.length - 1;
+    const cannotMoveBack = this.scanHistory.length === 0 || index <= 0;
+    const cannotMoveForward = this.scanHistory.length === 0 || index >= this.scanHistory.length - 1;
+    this.ui.firstScanButton.disabled = cannotMoveBack;
+    this.ui.previousScanButton.disabled = cannotMoveBack;
+    this.ui.nextScanButton.disabled = cannotMoveForward;
+    this.ui.lastScanButton.disabled = cannotMoveForward;
   }
 
   setUpEnterToValidateParameters() {

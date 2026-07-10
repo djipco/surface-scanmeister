@@ -398,7 +398,7 @@ html.kiosk-mode body {
   z-index: 18;
   width: 760px;
   min-width: 760px;
-  min-height: 210px;
+  min-height: 320px;
   max-width: calc(100vw - 16px);
   max-height: calc(100vh - 16px);
   border: 1px solid #343a40;
@@ -510,7 +510,7 @@ html.kiosk-mode body {
   line-height: 1.35;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) 190px minmax(220px, 1fr);
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto auto auto;
   gap: 10px 14px;
   align-items: center;
 }
@@ -541,22 +541,24 @@ html.kiosk-mode body {
 .guerilla-contrast-control { grid-column: 3; grid-row: 2; }
 
 .guerilla-toggle-switch {
-  width: 72px;
-  height: 38px;
+  width: 110px;
+  height: 58px;
 }
 
 .guerilla-toggle-switch span {
-  width: 72px;
-  height: 38px;
+  width: 110px;
+  height: 58px;
 }
 
-.guerilla-toggle-switch span::before {
-  width: 30px;
-  height: 30px;
+.guerilla-toggle-switch span::after {
+  top: 5px;
+  left: 5px;
+  width: 46px;
+  height: 46px;
 }
 
-.guerilla-toggle-switch input:checked + span::before {
-  transform: translateX(34px);
+.guerilla-toggle-switch input:checked + span::after {
+  transform: translateX(52px);
 }
 
 .guerilla-stepper {
@@ -584,18 +586,28 @@ html.kiosk-mode body {
   text-align: center;
 }
 
-.guerilla-scan-navigation {
+.guerilla-image-browser-title {
   grid-column: 1 / -1;
   grid-row: 3;
+  margin-top: 4px;
+  color: #aeb8c2;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guerilla-scan-navigation {
+  grid-column: 1 / -1;
+  grid-row: 4;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
 .guerilla-navigation-button {
-  height: 68px;
+  height: 88px;
   border-radius: 8px;
-  font-size: 34px;
+  font-size: 44px;
   font-weight: 700;
   touch-action: manipulation;
 }
