@@ -1,0 +1,11 @@
+Custom SANE build for ScanMeister
+
+Source:
+SANE version:
+Backend version:
+Target architecture:
+Build source commit/tag:
+Patch:
+Expected scanimage -V:
+Expected max -y:
+Build date:

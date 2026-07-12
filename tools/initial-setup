@@ -20,6 +20,21 @@ const CERT_DIRECTORY = "/etc/scanmeister/certs";
 const CERT_KEY = path.join(CERT_DIRECTORY, "server.key");
 const CERT_CRT = path.join(CERT_DIRECTORY, "server.crt");
 const USERS_FILE = "/etc/scanmeister/users";
+const PI_APPS_DIRECTORY = `/home/${SERVICE_USER}/pi-apps`;
+const PI_APPS_MANAGE = path.join(PI_APPS_DIRECTORY, "manage");
+const PI_APPS_INSTALL_URL = "https://raw.githubusercontent.com/Botspot/pi-apps/master/install";
+const RUSTDESK_APP_NAME = "RustDesk";
+const CUSTOM_SANE_SOURCE = "dependencies/sane";
+const CUSTOM_SANE_TARGET_BIN = "/usr/local/bin";
+const CUSTOM_SANE_TARGET_LIB = "/usr/local/lib";
+const CUSTOM_SANE_TARGET_ETC = "/usr/local/etc";
+const CUSTOM_SANE_REQUIRED_FILES = [
+  "bin/scanimage",
+  "lib/libsane.so",
+  "lib/sane/libsane-genesys.so",
+  "etc/sane.d/dll.conf",
+  "etc/sane.d/genesys.conf"
+];
 const REQUIRED_GROUPS = [
   "adm",
   "lp",
@@ -85,8 +100,17 @@ function formatCommand(command, commandArgs = []) {
 }
 
 function run(command, commandArgs = [], options = {}) {
-  const actualCommand = options.sudo ? "sudo" : command;
-  const actualArgs = options.sudo ? [command, ...commandArgs] : commandArgs;
+  let actualCommand = command;
+  let actualArgs = commandArgs;
+
+  if (options.user && os.userInfo().username !== options.user) {
+    actualCommand = "sudo";
+    actualArgs = ["-u", options.user, "-H", command, ...commandArgs];
+  } else if (options.sudo) {
+    actualCommand = "sudo";
+    actualArgs = [command, ...commandArgs];
+  }
+
   console.log(`$ ${formatCommand(actualCommand, actualArgs)}`);
 
   if (dryRun) {
@@ -199,19 +223,63 @@ function existingGroups(groups) {
   return groups.filter(group => capture("getent", ["group", group]).ok);
 }
 
-function chooseAutostartLauncher() {
-  return process.env.SCANMEISTER_GUERILLA === "1" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
+function customSanePath(relativePath = "") {
+  return path.join(TARGET_DIRECTORY, CUSTOM_SANE_SOURCE, relativePath);
 }
 
-async function verifyAutostart() {
+function missingCustomSaneFiles() {
+  return CUSTOM_SANE_REQUIRED_FILES.filter(relativePath => !fileExists(customSanePath(relativePath)));
+}
+
+function piAppsInstalled() {
+  return fileExists(PI_APPS_MANAGE);
+}
+
+function rustDeskInstalled() {
+  return capture("sh", ["-lc", "command -v rustdesk >/dev/null 2>&1 || dpkg-query -W rustdesk >/dev/null 2>&1"]).ok;
+}
+
+async function chooseAutostartMode() {
+  console.log("Choose which client should start automatically:");
+  console.log("  1. Normal client");
+  console.log("  2. Guerilla client");
+  console.log("  3. None");
+
+  while (true) {
+    const answer = (await rl.question("Autostart choice [1/2/3] ")).trim().toLowerCase();
+    if (answer === "1" || answer === "normal" || answer === "client") return "normal";
+    if (answer === "2" || answer === "guerilla" || answer === "guerrilla") return "guerilla";
+    if (answer === "3" || answer === "none" || answer === "no" || answer === "n") return "none";
+    console.log("Please enter 1, 2, or 3.");
+  }
+}
+
+async function verifyAutostart(expectedMode) {
+  if (expectedMode === "unchanged") {
+    return {
+      ok: true,
+      message: "Client autostart was left unchanged."
+    };
+  }
+
+  if (expectedMode === "none") {
+    return {
+      ok: !fileExists(CLIENT_AUTOSTART),
+      message: !fileExists(CLIENT_AUTOSTART)
+        ? "No client autostart entry is configured."
+        : `${CLIENT_AUTOSTART} still exists.`
+    };
+  }
+
   if (!fileExists(CLIENT_AUTOSTART)) {
     return {ok: false, message: `${CLIENT_AUTOSTART} does not exist.`};
   }
 
   try {
     const target = readlinkSync(CLIENT_AUTOSTART);
+    const expectedLauncher = expectedMode === "guerilla" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
     return {
-      ok: target.includes("ScanMeister"),
+      ok: target.endsWith(expectedLauncher),
       message: `${CLIENT_AUTOSTART} points to ${target}.`
     };
   } catch {
@@ -229,6 +297,7 @@ async function main() {
   console.log(`Dry run: ${dryRun ? "yes" : "no"}`);
   console.log("Each step asks before making changes and verifies the result afterward.");
   const finalChecks = {
+    autostartMode: "unchanged",
     health: false,
     scanners: false,
     service: false
@@ -379,7 +448,41 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   await runStep(
-    "8. Clone or update project",
+    "8. Install RustDesk remote access",
+    `This installs RustDesk through Pi-Apps for remote support.
+
+Pi-Apps will be installed for the ${SERVICE_USER} user if it is missing:
+${PI_APPS_DIRECTORY}
+
+RustDesk app name:
+${RUSTDESK_APP_NAME}`,
+    async () => {
+      if (!piAppsInstalled()) {
+        run("sh", ["-lc", `curl -fsSL ${PI_APPS_INSTALL_URL} | bash`], {user: SERVICE_USER});
+      }
+
+      if (!piAppsInstalled()) {
+        warn(`Pi-Apps was not found at ${PI_APPS_MANAGE}; cannot install ${RUSTDESK_APP_NAME}.`);
+        return;
+      }
+
+      if (rustDeskInstalled()) {
+        console.log("RustDesk already appears to be installed.");
+        return;
+      }
+
+      run(PI_APPS_MANAGE, ["install", RUSTDESK_APP_NAME], {user: SERVICE_USER});
+    },
+    async () => ({
+      ok: piAppsInstalled() && rustDeskInstalled(),
+      message: piAppsInstalled() && rustDeskInstalled()
+        ? "Pi-Apps is installed and RustDesk appears to be installed."
+        : `Pi-Apps installed: ${piAppsInstalled() ? "yes" : "no"}, RustDesk installed: ${rustDeskInstalled() ? "yes" : "no"}.`
+    })
+  );
+
+  await runStep(
+    "9. Clone or update project",
     `Target directory:
 ${TARGET_DIRECTORY}
 
@@ -413,7 +516,7 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "9. Install Node dependencies",
+    "10. Install Node dependencies",
     "This runs npm ci when package-lock.json exists, otherwise npm install.",
     async () => {
       const npmCommand = fileExists(path.join(TARGET_DIRECTORY, "package-lock.json")) ? "ci" : "install";
@@ -428,7 +531,50 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "10. Create runtime directories",
+    "11. Install custom SANE build",
+    `This installs the custom ScanMeister SANE build from:
+${customSanePath()}
+
+Required files:
+${CUSTOM_SANE_REQUIRED_FILES.join("\n")}
+
+The files are installed under /usr/local so they remain separate from apt-managed packages.`,
+    async () => {
+      const missing = missingCustomSaneFiles();
+      if (missing.length > 0) {
+        warn(`Custom SANE files are incomplete. Missing: ${missing.join(", ")}.`);
+        return;
+      }
+
+      run("mkdir", ["-p", CUSTOM_SANE_TARGET_BIN, path.join(CUSTOM_SANE_TARGET_LIB, "sane"), path.join(CUSTOM_SANE_TARGET_ETC, "sane.d")], {sudo: true});
+      run("cp", ["-a", customSanePath("bin/scanimage"), CUSTOM_SANE_TARGET_BIN], {sudo: true});
+      run("cp", ["-a", `${customSanePath("lib")}/.`, CUSTOM_SANE_TARGET_LIB], {sudo: true});
+      run("cp", ["-a", `${customSanePath("etc")}/.`, CUSTOM_SANE_TARGET_ETC], {sudo: true});
+      run("chmod", ["755", path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")], {sudo: true});
+      run("ldconfig", [], {sudo: true});
+    },
+    async () => {
+      const missing = missingCustomSaneFiles();
+      if (missing.length > 0) {
+        return {
+          ok: false,
+          message: `Custom SANE dependency is incomplete. Missing: ${missing.join(", ")}.`
+        };
+      }
+
+      const scanimagePath = capture("sh", ["-lc", "command -v scanimage"]);
+      const version = capture("scanimage", ["-V"]);
+      return {
+        ok: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage") && version.ok,
+        message: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")
+          ? `Custom scanimage is active: ${version.stdout.trim() || "version read successfully"}.`
+          : `scanimage is currently ${scanimagePath.stdout.trim() || "not found"}, expected ${path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")}.`
+      };
+    }
+  );
+
+  await runStep(
+    "12. Create runtime directories",
     "This creates logs and scans in the project folder and makes them writable by scanmeister.",
     async () => {
       ["logs", "scans"].forEach(directory => {
@@ -449,7 +595,7 @@ If it exists, this offers a git pull only when the worktree is clean.`,
   );
 
   await runStep(
-    "11. Create HTTPS certificate",
+    "13. Create HTTPS certificate",
     `This creates a self-signed certificate unless both files already exist:
 ${CERT_KEY}
 ${CERT_CRT}`,
@@ -478,7 +624,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "12. Configure remote web users file",
+    "14. Configure remote web users file",
     `This prepares ${USERS_FILE}. It can also launch tools/useradd to create the first user.`,
     async () => {
       run("mkdir", ["-p", path.dirname(USERS_FILE)], {sudo: true});
@@ -500,7 +646,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "13. Allow Node to bind ports 80 and 443",
+    "15. Allow Node to bind ports 80 and 443",
     "This applies cap_net_bind_service to the real Node.js binary, so ScanMeister can run as scanmeister instead of root.",
     async () => {
       const nodePath = realNodePath();
@@ -521,7 +667,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "14. Install and enable systemd service",
+    "16. Install and enable systemd service",
     `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
     async () => {
       run("cp", [path.join(TARGET_DIRECTORY, SERVICE_SOURCE), SERVICE_TARGET], {sudo: true});
@@ -542,24 +688,29 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "15. Configure client autostart",
-    `This creates an autostart symlink for the ${SERVICE_USER} desktop session.
-
-Default launcher: ${CLIENT_DESKTOP}
-Set SCANMEISTER_GUERILLA=1 before running this script to use ${GUERILLA_DESKTOP}.`,
+    "17. Configure client autostart",
+    `This configures what the ${SERVICE_USER} desktop session opens automatically:
+normal client, Guerilla client, or no client autostart.`,
     async () => {
-      const launcher = path.join(TARGET_DIRECTORY, chooseAutostartLauncher());
+      finalChecks.autostartMode = await chooseAutostartMode();
       run("mkdir", ["-p", AUTOSTART_DIRECTORY], {sudo: true});
       run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, AUTOSTART_DIRECTORY], {sudo: true});
+
+      if (finalChecks.autostartMode === "none") {
+        run("rm", ["-f", CLIENT_AUTOSTART], {sudo: os.userInfo().username !== SERVICE_USER});
+        return;
+      }
+
+      const desktopFile = finalChecks.autostartMode === "guerilla" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
+      const launcher = path.join(TARGET_DIRECTORY, desktopFile);
       run("ln", ["-sf", launcher, CLIENT_AUTOSTART], {sudo: os.userInfo().username !== SERVICE_USER});
-      run("chmod", ["+x", launcher], {sudo: os.userInfo().username !== SERVICE_USER});
       run("chown", ["-h", `${SERVICE_USER}:${SERVICE_GROUP}`, CLIENT_AUTOSTART], {sudo: true});
     },
-    verifyAutostart
+    async () => verifyAutostart(finalChecks.autostartMode)
   );
 
   await runStep(
-    "16. Final verification",
+    "18. Final verification",
     "This runs the project health checks and scanner listing tools.",
     async () => {
       finalChecks.health = run("./tools/check", [], {cwd: TARGET_DIRECTORY}).ok;

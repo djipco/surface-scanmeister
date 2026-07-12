@@ -159,6 +159,17 @@ sudo systemctl disable scanmeister.service
 This matters for logs, saved scans, and permissions. The `logs` and `scans` folders must be
 writable by the `scanmeister` user.
 
+#### Remote Access
+
+The guided `tools/initial-setup` script can optionally install RustDesk through Pi-Apps. Pi-Apps is
+installed for the `scanmeister` user, then RustDesk is installed with:
+
+```sh
+/home/scanmeister/pi-apps/manage install RustDesk
+```
+
+SSH and VNC can also be enabled by the setup script when `raspi-config` is available.
+
 #### Client Launcher
 
 The graphical client is opened separately from the server. Use the `ScanMeister Client.desktop`
@@ -186,6 +197,9 @@ In Guerilla mode, moving the mouse does not reveal the regular UI. Press `P` to 
 
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:
+
+The guided `tools/initial-setup` script can do this for you and asks whether to start the normal
+client, the Guerilla client, or no client at all.
 
 ```sh
 mkdir -p ~/.config/autostart
@@ -490,6 +504,11 @@ Each event contains the OSC address and argument metadata:
 #### scanimage
 
 The `scanimage` command is what is used under the hood to control the scanners. 
+Custom ScanMeister SANE builds belong in `dependencies/sane/`. Keep `scanimage`, `libsane`, the
+patched `genesys` backend, and `sane.d` configuration files from the same build. This keeps the
+custom scanner stack separate from source code while still making it part of the project install
+package. See `dependencies/sane/README.md` for the expected layout.
+
 You can user is to list available devices:
 
 ```sh
