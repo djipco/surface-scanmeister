@@ -2157,7 +2157,7 @@ export class App {
     const gapY = 0;
     const visibleOrientedWidth = Math.max(1, orientedWidth - gapX * (outputCount - 1));
     const visibleOrientedHeight = orientedHeight;
-    const scale = Math.min(monitorWidth / visibleOrientedWidth, monitorHeight / visibleOrientedHeight);
+    const scale = Math.max(monitorWidth / visibleOrientedWidth, monitorHeight / visibleOrientedHeight);
     const virtualWidth = monitorWidth + gapX * (outputCount - 1) * scale;
     const virtualHeight = monitorHeight;
     const drawnWidth = orientedWidth * scale;
