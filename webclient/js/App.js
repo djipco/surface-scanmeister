@@ -935,16 +935,6 @@ export class App {
     return 0;
   }
 
-  get wallColumnCount() {
-    if (this.displayLayout === "wall-8-horizontal") return 4;
-    if (this.displayLayout === "wall-4-horizontal") return 2;
-    return 1;
-  }
-
-  get wallRowCount() {
-    return this.isWallDisplayLayout ? 2 : 1;
-  }
-
   get wallGapMillimeters() {
     const gap = parseFloat(this.ui.wallGap.value);
     if (isNaN(gap)) return parseFloat(App.DEFAULT_WALL_GAP);
@@ -963,15 +953,6 @@ export class App {
 
   get activeWallOutputs() {
     return this.wallOutputs.slice(0, this.wallOutputCount);
-  }
-
-  getWallOutputPosition(index) {
-    const group = Math.floor(index / 4);
-    const indexInGroup = index % 4;
-    return {
-      column: group * 2 + (indexInGroup % 2),
-      row: Math.floor(indexInGroup / 2)
-    };
   }
 
   get directionMode() {
@@ -2161,33 +2142,31 @@ export class App {
 
     const outputWidth = 1920;
     const outputHeight = 1080;
-    const columns = this.wallColumnCount;
-    const rows = this.wallRowCount;
-    const monitorWidth = outputWidth * columns;
-    const monitorHeight = outputHeight * rows;
+    const outputCount = this.wallOutputCount;
+    const monitorWidth = outputWidth * outputCount;
+    const monitorHeight = outputHeight;
     const canvasRatio = sourceWidth / sourceHeight;
     const wallRatio = monitorWidth / monitorHeight;
     const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
     const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
     const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
     const requestedGapPixels = Math.max(0, this.wallGapPixels);
-    const gapX = columns > 1
-      ? Math.min(requestedGapPixels, Math.max(0, (orientedWidth - columns) / (columns - 1)))
+    const gapX = outputCount > 1
+      ? Math.min(requestedGapPixels, Math.max(0, (orientedWidth - outputCount) / (outputCount - 1)))
       : 0;
     const gapY = 0;
-    const visibleOrientedWidth = Math.max(1, orientedWidth - gapX * (columns - 1));
-    const visibleOrientedHeight = Math.max(1, orientedHeight - gapY * (rows - 1));
+    const visibleOrientedWidth = Math.max(1, orientedWidth - gapX * (outputCount - 1));
+    const visibleOrientedHeight = orientedHeight;
     const scale = Math.min(monitorWidth / visibleOrientedWidth, monitorHeight / visibleOrientedHeight);
-    const virtualWidth = monitorWidth + gapX * (columns - 1) * scale;
-    const virtualHeight = monitorHeight + gapY * (rows - 1) * scale;
+    const virtualWidth = monitorWidth + gapX * (outputCount - 1) * scale;
+    const virtualHeight = monitorHeight;
     const drawnWidth = orientedWidth * scale;
     const drawnHeight = orientedHeight * scale;
 
     return {
       outputWidth,
       outputHeight,
-      columns,
-      rows,
+      outputCount,
       monitorWidth,
       monitorHeight,
       virtualWidth,
@@ -2212,10 +2191,9 @@ export class App {
   getWallOutputRect(index, geometry = this.getWallGeometry()) {
     if (!geometry) return undefined;
 
-    const position = this.getWallOutputPosition(index);
     return {
-      x: position.column * (geometry.outputWidth + geometry.gapDestinationX),
-      y: position.row * (geometry.outputHeight + geometry.gapDestinationY),
+      x: index * (geometry.outputWidth + geometry.gapDestinationX),
+      y: 0,
       width: geometry.outputWidth,
       height: geometry.outputHeight
     };
