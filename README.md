@@ -9,7 +9,7 @@ Install Raspberry Pi OS (Debian 12, "bookworm"):
   
   * Host: **scanmeister0x** (change "x" by integer)
   * User account: **scanmeister**
-  * Password: use a 6-character random password (write it on device)
+  * Password: use an 8-character-or-longer random password (write it on device)
 
 * Boot Pi from the SDHC card and connect to network
 
@@ -49,8 +49,11 @@ For guided Raspberry Pi setup and maintenance, run the interactive setup assista
 node tools/setup
 ```
 
-It checks the environment, makes the project command-line tools executable, then asks before each
-setup action and verifies the result. After that automatic preparation, this also works:
+It checks the environment, makes sure the project command-line tools are executable, then shows a
+menu of setup actions. Pick a single action by number, choose `A` to run all actions, or choose `Q`
+to quit. Each action asks before making changes and verifies the result afterward.
+
+After that automatic preparation, this also works:
 
 ```sh
 ./tools/setup
@@ -62,7 +65,28 @@ To preview the commands without changing the system:
 node tools/setup --dry-run
 ```
 
-The manual steps below describe what the script does.
+To run every setup action in sequence:
+
+```sh
+node tools/setup --all
+```
+
+Current setup actions:
+
+```text
+1. Create 'scanmeister' user and assign necessary groups
+2. Install required system packages
+3. Install customized SANE build
+4. Install Node.js and configure port binding permissions
+5. Prepare ScanMeister project and runtime files
+6. Create HTTPS certificate
+7. Install and enable systemd scanmeister.service
+8. Configure client autostart
+9. Enable SSH
+10. Install RustDesk and configure X11
+```
+
+The manual sections below describe the same pieces for reference and troubleshooting.
 
 To install `scanmeister`, open a terminal, go to desktop and clone from GitHub repo:
 
@@ -172,7 +196,7 @@ RustDesk should be used with the Raspberry Pi desktop set to X11. On Wayland, Ru
 but show a black screen. The setup script requests X11 automatically when `raspi-config` is
 available; reboot or log out/in afterward for the change to take effect.
 
-SSH can also be enabled by the setup script when `raspi-config` is available.
+SSH can also be enabled from the setup menu when `raspi-config` is available.
 
 #### Client Launcher
 
@@ -202,8 +226,8 @@ In Guerilla mode, moving the mouse does not reveal the regular UI. Press `P` to 
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:
 
-The guided `tools/setup` script can do this for you and asks whether to start the normal
-client, the Guerilla client, or no client at all.
+The guided `tools/setup` script can do this for you and asks whether to start the normal client,
+the Guerilla client, or no client at all.
 
 ```sh
 mkdir -p ~/.config/autostart
@@ -432,10 +456,12 @@ sudo systemctl restart scanmeister.service
 If the users file is missing, unreadable, or contains no valid users, local access still works, but
 remote HTTPS access is refused.
 
-To change the IP address and port of the machine OSC messages are sent to, you can modify the 
+To change the IP address and port of the machine OSC messages are sent to, you can modify the
 configuration file:
 
-  ```surface-scanmeister/config/config.js```
+```text
+surface-scanmeister/config/Configuration.js
+```
 
 This same file can be modified to specify which port the OSC server listens on (by default, 
 `8000`). The IP address of the machine OSC messages are sent to should be changed.
@@ -468,9 +494,10 @@ node ScanMeister.js
 
 # Remote Access
 
-* **RustDesk**: use the ID/password shown by RustDesk on the Raspberry Pi.
+* **RustDesk**: use the ID/password shown by RustDesk on the Raspberry Pi. RustDesk works best with
+  the Pi desktop set to X11.
 
-* **ssh**: `ssh@IP_ADDRESS` (with same user and pass)
+* **SSH**: `ssh scanmeister@IP_ADDRESS`
 
 # OSC Schema
 
@@ -509,12 +536,13 @@ Each event contains the OSC address and argument metadata:
 
 The `scanimage` command is what is used under the hood to control the scanners.
 Custom ScanMeister SANE builds belong in `dependencies/sane/`. The current custom package contains
-the custom `scanimage` binary and the patched `genesys` backend only. Stock `libsane.so`, `dll.conf`,
-and `genesys.conf` are not included unless they are intentionally modified later. This keeps the
-custom scanner stack separate from source code while still making it part of the project install
-package. See `dependencies/sane/README.md` for the expected layout.
+the custom `scanimage` binary, the patched `genesys` backend, and the source patches used to build
+them. Stock `libsane.so`, `dll.conf`, and `genesys.conf` are not included unless they are
+intentionally modified later. This keeps the custom scanner stack separate from source code while
+still making it part of the project install package. See `dependencies/sane/README.md` for the
+expected layout.
 
-You can user is to list available devices:
+You can use it to list available devices:
 
 ```sh
 scanimage --list-devices
@@ -536,11 +564,10 @@ scanimage -L
 There is a [list of supported scanners](http://www.sane-project.org/sane-mfgs.html#SCANNERS) on the 
 SANE website.
 
-If, for whatever reason, `scanimage` is not installed (it should already be installed, you need to
-install SANE:
+If, for whatever reason, `scanimage` is not installed, install SANE tools:
 
 ```sh
-sudo apt install sane
+sudo apt install sane-utils
 ```
 
 #### Retrieve options for device (the options vary from device to device)
@@ -655,10 +682,10 @@ send it to TouchDesigner over a TCP connection:
 
 ```scanimage --format=pnm --mode=Color | nc -q 0 10.0.0.200 1234```
 
-In this scenario, the image will appear in TD in the `image0` component. The format **must be** `pnm` and 
-the mode **must be** `Color`. This yiels a PNM in the P6 format.
+In this scenario, the image will appear in TD in the `image0` component. The format **must be** `pnm` and
+the mode **must be** `Color`. This yields a PNM in the P6 format.
 
-    Warning: you may have to isntall netcat. On Debian "Bookworm" (12), I had to use: `sudo apt install netcat-traditional`
+    Warning: you may have to install netcat. On Debian "Bookworm" (12), I had to use: `sudo apt install netcat-traditional`
 
 The **scanmeister** daemon running on the Pi does the same thing behind the scene. To identify which
 device the image is coming from, **scanmeister** adds a comment on the first line of the output. This
