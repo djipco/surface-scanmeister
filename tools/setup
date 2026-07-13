@@ -55,6 +55,7 @@ const SYSTEM_PACKAGES = [
   "ca-certificates",
   "curl",
   "git",
+  "libcap2-bin",
   "openssl",
   "sane-utils",
   "usbutils",
@@ -62,7 +63,7 @@ const SYSTEM_PACKAGES = [
 ];
 const EXECUTABLE_FILES = [
   "tools/check",
-  "tools/initial-setup",
+  "tools/setup",
   "tools/scanners",
   "tools/useradd",
   "tools/userdel",
@@ -75,8 +76,8 @@ const help = args.has("--help") || args.has("-h");
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 
 function printHelp() {
-  console.log(`Usage: node tools/initial-setup [--dry-run]
-       ./tools/initial-setup [--dry-run]
+  console.log(`Usage: node tools/setup [--dry-run]
+       ./tools/setup [--dry-run]
 
 Interactively prepares a Raspberry Pi for ScanMeister.
 
@@ -287,6 +288,50 @@ async function verifyAutostart(expectedMode) {
   }
 }
 
+function verifyEnvironment() {
+  printHeader("Environment");
+  console.log(`Platform: ${process.platform}/${process.arch}`);
+  console.log(`User: ${os.userInfo().username}`);
+  console.log(`Directory: ${process.cwd()}`);
+
+  if (process.platform !== "linux") {
+    fail(`This setup assistant must run on Linux/Raspberry Pi, not ${process.platform}.`);
+    process.exitCode = 1;
+    return false;
+  }
+
+  ok("Linux environment detected.");
+  return true;
+}
+
+function ensureProjectToolsExecutable() {
+  printHeader("Project tools");
+  run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd()});
+
+  const missing = EXECUTABLE_FILES.filter(file => !fileExists(path.join(process.cwd(), file)));
+  const notExecutable = EXECUTABLE_FILES.filter(file => fileExists(path.join(process.cwd(), file)) && !isExecutable(path.join(process.cwd(), file)));
+
+  if (missing.length > 0) {
+    fail(`Missing required project tools: ${missing.join(", ")}.`);
+    process.exitCode = 1;
+    return false;
+  }
+
+  if (notExecutable.length > 0) {
+    if (dryRun) {
+      warn(`Would make these tools executable: ${notExecutable.join(", ")}.`);
+      return true;
+    }
+
+    fail(`Some project tools are not executable: ${notExecutable.join(", ")}.`);
+    process.exitCode = 1;
+    return false;
+  }
+
+  ok("Project command-line tools are executable.");
+  return true;
+}
+
 async function main() {
   if (help) {
     printHelp();
@@ -295,76 +340,32 @@ async function main() {
 
   console.log("ScanMeister initial setup");
   console.log(`Dry run: ${dryRun ? "yes" : "no"}`);
-  console.log("Each step asks before making changes and verifies the result afterward.");
-  const finalChecks = {
-    autostartMode: "unchanged",
-    health: false,
-    scanners: false,
-    service: false
+  console.log("Each setup action asks before making changes and verifies the result afterward.");
+
+  if (!verifyEnvironment()) {
+    return;
+  }
+
+  if (!ensureProjectToolsExecutable()) {
+    return;
+  }
+
+  const setupState = {
+    autostartMode: "unchanged"
   };
 
   await runStep(
-    "1. Check Raspberry Pi / Linux context",
-    `This checks the current platform and user before touching the system.
-
-Current platform: ${process.platform}/${process.arch}
-Current user: ${os.userInfo().username}
-Current directory: ${process.cwd()}`,
-    async () => {
-      console.log("No changes required for this step.");
-    },
-    async () => ({
-      ok: process.platform === "linux",
-      message: process.platform === "linux"
-        ? "Running on Linux."
-        : `This script is intended for Linux/Raspberry Pi, not ${process.platform}.`
-    })
-  );
-
-  await runStep(
-    "2. Make project tools executable",
-    `This applies chmod +x to the command-line tools in the current project folder:
-${EXECUTABLE_FILES.join("\n")}`,
-    async () => {
-      run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd()});
-    },
-    async () => {
-      const missing = EXECUTABLE_FILES.filter(file => !fileExists(path.join(process.cwd(), file)));
-      const notExecutable = EXECUTABLE_FILES.filter(file => fileExists(path.join(process.cwd(), file)) && !isExecutable(path.join(process.cwd(), file)));
-      return {
-        ok: missing.length === 0 && notExecutable.length === 0,
-        message: missing.length === 0 && notExecutable.length === 0
-          ? "Project command-line tools are executable."
-          : `Missing: ${missing.join(", ") || "none"}. Not executable: ${notExecutable.join(", ") || "none"}.`
-      };
-    }
-  );
-
-  await runStep(
-    "3. Create scanmeister user",
-    `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing.`,
-    async () => {
-      if (capture("id", [SERVICE_USER]).ok) {
-        console.log(`${SERVICE_USER} already exists.`);
-        return;
-      }
-      run("useradd", ["-m", "-s", "/bin/bash", SERVICE_USER], {sudo: true});
-    },
-    async () => ({
-      ok: capture("id", [SERVICE_USER]).ok,
-      message: capture("id", [SERVICE_USER]).ok
-        ? `${SERVICE_USER} exists.`
-        : `${SERVICE_USER} does not exist.`
-    })
-  );
-
-  await runStep(
-    "4. Add scanmeister to hardware groups",
-    `This adds ${SERVICE_USER} to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
+    "1. Create 'scanmeister' user and assign necessary groups",
+    `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing and adds it to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
 
 Requested groups:
 ${REQUIRED_GROUPS.join(", ")}`,
     async () => {
+      if (capture("id", [SERVICE_USER]).ok) {
+        console.log(`${SERVICE_USER} already exists.`);
+      } else {
+        run("useradd", ["-m", "-s", "/bin/bash", SERVICE_USER], {sudo: true});
+      }
       const groups = existingGroups(REQUIRED_GROUPS);
       if (groups.length === 0) {
         warn("None of the requested groups exist on this system.");
@@ -373,20 +374,27 @@ ${REQUIRED_GROUPS.join(", ")}`,
       run("usermod", ["-aG", groups.join(","), SERVICE_USER], {sudo: true});
     },
     async () => {
+      if (!capture("id", [SERVICE_USER]).ok) {
+        return {
+          ok: false,
+          message: `${SERVICE_USER} does not exist.`
+        };
+      }
+
       const groups = existingGroups(REQUIRED_GROUPS);
       const current = getGroups(SERVICE_USER);
       const missing = groups.filter(group => !current.includes(group));
       return {
         ok: missing.length === 0,
         message: missing.length === 0
-          ? `${SERVICE_USER} is in all existing requested groups.`
+          ? `${SERVICE_USER} exists and is in all existing requested groups.`
           : `${SERVICE_USER} is missing groups: ${missing.join(", ")}. Log out/in may be required.`
       };
     }
   );
 
   await runStep(
-    "5. Install base system packages",
+    "2. Install required system packages",
     `This installs packages used by ScanMeister and the setup process:
 ${SYSTEM_PACKAGES.join(", ")}`,
     async () => {
@@ -405,133 +413,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   await runStep(
-    "6. Install or verify Node.js",
-    "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing.",
-    async () => {
-      if (nodeMajorVersion() >= 20) {
-        console.log(`Node is already acceptable: ${process.version}`);
-        return;
-      }
-      run("sh", ["-lc", "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"]);
-      run("apt-get", ["install", "-y", "nodejs"], {sudo: true});
-    },
-    async () => ({
-      ok: nodeMajorVersion() >= 20,
-      message: nodeMajorVersion() >= 20
-        ? `Node.js is ${capture("node", ["--version"]).stdout.trim()}.`
-        : "Node.js 20 or newer is not available."
-    })
-  );
-
-  await runStep(
-    "7. Enable SSH and VNC",
-    "This uses raspi-config non-interactive commands when available.",
-    async () => {
-      if (!commandExists("raspi-config")) {
-        warn("raspi-config is not available; cannot enable SSH/VNC automatically.");
-        return;
-      }
-      run("raspi-config", ["nonint", "do_ssh", "0"], {sudo: true});
-      run("raspi-config", ["nonint", "do_vnc", "0"], {sudo: true});
-    },
-    async () => {
-      if (!commandExists("raspi-config")) {
-        return {ok: false, message: "raspi-config is not available; SSH/VNC status was not changed."};
-      }
-      const ssh = capture("systemctl", ["is-enabled", "ssh"]);
-      const vnc = capture("systemctl", ["is-enabled", "vncserver-x11-serviced"]);
-      return {
-        ok: ssh.ok || vnc.ok,
-        message: `SSH enabled: ${ssh.ok ? "yes" : "unknown/no"}, VNC enabled: ${vnc.ok ? "yes" : "unknown/no"}.`
-      };
-    }
-  );
-
-  await runStep(
-    "8. Install RustDesk remote access",
-    `This installs RustDesk through Pi-Apps for remote support.
-
-Pi-Apps will be installed for the ${SERVICE_USER} user if it is missing:
-${PI_APPS_DIRECTORY}
-
-RustDesk app name:
-${RUSTDESK_APP_NAME}`,
-    async () => {
-      if (!piAppsInstalled()) {
-        run("sh", ["-lc", `curl -fsSL ${PI_APPS_INSTALL_URL} | bash`], {user: SERVICE_USER});
-      }
-
-      if (!piAppsInstalled()) {
-        warn(`Pi-Apps was not found at ${PI_APPS_MANAGE}; cannot install ${RUSTDESK_APP_NAME}.`);
-        return;
-      }
-
-      if (rustDeskInstalled()) {
-        console.log("RustDesk already appears to be installed.");
-        return;
-      }
-
-      run(PI_APPS_MANAGE, ["install", RUSTDESK_APP_NAME], {user: SERVICE_USER});
-    },
-    async () => ({
-      ok: piAppsInstalled() && rustDeskInstalled(),
-      message: piAppsInstalled() && rustDeskInstalled()
-        ? "Pi-Apps is installed and RustDesk appears to be installed."
-        : `Pi-Apps installed: ${piAppsInstalled() ? "yes" : "no"}, RustDesk installed: ${rustDeskInstalled() ? "yes" : "no"}.`
-    })
-  );
-
-  await runStep(
-    "9. Clone or update project",
-    `Target directory:
-${TARGET_DIRECTORY}
-
-If it does not exist, this clones ${PROJECT_REPOSITORY}.
-If it exists, this offers a git pull only when the worktree is clean.`,
-    async () => {
-      if (!directoryExists(TARGET_DIRECTORY)) {
-        mkdirSync(path.dirname(TARGET_DIRECTORY), {recursive: true});
-        run("git", ["clone", PROJECT_REPOSITORY, TARGET_DIRECTORY], {sudo: os.userInfo().username !== SERVICE_USER});
-        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, TARGET_DIRECTORY], {sudo: true});
-        return;
-      }
-
-      const status = capture("git", ["status", "--short"], {cwd: TARGET_DIRECTORY});
-      if (!status.ok) {
-        warn(`${TARGET_DIRECTORY} exists but is not a git repository.`);
-        return;
-      }
-      if (status.stdout.trim()) {
-        warn("Project has local changes. Skipping git pull to avoid overwriting work.");
-        return;
-      }
-      run("git", ["pull"], {cwd: TARGET_DIRECTORY});
-    },
-    async () => ({
-      ok: fileExists(path.join(TARGET_DIRECTORY, "ScanMeister.js")),
-      message: fileExists(path.join(TARGET_DIRECTORY, "ScanMeister.js"))
-        ? `Project exists at ${TARGET_DIRECTORY}.`
-        : `Project is missing at ${TARGET_DIRECTORY}.`
-    })
-  );
-
-  await runStep(
-    "10. Install Node dependencies",
-    "This runs npm ci when package-lock.json exists, otherwise npm install.",
-    async () => {
-      const npmCommand = fileExists(path.join(TARGET_DIRECTORY, "package-lock.json")) ? "ci" : "install";
-      run("npm", [npmCommand], {cwd: TARGET_DIRECTORY});
-    },
-    async () => ({
-      ok: directoryExists(path.join(TARGET_DIRECTORY, "node_modules")),
-      message: directoryExists(path.join(TARGET_DIRECTORY, "node_modules"))
-        ? "node_modules exists."
-        : "node_modules is missing."
-    })
-  );
-
-  await runStep(
-    "11. Install custom SANE build",
+    "3. Install customized SANE build",
     `This installs the custom ScanMeister SANE build from:
 ${customSanePath()}
 
@@ -574,28 +456,124 @@ The files are installed under /usr/local so they remain separate from apt-manage
   );
 
   await runStep(
-    "12. Create runtime directories",
-    "This creates logs and scans in the project folder and makes them writable by scanmeister.",
+    "4. Install Node.js and configure port binding permissions",
+    "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing, then allows Node to bind ports 80 and 443 without running as root.",
     async () => {
-      ["logs", "scans"].forEach(directory => {
-        const fullPath = path.join(TARGET_DIRECTORY, directory);
-        run("mkdir", ["-p", fullPath], {sudo: true});
-        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, fullPath], {sudo: true});
-      });
+      if (nodeMajorVersion() >= 20) {
+        console.log(`Node is already acceptable: ${capture("node", ["--version"]).stdout.trim()}`);
+      } else {
+        run("sh", ["-lc", "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"]);
+        run("apt-get", ["install", "-y", "nodejs"], {sudo: true});
+      }
+
+      const nodePath = realNodePath();
+      if (!nodePath) {
+        warn("Could not resolve node path; cannot apply cap_net_bind_service.");
+        return;
+      }
+      run("setcap", ["cap_net_bind_service=+ep", nodePath], {sudo: true});
     },
     async () => {
-      const missing = ["logs", "scans"].filter(directory => !directoryExists(path.join(TARGET_DIRECTORY, directory)));
+      const versionOk = nodeMajorVersion() >= 20;
+      const nodeVersion = capture("node", ["--version"]).stdout.trim();
+      const nodePath = realNodePath();
+      const caps = nodePath ? capture("getcap", [nodePath]) : {ok: false, stdout: ""};
+      const capOk = caps.stdout.includes("cap_net_bind_service=ep");
+      const problems = [];
+
+      if (!versionOk) problems.push("Node.js 20 or newer is not available");
+      if (!capOk) problems.push("cap_net_bind_service is not set on Node");
+
       return {
-        ok: missing.length === 0,
-        message: missing.length === 0
-          ? "logs and scans directories exist."
-          : `Missing directories: ${missing.join(", ")}.`
+        ok: problems.length === 0,
+        message: problems.length === 0
+          ? `Node.js is ${nodeVersion}; ${caps.stdout.trim()}.`
+          : problems.join("; ")
       };
     }
   );
 
   await runStep(
-    "13. Create HTTPS certificate",
+    "5. Prepare ScanMeister project and runtime files",
+    `Target directory:
+${TARGET_DIRECTORY}
+
+If it does not exist, this clones ${PROJECT_REPOSITORY}.
+If it exists, this offers a git pull only when the worktree is clean.
+Then it installs Node dependencies and prepares runtime directories/configuration:
+${path.join(TARGET_DIRECTORY, "logs")}
+${path.join(TARGET_DIRECTORY, "scans")}
+${path.dirname(USERS_FILE)}
+${CERT_DIRECTORY}
+${USERS_FILE}`,
+    async () => {
+      if (!directoryExists(TARGET_DIRECTORY)) {
+        mkdirSync(path.dirname(TARGET_DIRECTORY), {recursive: true});
+        run("git", ["clone", PROJECT_REPOSITORY, TARGET_DIRECTORY], {sudo: os.userInfo().username !== SERVICE_USER});
+        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, TARGET_DIRECTORY], {sudo: true});
+      } else {
+        const status = capture("git", ["status", "--short"], {cwd: TARGET_DIRECTORY});
+        if (!status.ok) {
+          warn(`${TARGET_DIRECTORY} exists but is not a git repository.`);
+        } else if (status.stdout.trim()) {
+          warn("Project has local changes. Skipping git pull to avoid overwriting work.");
+        } else {
+          run("git", ["pull"], {cwd: TARGET_DIRECTORY});
+        }
+      }
+
+      if (fileExists(path.join(TARGET_DIRECTORY, "package.json"))) {
+        const npmCommand = fileExists(path.join(TARGET_DIRECTORY, "package-lock.json")) ? "ci" : "install";
+        run("npm", [npmCommand], {cwd: TARGET_DIRECTORY});
+      } else {
+        warn(`${TARGET_DIRECTORY}/package.json is missing; skipping npm install.`);
+      }
+
+      ["logs", "scans"].forEach(directory => {
+        const fullPath = path.join(TARGET_DIRECTORY, directory);
+        run("mkdir", ["-p", fullPath], {sudo: true});
+        run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, fullPath], {sudo: true});
+      });
+
+      run("mkdir", ["-p", path.dirname(USERS_FILE), CERT_DIRECTORY], {sudo: true});
+
+      if (!fileExists(USERS_FILE)) {
+        const addUser = await confirm("No users file exists. Add first remote user now?");
+        if (addUser) run("./tools/useradd", ["admin"], {cwd: TARGET_DIRECTORY, sudo: true});
+      }
+
+      if (fileExists(USERS_FILE)) {
+        run("chown", ["root:scanmeister", USERS_FILE], {sudo: true});
+        run("chmod", ["640", USERS_FILE], {sudo: true});
+      }
+    },
+    async () => {
+      const projectExists = fileExists(path.join(TARGET_DIRECTORY, "ScanMeister.js"));
+      const dependenciesInstalled = directoryExists(path.join(TARGET_DIRECTORY, "node_modules"));
+      const missingDirectories = [
+        path.join(TARGET_DIRECTORY, "logs"),
+        path.join(TARGET_DIRECTORY, "scans"),
+        path.dirname(USERS_FILE),
+        CERT_DIRECTORY
+      ].filter(directory => !directoryExists(directory));
+      const problems = [];
+
+      if (!projectExists) problems.push(`project is missing at ${TARGET_DIRECTORY}`);
+      if (!dependenciesInstalled) problems.push("node_modules is missing");
+      if (missingDirectories.length > 0) problems.push(`missing directories: ${missingDirectories.join(", ")}`);
+      if (!fileExists(USERS_FILE)) problems.push(`${USERS_FILE} does not exist; remote HTTPS access will be refused`);
+
+      return {
+        ok: problems.length === 0,
+        message: problems.length === 0
+          ? `Project, Node dependencies, runtime directories, and remote users file are ready at ${TARGET_DIRECTORY}.`
+          : problems.join("; ")
+      };
+    }
+  );
+
+  await runStep(
+    "6. Create HTTPS certificate",
     `This creates a self-signed certificate unless both files already exist:
 ${CERT_KEY}
 ${CERT_CRT}`,
@@ -624,50 +602,7 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "14. Configure remote web users file",
-    `This prepares ${USERS_FILE}. It can also launch tools/useradd to create the first user.`,
-    async () => {
-      run("mkdir", ["-p", path.dirname(USERS_FILE)], {sudo: true});
-      if (!fileExists(USERS_FILE)) {
-        const addUser = await confirm("No users file exists. Add first remote user now?");
-        if (addUser) run("./tools/useradd", ["admin"], {cwd: TARGET_DIRECTORY, sudo: true});
-      }
-      if (fileExists(USERS_FILE)) {
-        run("chown", ["root:scanmeister", USERS_FILE], {sudo: true});
-        run("chmod", ["640", USERS_FILE], {sudo: true});
-      }
-    },
-    async () => ({
-      ok: fileExists(USERS_FILE),
-      message: fileExists(USERS_FILE)
-        ? `${USERS_FILE} exists.`
-        : `${USERS_FILE} does not exist. Remote HTTPS access will be refused.`
-    })
-  );
-
-  await runStep(
-    "15. Allow Node to bind ports 80 and 443",
-    "This applies cap_net_bind_service to the real Node.js binary, so ScanMeister can run as scanmeister instead of root.",
-    async () => {
-      const nodePath = realNodePath();
-      if (!nodePath) {
-        warn("Could not resolve node path.");
-        return;
-      }
-      run("setcap", ["cap_net_bind_service=+ep", nodePath], {sudo: true});
-    },
-    async () => {
-      const nodePath = realNodePath();
-      const caps = nodePath ? capture("getcap", [nodePath]) : {ok: false, stdout: ""};
-      return {
-        ok: caps.stdout.includes("cap_net_bind_service=ep"),
-        message: caps.stdout.trim() || "cap_net_bind_service is not set on Node."
-      };
-    }
-  );
-
-  await runStep(
-    "16. Install and enable systemd service",
+    "7. Install and enable systemd scanmeister.service",
     `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
     async () => {
       run("cp", [path.join(TARGET_DIRECTORY, SERVICE_SOURCE), SERVICE_TARGET], {sudo: true});
@@ -688,46 +623,81 @@ ${CERT_CRT}`,
   );
 
   await runStep(
-    "17. Configure client autostart",
+    "8. Configure client autostart",
     `This configures what the ${SERVICE_USER} desktop session opens automatically:
 normal client, Guerilla client, or no client autostart.`,
     async () => {
-      finalChecks.autostartMode = await chooseAutostartMode();
+      setupState.autostartMode = await chooseAutostartMode();
       run("mkdir", ["-p", AUTOSTART_DIRECTORY], {sudo: true});
       run("chown", ["-R", `${SERVICE_USER}:${SERVICE_GROUP}`, AUTOSTART_DIRECTORY], {sudo: true});
 
-      if (finalChecks.autostartMode === "none") {
+      if (setupState.autostartMode === "none") {
         run("rm", ["-f", CLIENT_AUTOSTART], {sudo: os.userInfo().username !== SERVICE_USER});
         return;
       }
 
-      const desktopFile = finalChecks.autostartMode === "guerilla" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
+      const desktopFile = setupState.autostartMode === "guerilla" ? GUERILLA_DESKTOP : CLIENT_DESKTOP;
       const launcher = path.join(TARGET_DIRECTORY, desktopFile);
       run("ln", ["-sf", launcher, CLIENT_AUTOSTART], {sudo: os.userInfo().username !== SERVICE_USER});
       run("chown", ["-h", `${SERVICE_USER}:${SERVICE_GROUP}`, CLIENT_AUTOSTART], {sudo: true});
     },
-    async () => verifyAutostart(finalChecks.autostartMode)
+    async () => verifyAutostart(setupState.autostartMode)
   );
 
   await runStep(
-    "18. Final verification",
-    "This runs the project health checks and scanner listing tools.",
+    "9. Enable SSH",
+    "This uses raspi-config non-interactive commands when available.",
     async () => {
-      finalChecks.health = run("./tools/check", [], {cwd: TARGET_DIRECTORY}).ok;
-      finalChecks.scanners = run("./tools/scanners", [], {cwd: TARGET_DIRECTORY}).ok;
-      finalChecks.service = run("systemctl", ["status", "scanmeister.service", "--no-pager"], {sudo: true}).ok;
+      if (!commandExists("raspi-config")) {
+        warn("raspi-config is not available; cannot enable SSH automatically.");
+        return;
+      }
+      run("raspi-config", ["nonint", "do_ssh", "0"], {sudo: true});
     },
     async () => {
-      const failed = Object.entries(finalChecks)
-        .filter(([, passed]) => !passed)
-        .map(([name]) => name);
+      if (!commandExists("raspi-config")) {
+        return {ok: false, message: "raspi-config is not available; SSH status was not changed."};
+      }
+      const ssh = capture("systemctl", ["is-enabled", "ssh"]);
       return {
-        ok: failed.length === 0,
-        message: failed.length === 0
-          ? "Project health, scanner listing, and service status checks passed."
-          : `Some final checks failed or were skipped: ${failed.join(", ")}. Review the output above.`
+        ok: ssh.ok,
+        message: `SSH enabled: ${ssh.ok ? "yes" : "unknown/no"}.`
       };
     }
+  );
+
+  await runStep(
+    "10. Install RustDesk",
+    `This installs RustDesk through Pi-Apps for remote support.
+
+Pi-Apps will be installed for the ${SERVICE_USER} user if it is missing:
+${PI_APPS_DIRECTORY}
+
+RustDesk app name:
+${RUSTDESK_APP_NAME}`,
+    async () => {
+      if (!piAppsInstalled()) {
+        run("sh", ["-lc", `curl -fsSL ${PI_APPS_INSTALL_URL} | bash`], {user: SERVICE_USER});
+      }
+
+      if (!piAppsInstalled()) {
+        warn(`Pi-Apps was not found at ${PI_APPS_MANAGE}; cannot install ${RUSTDESK_APP_NAME}.`);
+        return;
+      }
+
+      if (rustDeskInstalled()) {
+        console.log("RustDesk already appears to be installed.");
+        return;
+      }
+
+      run(PI_APPS_MANAGE, ["install", RUSTDESK_APP_NAME], {user: SERVICE_USER});
+    },
+    async () => ({
+      ok: piAppsInstalled() && rustDeskInstalled(),
+      message: piAppsInstalled() && rustDeskInstalled()
+        ? "Pi-Apps is installed and RustDesk appears to be installed."
+        : `Pi-Apps installed: ${piAppsInstalled() ? "yes" : "no"}, RustDesk installed: ${rustDeskInstalled() ? "yes" : "no"}.`
+    })
   );
 
   console.log("\nInitial setup finished.");

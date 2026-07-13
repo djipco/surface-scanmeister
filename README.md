@@ -15,7 +15,7 @@ Install Raspberry Pi OS (Debian 12, "bookworm"):
 
 * Go to Pi config:
   
-  * Enable **VNC** and **SSH** (in "Interfaces" section)
+* Enable **SSH** (in "Interfaces" section)
   * Set timezone (in "Localisation" section)
     
 * Update everything:
@@ -43,23 +43,23 @@ sudo apt install -y nodejs
 
 #### Installation
 
-For a guided Raspberry Pi install, run the interactive setup script from the project folder:
+For guided Raspberry Pi setup and maintenance, run the interactive setup assistant from the project folder:
 
 ```sh
-node tools/initial-setup
+node tools/setup
 ```
 
-It explains each step, asks before changing anything, then verifies the result. One of the first
-steps makes the project command-line tools executable, so afterward this also works:
+It checks the environment, makes the project command-line tools executable, then asks before each
+setup action and verifies the result. After that automatic preparation, this also works:
 
 ```sh
-./tools/initial-setup
+./tools/setup
 ```
 
 To preview the commands without changing the system:
 
 ```sh
-node tools/initial-setup --dry-run
+node tools/setup --dry-run
 ```
 
 The manual steps below describe what the script does.
@@ -161,14 +161,14 @@ writable by the `scanmeister` user.
 
 #### Remote Access
 
-The guided `tools/initial-setup` script can optionally install RustDesk through Pi-Apps. Pi-Apps is
+The guided `tools/setup` script can optionally install RustDesk through Pi-Apps. Pi-Apps is
 installed for the `scanmeister` user, then RustDesk is installed with:
 
 ```sh
 /home/scanmeister/pi-apps/manage install RustDesk
 ```
 
-SSH and VNC can also be enabled by the setup script when `raspi-config` is available.
+SSH can also be enabled by the setup script when `raspi-config` is available.
 
 #### Client Launcher
 
@@ -198,7 +198,7 @@ In Guerilla mode, moving the mouse does not reveal the regular UI. Press `P` to 
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:
 
-The guided `tools/initial-setup` script can do this for you and asks whether to start the normal
+The guided `tools/setup` script can do this for you and asks whether to start the normal
 client, the Guerilla client, or no client at all.
 
 ```sh
@@ -393,7 +393,7 @@ ScanMeister.
 If the tools are not executable on the Pi, run:
 
 ```sh
-chmod +x tools/check tools/initial-setup tools/scanners tools/useradd tools/userdel tools/userlist
+chmod +x tools/check tools/setup tools/scanners tools/useradd tools/userdel tools/userlist
 ```
 
 The users file can also be edited manually. It contains one generated line per remote user:
@@ -464,7 +464,7 @@ node ScanMeister.js
 
 # Remote Access
 
-* **VNC**: use `scanmeister` (username) and the password defined above.
+* **RustDesk**: use the ID/password shown by RustDesk on the Raspberry Pi.
 
 * **ssh**: `ssh@IP_ADDRESS` (with same user and pass)
 

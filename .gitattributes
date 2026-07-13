@@ -1,5 +1,5 @@
 tools/check text eol=lf
-tools/initial-setup text eol=lf
+tools/setup text eol=lf
 tools/scanners text eol=lf
 tools/useradd text eol=lf
 tools/userdel text eol=lf
