@@ -395,7 +395,7 @@ async function main() {
   };
 
   addStep(
-    "1. Create 'scanmeister' user and assign necessary groups",
+    "Create 'scanmeister' user and assign necessary groups",
     `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing and adds it to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
 
 Requested groups:
@@ -434,7 +434,7 @@ ${REQUIRED_GROUPS.join(", ")}`,
   );
 
   addStep(
-    "2. Install required system packages",
+    "Install required system packages",
     `This installs packages used by ScanMeister and the setup process:
 ${SYSTEM_PACKAGES.join(", ")}`,
     async () => {
@@ -453,7 +453,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
   );
 
   addStep(
-    "3. Install customized SANE build",
+    "Install customized SANE build",
     `This installs the custom ScanMeister SANE build from:
 ${customSanePath()}
 
@@ -499,7 +499,7 @@ The patched genesys backend replaces the system backend under /usr/lib/aarch64-l
   );
 
   addStep(
-    "4. Install Node.js and configure port binding permissions",
+    "Install Node.js and configure port binding permissions",
     "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing, then allows Node to bind ports 80 and 443 without running as root.",
     async () => {
       if (nodeMajorVersion() >= 20) {
@@ -537,7 +537,7 @@ The patched genesys backend replaces the system backend under /usr/lib/aarch64-l
   );
 
   addStep(
-    "5. Prepare ScanMeister project and runtime files",
+    "Prepare ScanMeister project and runtime files",
     `Target directory:
 ${TARGET_DIRECTORY}
 
@@ -616,7 +616,7 @@ ${USERS_FILE}`,
   );
 
   addStep(
-    "6. Create HTTPS certificate",
+    "Create HTTPS certificate",
     `This creates a self-signed certificate unless both files already exist:
 ${CERT_KEY}
 ${CERT_CRT}`,
@@ -645,7 +645,7 @@ ${CERT_CRT}`,
   );
 
   addStep(
-    "7. Install and enable systemd scanmeister.service",
+    "Install and enable systemd scanmeister.service",
     `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
     async () => {
       run("cp", [path.join(TARGET_DIRECTORY, SERVICE_SOURCE), SERVICE_TARGET], {sudo: true});
@@ -666,7 +666,7 @@ ${CERT_CRT}`,
   );
 
   addStep(
-    "8. Configure client autostart",
+    "Configure client autostart",
     `This configures what the ${SERVICE_USER} desktop session opens automatically:
 normal client, Guerilla client, or no client autostart.`,
     async () => {
@@ -688,7 +688,7 @@ normal client, Guerilla client, or no client autostart.`,
   );
 
   addStep(
-    "9. Enable SSH",
+    "Enable SSH",
     "This uses raspi-config non-interactive commands when available.",
     async () => {
       if (!commandExists("raspi-config")) {
@@ -710,7 +710,7 @@ normal client, Guerilla client, or no client autostart.`,
   );
 
   addStep(
-    "10. Install RustDesk and configure X11",
+    "Install RustDesk and configure X11",
     `This installs RustDesk through Pi-Apps for remote support and requests X11 desktop mode.
 
 RustDesk can connect but show a black screen on Wayland. X11 is the recommended desktop mode for ScanMeister remote support.

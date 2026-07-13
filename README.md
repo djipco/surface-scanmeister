@@ -74,16 +74,16 @@ node tools/setup --all
 Current setup actions:
 
 ```text
-1. Create 'scanmeister' user and assign necessary groups
-2. Install required system packages
-3. Install customized SANE build
-4. Install Node.js and configure port binding permissions
-5. Prepare ScanMeister project and runtime files
-6. Create HTTPS certificate
-7. Install and enable systemd scanmeister.service
-8. Configure client autostart
-9. Enable SSH
-10. Install RustDesk and configure X11
+Create 'scanmeister' user and assign necessary groups
+Install required system packages
+Install customized SANE build
+Install Node.js and configure port binding permissions
+Prepare ScanMeister project and runtime files
+Create HTTPS certificate
+Install and enable systemd scanmeister.service
+Configure client autostart
+Enable SSH
+Install RustDesk and configure X11
 ```
 
 The manual sections below describe the same pieces for reference and troubleshooting.
