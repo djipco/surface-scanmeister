@@ -802,6 +802,19 @@ label.guerilla-toggle-switch input:checked + span::after {
   text-align: left;
 }
 
+.inline-number-readout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-number-readout .label-unit {
+  color: #9aa4ad;
+  font-weight: 400;
+  text-align: left;
+}
+
 .server-address-fields {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.45fr);

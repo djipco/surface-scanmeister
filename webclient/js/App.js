@@ -15,6 +15,7 @@ export class App {
   static STORAGE_DRAW_MODE = "scanmeister.drawMode";
   static STORAGE_RENDER_MODE = "scanmeister.renderMode";
   static STORAGE_DISPLAY_LAYOUT = "scanmeister.displayLayout";
+  static STORAGE_WALL_GAP = "scanmeister.wallGap";
   static STORAGE_DIRECTION_MODE = "scanmeister.directionMode";
   static STORAGE_REVEAL_MODE = "scanmeister.revealMode";
   static STORAGE_RENDER_SPEED = "scanmeister.renderSpeed";
@@ -41,6 +42,7 @@ export class App {
   static DEFAULT_SCAN_WIDTH = "300";
   static DEFAULT_SCAN_HEIGHT = "216";
   static DEFAULT_RENDER_SPEED = "100";
+  static DEFAULT_WALL_GAP = "0";
   static DEFAULT_AUTO_HIDE_SECONDS = "10";
   static DEFAULT_AUTO_SCAN_SECONDS = "30";
   static DEFAULT_OVERLAY_GRID_SPACING = "100";
@@ -933,6 +935,26 @@ export class App {
     return 0;
   }
 
+  get wallColumnCount() {
+    if (this.displayLayout === "wall-8-horizontal") return 4;
+    if (this.displayLayout === "wall-4-horizontal") return 2;
+    return 1;
+  }
+
+  get wallRowCount() {
+    return this.isWallDisplayLayout ? 2 : 1;
+  }
+
+  get wallGapMillimeters() {
+    const gap = parseFloat(this.ui.wallGap.value);
+    if (isNaN(gap)) return parseFloat(App.DEFAULT_WALL_GAP);
+    return this.clampWallGapValue(gap);
+  }
+
+  get wallGapPixels() {
+    return this.wallGapMillimeters / 25.4 * this.resolution;
+  }
+
   get wallDisplayAspectRatio() {
     if (this.displayLayout === "wall-8-horizontal") return 32 / 9;
     if (this.displayLayout === "wall-4-horizontal") return 16 / 9;
@@ -941,6 +963,15 @@ export class App {
 
   get activeWallOutputs() {
     return this.wallOutputs.slice(0, this.wallOutputCount);
+  }
+
+  getWallOutputPosition(index) {
+    const group = Math.floor(index / 4);
+    const indexInGroup = index % 4;
+    return {
+      column: group * 2 + (indexInGroup % 2),
+      row: Math.floor(indexInGroup / 2)
+    };
   }
 
   get directionMode() {
@@ -1085,6 +1116,9 @@ export class App {
     this.ui.drawMode = document.getElementById("draw-mode");
     this.ui.renderMode = document.getElementById("render-mode");
     this.ui.displayLayout = document.getElementById("display-layout");
+    this.ui.wallGapRow = document.getElementById("wall-gap-row");
+    this.ui.wallGap = document.getElementById("wall-gap");
+    this.ui.wallGapPixels = document.getElementById("wall-gap-pixels");
     this.ui.directionMode = document.getElementById("direction-mode");
     this.ui.revealMode = document.getElementById("reveal-mode");
     this.ui.renderSpeedRow = document.getElementById("render-speed-row");
@@ -1158,6 +1192,7 @@ export class App {
     this.restoreDrawMode();
     this.restoreRenderMode();
     this.restoreDisplayLayout();
+    this.restoreWallGap();
     this.restoreDirectionMode();
     this.restoreRevealMode();
     this.restoreNumericValue(this.ui.renderSpeed, App.STORAGE_RENDER_SPEED);
@@ -1194,6 +1229,8 @@ export class App {
     this.ui.resolution.addEventListener("change", () => {
       this.saveControlValue(this.ui.resolution, App.STORAGE_RESOLUTION);
       this.updateExpectedImageSize();
+      this.updateWallGapState();
+      this.refreshWallDisplays();
       this.updateCommandPreview();
     });
     this.ui.forceCalibration.addEventListener("change", () => {
@@ -1286,6 +1323,17 @@ export class App {
       this.saveControlValue(this.ui.displayLayout, App.STORAGE_DISPLAY_LAYOUT);
       this.updateDisplayLayoutState();
       this.updateCanvasDisplaySize();
+      this.refreshWallDisplays();
+    });
+    this.ui.wallGap.addEventListener("input", () => {
+      this.saveWallGap();
+      this.updateWallGapState();
+      this.refreshWallDisplays();
+    });
+    this.ui.wallGap.addEventListener("change", () => {
+      this.ui.wallGap.value = this.clampWallGapValue(this.wallGapMillimeters);
+      this.saveWallGap();
+      this.updateWallGapState();
       this.refreshWallDisplays();
     });
     this.ui.directionMode.addEventListener("change", () => {
@@ -1386,6 +1434,7 @@ export class App {
     this.updateCommandPreview();
     this.updateScanButtonState();
     this.updateRenderSpeedState();
+    this.updateWallGapState();
     this.updateAutoHideState();
     this.updateAutoScanState();
     this.updateOverlayGridState();
@@ -1908,6 +1957,14 @@ export class App {
     this.ui.renderSpeedRow.classList.toggle("disabled", isDisabled);
   }
 
+  updateWallGapState() {
+    const isWall = this.isWallDisplayLayout;
+    const gapPixels = Math.max(0, this.wallGapPixels);
+
+    this.ui.wallGapRow.classList.toggle("hidden", !isWall);
+    this.ui.wallGapPixels.innerText = `${Math.round(gapPixels)} px`;
+  }
+
   updateOverlayGridState() {
     const isDisabled = !this.overlayGridEnabled;
     const spacing = this.clampInputValue(this.ui.overlayGridSpacing, this.overlayGridSpacing);
@@ -2032,6 +2089,7 @@ export class App {
       this.ui.wallDisplay.classList.toggle("hidden", !isWall);
       this.ui.wallDisplay.setAttribute("aria-hidden", isWall ? "false" : "true");
     }
+    this.updateWallGapState();
     this.updateOverlayGridState();
   }
 
@@ -2050,19 +2108,22 @@ export class App {
     const sourceCanvas = this.getWallRowBandCanvas(sourceStartRow, sourceRowCount);
     if (!sourceCanvas) return;
 
-    const outputWidth = 1920;
-    const outputHeight = 1080;
+    const geometry = this.getWallGeometry();
+    if (!geometry) return;
+
     this.activeWallOutputs.forEach((output, index) => {
-      const outputLeft = index * outputWidth;
+      const outputRect = this.getWallOutputRect(index, geometry);
+      if (!outputRect) return;
+
       const localRect = this.intersectRects(
         dirtyRect,
-        {x: outputLeft, y: 0, width: outputWidth, height: outputHeight}
+        outputRect
       );
       if (!localRect) return;
 
       this.refreshWallDisplayRect(index, {
-        x: localRect.x - outputLeft,
-        y: localRect.y,
+        x: localRect.x - outputRect.x,
+        y: localRect.y - outputRect.y,
         width: localRect.width,
         height: localRect.height,
         sourceStartRow,
@@ -2095,45 +2156,101 @@ export class App {
     return this.wallRowBandCanvas;
   }
 
+  getWallGeometry(sourceWidth = this.canvas.width, sourceHeight = this.canvas.height) {
+    if (!sourceWidth || !sourceHeight || !this.isWallDisplayLayout) return undefined;
+
+    const outputWidth = 1920;
+    const outputHeight = 1080;
+    const columns = this.wallColumnCount;
+    const rows = this.wallRowCount;
+    const monitorWidth = outputWidth * columns;
+    const monitorHeight = outputHeight * rows;
+    const canvasRatio = sourceWidth / sourceHeight;
+    const wallRatio = monitorWidth / monitorHeight;
+    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
+    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
+    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
+    const requestedGapPixels = Math.max(0, this.wallGapPixels);
+    const gapX = columns > 1
+      ? Math.min(requestedGapPixels, Math.max(0, (orientedWidth - columns) / (columns - 1)))
+      : 0;
+    const gapY = 0;
+    const visibleOrientedWidth = Math.max(1, orientedWidth - gapX * (columns - 1));
+    const visibleOrientedHeight = Math.max(1, orientedHeight - gapY * (rows - 1));
+    const scale = Math.min(monitorWidth / visibleOrientedWidth, monitorHeight / visibleOrientedHeight);
+    const virtualWidth = monitorWidth + gapX * (columns - 1) * scale;
+    const virtualHeight = monitorHeight + gapY * (rows - 1) * scale;
+    const drawnWidth = orientedWidth * scale;
+    const drawnHeight = orientedHeight * scale;
+
+    return {
+      outputWidth,
+      outputHeight,
+      columns,
+      rows,
+      monitorWidth,
+      monitorHeight,
+      virtualWidth,
+      virtualHeight,
+      canvasRatio,
+      wallRatio,
+      shouldRotate,
+      orientedWidth,
+      orientedHeight,
+      scale,
+      gapX,
+      gapY,
+      gapDestinationX: gapX * scale,
+      gapDestinationY: gapY * scale,
+      drawnWidth,
+      drawnHeight,
+      left: (virtualWidth - drawnWidth) / 2,
+      top: (virtualHeight - drawnHeight) / 2
+    };
+  }
+
+  getWallOutputRect(index, geometry = this.getWallGeometry()) {
+    if (!geometry) return undefined;
+
+    const position = this.getWallOutputPosition(index);
+    return {
+      x: position.column * (geometry.outputWidth + geometry.gapDestinationX),
+      y: position.row * (geometry.outputHeight + geometry.gapDestinationY),
+      width: geometry.outputWidth,
+      height: geometry.outputHeight
+    };
+  }
+
   getWallDirtyRectForSourceRows(startRow, rowCount) {
     const sourceWidth = this.canvas.width;
     const sourceHeight = this.canvas.height;
     if (!sourceWidth || !sourceHeight) return undefined;
 
-    const wallWidth = 1920 * Math.max(1, this.wallOutputCount);
-    const wallHeight = 1080;
-    const canvasRatio = sourceWidth / sourceHeight;
-    const wallRatio = wallWidth / wallHeight;
-    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
-    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
-    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
-    const drawnWidth = orientedWidth * scale;
-    const drawnHeight = orientedHeight * scale;
-    const left = (wallWidth - drawnWidth) / 2;
-    const top = (wallHeight - drawnHeight) / 2;
+    const geometry = this.getWallGeometry(sourceWidth, sourceHeight);
+    if (!geometry) return undefined;
+
     const endRow = startRow + rowCount;
 
-    if (!shouldRotate) {
+    if (!geometry.shouldRotate) {
       return this.expandRectToPixels({
-        x: left,
-        y: top + startRow * scale,
-        width: drawnWidth,
-        height: rowCount * scale
-      }, wallWidth, wallHeight);
+        x: geometry.left,
+        y: geometry.top + startRow * geometry.scale,
+        width: geometry.drawnWidth,
+        height: rowCount * geometry.scale
+      }, geometry.virtualWidth, geometry.virtualHeight);
     }
 
     const normalDirection = this.directionMode !== "rotated";
     const xStart = normalDirection
-      ? left + startRow * scale
-      : left + (sourceHeight - endRow) * scale;
+      ? geometry.left + startRow * geometry.scale
+      : geometry.left + (sourceHeight - endRow) * geometry.scale;
 
     return this.expandRectToPixels({
       x: xStart,
-      y: top,
-      width: rowCount * scale,
-      height: drawnHeight
-    }, wallWidth, wallHeight);
+      y: geometry.top,
+      width: rowCount * geometry.scale,
+      height: geometry.drawnHeight
+    }, geometry.virtualWidth, geometry.virtualHeight);
   }
 
   expandRectToPixels(rect, maxWidth, maxHeight) {
@@ -2171,15 +2288,19 @@ export class App {
     if (!output || !this.canvas.width || !this.canvas.height) return;
 
     const {canvas, context} = output;
-    const width = 1920;
-    const height = 1080;
+    const geometry = this.getWallGeometry();
+    const outputRect = this.getWallOutputRect(index, geometry);
+    if (!geometry || !outputRect) return;
+
+    const width = geometry.outputWidth;
+    const height = geometry.outputHeight;
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.save();
-    context.translate(-index * width, 0);
-    this.drawSourceCanvasInVirtualWall(context, width * this.wallOutputCount, height);
+    context.translate(-outputRect.x, -outputRect.y);
+    this.drawSourceCanvasInVirtualWall(context, geometry);
     context.restore();
   }
 
@@ -2188,8 +2309,12 @@ export class App {
     if (!output || !this.canvas.width || !this.canvas.height) return;
 
     const {canvas, context} = output;
-    const width = 1920;
-    const height = 1080;
+    const geometry = this.getWallGeometry();
+    const outputRect = this.getWallOutputRect(index, geometry);
+    if (!geometry || !outputRect) return;
+
+    const width = geometry.outputWidth;
+    const height = geometry.outputHeight;
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
 
@@ -2197,11 +2322,10 @@ export class App {
     context.beginPath();
     context.rect(rect.x, rect.y, rect.width, rect.height);
     context.clip();
-    context.translate(-index * width, 0);
+    context.translate(-outputRect.x, -outputRect.y);
     this.drawSourceBandInVirtualWall(
       context,
-      width * this.wallOutputCount,
-      height,
+      geometry,
       rect.sourceCanvas,
       rect.sourceStartRow,
       rect.sourceRowCount
@@ -2209,25 +2333,19 @@ export class App {
     context.restore();
   }
 
-  drawSourceBandInVirtualWall(context, wallWidth, wallHeight, sourceCanvas, startRow, rowCount) {
+  drawSourceBandInVirtualWall(context, geometry, sourceCanvas, startRow, rowCount) {
     const sourceWidth = this.canvas.width;
     const sourceHeight = this.canvas.height;
-    if (!sourceWidth || !sourceHeight || !sourceCanvas || rowCount <= 0) return;
+    if (!sourceWidth || !sourceHeight || !geometry || !sourceCanvas || rowCount <= 0) return;
 
-    const canvasRatio = sourceWidth / sourceHeight;
-    const wallRatio = wallWidth / wallHeight;
-    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
-    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
-    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
-    const baseAngle = shouldRotate ? 270 : 180;
+    const baseAngle = geometry.shouldRotate ? 270 : 180;
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
     context.imageSmoothingEnabled = true;
-    context.translate(wallWidth / 2, wallHeight / 2);
+    context.translate(geometry.virtualWidth / 2, geometry.virtualHeight / 2);
     context.rotate(angle * Math.PI / 180);
-    context.scale(scale, scale);
+    context.scale(geometry.scale, geometry.scale);
     context.drawImage(
       sourceCanvas,
       0,
@@ -2241,23 +2359,19 @@ export class App {
     );
   }
 
-  drawSourceCanvasInVirtualWall(context, wallWidth, wallHeight) {
+  drawSourceCanvasInVirtualWall(context, geometry) {
     const sourceWidth = this.canvas.width;
     const sourceHeight = this.canvas.height;
-    const canvasRatio = sourceWidth / sourceHeight;
-    const wallRatio = wallWidth / wallHeight;
-    const shouldRotate = (canvasRatio >= 1) !== (wallRatio >= 1);
-    const orientedWidth = shouldRotate ? sourceHeight : sourceWidth;
-    const orientedHeight = shouldRotate ? sourceWidth : sourceHeight;
-    const scale = Math.min(wallWidth / orientedWidth, wallHeight / orientedHeight);
-    const baseAngle = shouldRotate ? 270 : 180;
+    if (!sourceWidth || !sourceHeight || !geometry) return;
+
+    const baseAngle = geometry.shouldRotate ? 270 : 180;
     const directionOffset = this.directionMode === "rotated" ? 180 : 0;
     const angle = (baseAngle + directionOffset) % 360;
 
     context.imageSmoothingEnabled = true;
-    context.translate(wallWidth / 2, wallHeight / 2);
+    context.translate(geometry.virtualWidth / 2, geometry.virtualHeight / 2);
     context.rotate(angle * Math.PI / 180);
-    context.scale(scale, scale);
+    context.scale(geometry.scale, geometry.scale);
     context.drawImage(this.canvas, -sourceWidth / 2, -sourceHeight / 2);
   }
 
@@ -2736,6 +2850,12 @@ export class App {
     return this.clamp(value, min, max);
   }
 
+  clampWallGapValue(value) {
+    const min = parseFloat(this.ui.wallGap.min);
+    const max = parseFloat(this.ui.wallGap.max);
+    return this.clamp(value, min, max);
+  }
+
   clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -2770,6 +2890,18 @@ export class App {
       input.value = this.clampInputValue(input, parsedValue);
       localStorage.setItem(storageKey, input.value);
     } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  restoreWallGap() {
+    try {
+      const value = localStorage.getItem(App.STORAGE_WALL_GAP);
+      const parsedValue = value === null ? parseFloat(App.DEFAULT_WALL_GAP) : parseFloat(value);
+      this.ui.wallGap.value = this.clampWallGapValue(isNaN(parsedValue) ? 0 : parsedValue);
+      localStorage.setItem(App.STORAGE_WALL_GAP, this.ui.wallGap.value);
+    } catch (err) {
+      this.ui.wallGap.value = App.DEFAULT_WALL_GAP;
       // Keep the interface usable if localStorage is unavailable.
     }
   }
@@ -2811,6 +2943,17 @@ export class App {
         : this.roundInputValue(input, value);
       if (options.normalize) input.value = storedValue;
       localStorage.setItem(storageKey, storedValue);
+    } catch (err) {
+      // Keep the interface usable if localStorage is unavailable.
+    }
+  }
+
+  saveWallGap() {
+    try {
+      const value = parseFloat(this.ui.wallGap.value);
+      if (isNaN(value)) return;
+
+      localStorage.setItem(App.STORAGE_WALL_GAP, String(this.clampWallGapValue(value)));
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
