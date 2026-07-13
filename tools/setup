@@ -73,6 +73,7 @@ const dryRun = args.has("--dry-run");
 const runAll = args.has("--all");
 const help = args.has("--help") || args.has("-h");
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+let commandEchoSuppressed = false;
 
 function printHelp() {
   console.log(`Usage: node tools/setup [--dry-run]
@@ -112,7 +113,7 @@ function run(command, commandArgs = [], options = {}) {
     actualArgs = [command, ...commandArgs];
   }
 
-  if (!options.silent) {
+  if (!options.silent && !commandEchoSuppressed) {
     console.log(`$ ${formatCommand(actualCommand, actualArgs)}`);
   }
 
@@ -139,6 +140,27 @@ function run(command, commandArgs = [], options = {}) {
 
 function capture(command, commandArgs = [], options = {}) {
   return run(command, commandArgs, {...options, capture: true});
+}
+
+async function withCommandEchoSuppressed(callback) {
+  const previous = commandEchoSuppressed;
+  commandEchoSuppressed = true;
+  try {
+    return await callback();
+  } finally {
+    commandEchoSuppressed = previous;
+  }
+}
+
+async function getStepMenuStatus(step) {
+  if (dryRun) return " ";
+
+  try {
+    const result = await withCommandEchoSuppressed(() => step.verify());
+    return result?.ok ? "✓" : " ";
+  } catch {
+    return " ";
+  }
 }
 
 function commandExists(command) {
@@ -209,9 +231,10 @@ async function runStep(title, description, action, verify) {
 
 async function chooseSetupStep(steps) {
   printHeader("Setup menu");
-  steps.forEach((step, index) => {
-    console.log(`  ${index + 1}. ${step.title}`);
-  });
+  for (const [index, step] of steps.entries()) {
+    const status = await getStepMenuStatus(step);
+    console.log(`  ${index + 1}. ${status} ${step.title}`);
+  }
   console.log("  A. Run all steps");
   console.log("  Q. Quit");
 
@@ -384,6 +407,7 @@ async function main() {
   const addStep = (title, description, action, verify) => {
     steps.push({
       title,
+      verify,
       run: () => runStep(title, description, action, verify)
     });
   };
@@ -761,9 +785,6 @@ ${RUSTDESK_APP_NAME}`,
   }
 
   console.log("\nSetup finished.");
-  console.log("Useful URLs:");
-  console.log("  https://localhost");
-  console.log("  https://scanmeister01.local");
 }
 
 main()
