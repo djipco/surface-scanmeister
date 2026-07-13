@@ -14,6 +14,10 @@ dependencies/sane/
     scanimage
   lib/aarch64-linux-gnu/sane/
     libsane-genesys.so.1.1.1
+  patches/
+    README.md
+    sane-backends-1.2.1-genesys-max-scan-length.patch
+    sane-backends-1.2.1-scanimage.patch
 ```
 
 `tools/setup` can then install the custom SANE build from this folder.
@@ -37,3 +41,15 @@ It also recreates this symlink:
 
 `libsane.so`, `dll.conf`, and `genesys.conf` are not part of the custom dependency package unless
 they are intentionally modified later.
+
+Patch files
+-----------
+
+Place the source patches used to build the committed binaries in `dependencies/sane/patches`.
+Name each patch after the upstream SANE version and the change it makes.
+
+The committed `scanimage` and `libsane-genesys.so.1.1.1` binaries should be rebuildable from:
+
+1. The upstream SANE source version listed in `VERSION`.
+2. The patch files in `dependencies/sane/patches`.
+3. The build notes recorded in `VERSION`.
