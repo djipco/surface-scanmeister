@@ -168,6 +168,10 @@ installed for the `scanmeister` user, then RustDesk is installed with:
 /home/scanmeister/pi-apps/manage install RustDesk
 ```
 
+RustDesk should be used with the Raspberry Pi desktop set to X11. On Wayland, RustDesk may connect
+but show a black screen. The setup script requests X11 automatically when `raspi-config` is
+available; reboot or log out/in afterward for the change to take effect.
+
 SSH can also be enabled by the setup script when `raspi-config` is available.
 
 #### Client Launcher
@@ -503,9 +507,10 @@ Each event contains the OSC address and argument metadata:
 
 #### scanimage
 
-The `scanimage` command is what is used under the hood to control the scanners. 
-Custom ScanMeister SANE builds belong in `dependencies/sane/`. Keep `scanimage`, `libsane`, the
-patched `genesys` backend, and `sane.d` configuration files from the same build. This keeps the
+The `scanimage` command is what is used under the hood to control the scanners.
+Custom ScanMeister SANE builds belong in `dependencies/sane/`. The current custom package contains
+the custom `scanimage` binary and the patched `genesys` backend only. Stock `libsane.so`, `dll.conf`,
+and `genesys.conf` are not included unless they are intentionally modified later. This keeps the
 custom scanner stack separate from source code while still making it part of the project install
 package. See `dependencies/sane/README.md` for the expected layout.
 

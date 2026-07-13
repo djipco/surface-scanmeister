@@ -3,7 +3,7 @@
 Place the custom Raspberry Pi SANE build artifacts here.
 
 Keep these files from the same SANE build. Do not mix a patched `genesys` backend with a
-different `scanimage` / `libsane` version unless you have explicitly tested that combination.
+different `scanimage` version unless you have explicitly tested that combination.
 
 Expected layout:
 
@@ -12,18 +12,28 @@ dependencies/sane/
   VERSION
   bin/
     scanimage
-  lib/
-    libsane.so
-    libsane.so.1
-    libsane.so.1.2.1
-    sane/
-      libsane-genesys.so
-      libsane-genesys.so.1
-      libsane-genesys.so.1.2.1
-  etc/
-    sane.d/
-      dll.conf
-      genesys.conf
+  lib/aarch64-linux-gnu/sane/
+    libsane-genesys.so.1.1.1
 ```
 
-`tools/initial-setup` can then install the custom SANE build from this folder into `/usr/local`.
+`tools/setup` can then install the custom SANE build from this folder.
+
+The setup script installs:
+
+```text
+dependencies/sane/bin/scanimage
+  -> /usr/local/bin/scanimage
+
+dependencies/sane/lib/aarch64-linux-gnu/sane/libsane-genesys.so.1.1.1
+  -> /usr/lib/aarch64-linux-gnu/sane/libsane-genesys.so.1.1.1
+```
+
+It also recreates this symlink:
+
+```text
+/usr/lib/aarch64-linux-gnu/sane/libsane-genesys.so.1
+  -> libsane-genesys.so.1.1.1
+```
+
+`libsane.so`, `dll.conf`, and `genesys.conf` are not part of the custom dependency package unless
+they are intentionally modified later.
