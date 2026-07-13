@@ -26,14 +26,12 @@ const PI_APPS_INSTALL_URL = "https://raw.githubusercontent.com/Botspot/pi-apps/m
 const RUSTDESK_APP_NAME = "RustDesk";
 const CUSTOM_SANE_SOURCE = "dependencies/sane";
 const CUSTOM_SANE_TARGET_BIN = "/usr/local/bin";
-const CUSTOM_SANE_TARGET_LIB = "/usr/local/lib";
-const CUSTOM_SANE_TARGET_ETC = "/usr/local/etc";
+const CUSTOM_SANE_TARGET_BACKEND_DIR = "/usr/lib/aarch64-linux-gnu/sane";
+const CUSTOM_SANE_GENESYS_BACKEND = "libsane-genesys.so.1.1.1";
+const CUSTOM_SANE_GENESYS_LINK = "libsane-genesys.so.1";
 const CUSTOM_SANE_REQUIRED_FILES = [
   "bin/scanimage",
-  "lib/libsane.so",
-  "lib/sane/libsane-genesys.so",
-  "etc/sane.d/dll.conf",
-  "etc/sane.d/genesys.conf"
+  `lib/aarch64-linux-gnu/sane/${CUSTOM_SANE_GENESYS_BACKEND}`
 ];
 const REQUIRED_GROUPS = [
   "adm",
@@ -268,6 +266,17 @@ function rustDeskInstalled() {
   return capture("sh", ["-lc", "command -v rustdesk >/dev/null 2>&1 || dpkg-query -W rustdesk >/dev/null 2>&1"]).ok;
 }
 
+function configureX11ForRustDesk() {
+  if (!commandExists("raspi-config")) {
+    warn("raspi-config is not available; cannot switch the desktop session to X11 automatically.");
+    return false;
+  }
+
+  run("raspi-config", ["nonint", "do_wayland", "W1"], {sudo: true});
+  console.log("X11 desktop mode requested. Reboot or log out/in for the change to take effect.");
+  return true;
+}
+
 async function chooseAutostartMode() {
   console.log("Choose which client should start automatically:");
   console.log("  1. Normal client");
@@ -451,7 +460,8 @@ ${customSanePath()}
 Required files:
 ${CUSTOM_SANE_REQUIRED_FILES.join("\n")}
 
-The files are installed under /usr/local so they remain separate from apt-managed packages.`,
+The custom scanimage command is installed under /usr/local/bin.
+The patched genesys backend replaces the system backend under /usr/lib/aarch64-linux-gnu/sane.`,
     async () => {
       const missing = missingCustomSaneFiles();
       if (missing.length > 0) {
@@ -459,11 +469,12 @@ The files are installed under /usr/local so they remain separate from apt-manage
         return;
       }
 
-      run("mkdir", ["-p", CUSTOM_SANE_TARGET_BIN, path.join(CUSTOM_SANE_TARGET_LIB, "sane"), path.join(CUSTOM_SANE_TARGET_ETC, "sane.d")], {sudo: true});
+      run("mkdir", ["-p", CUSTOM_SANE_TARGET_BIN, CUSTOM_SANE_TARGET_BACKEND_DIR], {sudo: true});
       run("cp", ["-a", customSanePath("bin/scanimage"), CUSTOM_SANE_TARGET_BIN], {sudo: true});
-      run("cp", ["-a", `${customSanePath("lib")}/.`, CUSTOM_SANE_TARGET_LIB], {sudo: true});
-      run("cp", ["-a", `${customSanePath("etc")}/.`, CUSTOM_SANE_TARGET_ETC], {sudo: true});
+      run("cp", ["-a", customSanePath(`lib/aarch64-linux-gnu/sane/${CUSTOM_SANE_GENESYS_BACKEND}`), CUSTOM_SANE_TARGET_BACKEND_DIR], {sudo: true});
+      run("ln", ["-sf", CUSTOM_SANE_GENESYS_BACKEND, path.join(CUSTOM_SANE_TARGET_BACKEND_DIR, CUSTOM_SANE_GENESYS_LINK)], {sudo: true});
       run("chmod", ["755", path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")], {sudo: true});
+      run("chmod", ["644", path.join(CUSTOM_SANE_TARGET_BACKEND_DIR, CUSTOM_SANE_GENESYS_BACKEND)], {sudo: true});
       run("ldconfig", [], {sudo: true});
     },
     async () => {
@@ -477,11 +488,12 @@ The files are installed under /usr/local so they remain separate from apt-manage
 
       const scanimagePath = capture("sh", ["-lc", "command -v scanimage"]);
       const version = capture("scanimage", ["-V"]);
+      const backendInstalled = fileExists(path.join(CUSTOM_SANE_TARGET_BACKEND_DIR, CUSTOM_SANE_GENESYS_BACKEND));
       return {
-        ok: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage") && version.ok,
-        message: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")
-          ? `Custom scanimage is active: ${version.stdout.trim() || "version read successfully"}.`
-          : `scanimage is currently ${scanimagePath.stdout.trim() || "not found"}, expected ${path.join(CUSTOM_SANE_TARGET_BIN, "scanimage")}.`
+        ok: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage") && backendInstalled && version.ok,
+        message: scanimagePath.stdout.trim() === path.join(CUSTOM_SANE_TARGET_BIN, "scanimage") && backendInstalled
+          ? `Custom scanimage and genesys backend are active: ${version.stdout.trim() || "version read successfully"}.`
+          : `scanimage is ${scanimagePath.stdout.trim() || "not found"} and genesys backend installed: ${backendInstalled ? "yes" : "no"}.`
       };
     }
   );
@@ -698,8 +710,10 @@ normal client, Guerilla client, or no client autostart.`,
   );
 
   addStep(
-    "10. Install RustDesk",
-    `This installs RustDesk through Pi-Apps for remote support.
+    "10. Install RustDesk and configure X11",
+    `This installs RustDesk through Pi-Apps for remote support and requests X11 desktop mode.
+
+RustDesk can connect but show a black screen on Wayland. X11 is the recommended desktop mode for ScanMeister remote support.
 
 Pi-Apps will be installed for the ${SERVICE_USER} user if it is missing:
 ${PI_APPS_DIRECTORY}
@@ -718,15 +732,16 @@ ${RUSTDESK_APP_NAME}`,
 
       if (rustDeskInstalled()) {
         console.log("RustDesk already appears to be installed.");
-        return;
+      } else {
+        run(PI_APPS_MANAGE, ["install", RUSTDESK_APP_NAME], {user: SERVICE_USER});
       }
 
-      run(PI_APPS_MANAGE, ["install", RUSTDESK_APP_NAME], {user: SERVICE_USER});
+      configureX11ForRustDesk();
     },
     async () => ({
       ok: piAppsInstalled() && rustDeskInstalled(),
       message: piAppsInstalled() && rustDeskInstalled()
-        ? "Pi-Apps is installed and RustDesk appears to be installed."
+        ? "Pi-Apps and RustDesk are installed. X11 was requested if raspi-config was available; reboot or log out/in may be required."
         : `Pi-Apps installed: ${piAppsInstalled() ? "yes" : "no"}, RustDesk installed: ${rustDeskInstalled() ? "yes" : "no"}.`
     })
   );
