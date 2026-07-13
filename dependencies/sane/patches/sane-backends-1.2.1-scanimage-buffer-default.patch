@@ -1,0 +1,102 @@
+diff --git a/frontend/scanimage.c b/frontend/scanimage.c
+index d79d487..7c5b7e0 100644
+--- a/frontend/scanimage.c
++++ b/frontend/scanimage.c
+@@ -170,6 +170,12 @@ static SANE_Word br_y = 0;
+ static SANE_Byte *buffer;
+ static size_t buffer_size;
+ 
++static void
++stream_flush (FILE *ofp)
++{
++  if (!output_file)
++    fflush (ofp);
++}
+ 
+ static void
+ auth_callback (SANE_String_Const resource,
+@@ -1460,16 +1466,19 @@ scan_it (FILE *ofp, void* pw)
+ 					     parm.pixels_per_line, parm.lines,
+ 					     parm.depth, resolution_value,
+ 					     icc_profile, ofp);
++		    stream_flush (ofp);
+ 		    break;
+ 		  case OUTPUT_PNM:
+ 		    write_pnm_header (parm.format, parm.pixels_per_line,
+ 				      parm.lines, parm.depth, ofp);
++		    stream_flush (ofp);
+ 		    break;
+ #ifdef HAVE_LIBPNG
+ 		  case OUTPUT_PNG:
+ 		    write_png_header (parm.format, parm.pixels_per_line,
+ 				      parm.lines, parm.depth, resolution_value,
+ 				      icc_profile, ofp, &png_ptr, &info_ptr);
++		    stream_flush (ofp);
+ 		    break;
+ #endif
+ #ifdef HAVE_LIBJPEG
+@@ -1691,7 +1700,10 @@ scan_it (FILE *ofp, void* pw)
+ 	      else
+ #endif
+ 	      if ((output_format == OUTPUT_TIFF) || (parm.depth != 16))
+-		fwrite (buffer, 1, len, ofp);
++		{
++		  fwrite (buffer, 1, len, ofp);
++		  stream_flush (ofp);
++		}
+ 	      else
+ 		{
+ #if !defined(WORDS_BIGENDIAN)
+@@ -1703,6 +1715,7 @@ scan_it (FILE *ofp, void* pw)
+ 		      if (len > 0)
+ 			{
+ 			  fwrite (buffer, 1, 1, ofp);
++			  stream_flush (ofp);
+ 			  buffer[0] = (SANE_Byte) hang_over;
+ 			  hang_over = -1;
+ 			  start = 1;
+@@ -1724,6 +1737,7 @@ scan_it (FILE *ofp, void* pw)
+ 		    }
+ #endif
+ 		  fwrite (buffer, 1, len, ofp);
++		  stream_flush (ofp);
+ 		}
+ 	    }
+ 
+@@ -1749,16 +1763,19 @@ scan_it (FILE *ofp, void* pw)
+ 	sanei_write_tiff_header (parm.format, parm.pixels_per_line,
+ 				 image.height, parm.depth, resolution_value,
+ 				 icc_profile, ofp);
++	stream_flush (ofp);
+       break;
+       case OUTPUT_PNM:
+ 	write_pnm_header (parm.format, parm.pixels_per_line,
+                           image.height, parm.depth, ofp);
++	stream_flush (ofp);
+       break;
+ #ifdef HAVE_LIBPNG
+       case OUTPUT_PNG:
+ 	write_png_header (parm.format, parm.pixels_per_line,
+ 			  image.height, parm.depth, resolution_value,
+ 			  icc_profile, ofp, &png_ptr, &info_ptr);
++	stream_flush (ofp);
+       break;
+ #endif
+ #ifdef HAVE_LIBJPEG
+@@ -1795,6 +1812,7 @@ scan_it (FILE *ofp, void* pw)
+ #endif
+ 
+ 	fwrite (image.data, 1, image.height * image.width * image.num_channels, ofp);
++	stream_flush (ofp);
+     }
+ #ifdef HAVE_LIBPNG
+     if(output_format == OUTPUT_PNG)
+@@ -2701,6 +2719,8 @@ List of available devices:", prog_name);
+                   scanimage_exit(1);
+                 }
+             }
++          else
++            setvbuf (ofp, NULL, _IONBF, 0);
+ #ifdef HAVE_LIBJPEG
+          if (output_format == OUTPUT_PDF)
+            {
