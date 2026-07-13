@@ -326,18 +326,12 @@ async function verifyAutostart(expectedMode) {
 }
 
 function verifyEnvironment() {
-  printHeader("Environment");
-  console.log(`Platform: ${process.platform}/${process.arch}`);
-  console.log(`User: ${os.userInfo().username}`);
-  console.log(`Directory: ${process.cwd()}`);
-
   if (process.platform !== "linux") {
     fail(`This setup assistant must run on Linux/Raspberry Pi, not ${process.platform}.`);
     process.exitCode = 1;
     return false;
   }
 
-  ok("Linux environment detected.");
   return true;
 }
 
@@ -373,7 +367,7 @@ async function main() {
   }
 
   console.log("ScanMeister initial setup");
-  console.log(`Dry run: ${dryRun ? "yes" : "no"}`);
+  if (dryRun) console.log("Dry run: yes");
 
   if (!verifyEnvironment()) {
     return;
