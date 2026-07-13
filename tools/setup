@@ -72,6 +72,7 @@ const EXECUTABLE_FILES = [
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
+const runAll = args.has("--all");
 const help = args.has("--help") || args.has("-h");
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 
@@ -84,6 +85,7 @@ Interactively prepares a Raspberry Pi for ScanMeister.
 The script explains each step, asks before doing it, then verifies the result.
 
 Options:
+  --all       Run all setup steps in sequence
   --dry-run   Show commands without changing the system
   -h, --help  Show this help
 `);
@@ -112,10 +114,14 @@ function run(command, commandArgs = [], options = {}) {
     actualArgs = [command, ...commandArgs];
   }
 
-  console.log(`$ ${formatCommand(actualCommand, actualArgs)}`);
+  if (!options.silent) {
+    console.log(`$ ${formatCommand(actualCommand, actualArgs)}`);
+  }
 
   if (dryRun) {
-    console.log("DRY RUN: command not executed.");
+    if (!options.silent) {
+      console.log("DRY RUN: command not executed.");
+    }
     return {ok: true, status: 0, stdout: "", stderr: ""};
   }
 
@@ -200,6 +206,28 @@ async function runStep(title, description, action, verify) {
     fail(result.message);
   } else {
     warn(result.message);
+  }
+}
+
+async function chooseSetupStep(steps) {
+  printHeader("Setup menu");
+  steps.forEach((step, index) => {
+    console.log(`  ${index + 1}. ${step.title}`);
+  });
+  console.log("  A. Run all steps");
+  console.log("  Q. Quit");
+
+  while (true) {
+    const answer = (await rl.question("Choose an action: ")).trim().toLowerCase();
+    if (answer === "q" || answer === "quit" || answer === "exit") return null;
+    if (answer === "a" || answer === "all") return "all";
+
+    const number = Number(answer);
+    if (Number.isInteger(number) && number >= 1 && number <= steps.length) {
+      return number - 1;
+    }
+
+    console.log(`Please enter a number between 1 and ${steps.length}, A, or Q.`);
   }
 }
 
@@ -305,8 +333,7 @@ function verifyEnvironment() {
 }
 
 function ensureProjectToolsExecutable() {
-  printHeader("Project tools");
-  run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd()});
+  run("chmod", ["+x", ...EXECUTABLE_FILES], {cwd: process.cwd(), silent: true});
 
   const missing = EXECUTABLE_FILES.filter(file => !fileExists(path.join(process.cwd(), file)));
   const notExecutable = EXECUTABLE_FILES.filter(file => fileExists(path.join(process.cwd(), file)) && !isExecutable(path.join(process.cwd(), file)));
@@ -319,7 +346,6 @@ function ensureProjectToolsExecutable() {
 
   if (notExecutable.length > 0) {
     if (dryRun) {
-      warn(`Would make these tools executable: ${notExecutable.join(", ")}.`);
       return true;
     }
 
@@ -328,7 +354,6 @@ function ensureProjectToolsExecutable() {
     return false;
   }
 
-  ok("Project command-line tools are executable.");
   return true;
 }
 
@@ -340,7 +365,6 @@ async function main() {
 
   console.log("ScanMeister initial setup");
   console.log(`Dry run: ${dryRun ? "yes" : "no"}`);
-  console.log("Each setup action asks before making changes and verifies the result afterward.");
 
   if (!verifyEnvironment()) {
     return;
@@ -353,8 +377,15 @@ async function main() {
   const setupState = {
     autostartMode: "unchanged"
   };
+  const steps = [];
+  const addStep = (title, description, action, verify) => {
+    steps.push({
+      title,
+      run: () => runStep(title, description, action, verify)
+    });
+  };
 
-  await runStep(
+  addStep(
     "1. Create 'scanmeister' user and assign necessary groups",
     `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing and adds it to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
 
@@ -393,7 +424,7 @@ ${REQUIRED_GROUPS.join(", ")}`,
     }
   );
 
-  await runStep(
+  addStep(
     "2. Install required system packages",
     `This installs packages used by ScanMeister and the setup process:
 ${SYSTEM_PACKAGES.join(", ")}`,
@@ -412,7 +443,7 @@ ${SYSTEM_PACKAGES.join(", ")}`,
     }
   );
 
-  await runStep(
+  addStep(
     "3. Install customized SANE build",
     `This installs the custom ScanMeister SANE build from:
 ${customSanePath()}
@@ -455,7 +486,7 @@ The files are installed under /usr/local so they remain separate from apt-manage
     }
   );
 
-  await runStep(
+  addStep(
     "4. Install Node.js and configure port binding permissions",
     "ScanMeister requires Node.js 20 or newer. This step installs NodeSource LTS setup if the installed Node is too old or missing, then allows Node to bind ports 80 and 443 without running as root.",
     async () => {
@@ -493,7 +524,7 @@ The files are installed under /usr/local so they remain separate from apt-manage
     }
   );
 
-  await runStep(
+  addStep(
     "5. Prepare ScanMeister project and runtime files",
     `Target directory:
 ${TARGET_DIRECTORY}
@@ -572,7 +603,7 @@ ${USERS_FILE}`,
     }
   );
 
-  await runStep(
+  addStep(
     "6. Create HTTPS certificate",
     `This creates a self-signed certificate unless both files already exist:
 ${CERT_KEY}
@@ -601,7 +632,7 @@ ${CERT_CRT}`,
     })
   );
 
-  await runStep(
+  addStep(
     "7. Install and enable systemd scanmeister.service",
     `This copies ${SERVICE_SOURCE} to ${SERVICE_TARGET}, reloads systemd, and enables scanmeister.service.`,
     async () => {
@@ -622,7 +653,7 @@ ${CERT_CRT}`,
     }
   );
 
-  await runStep(
+  addStep(
     "8. Configure client autostart",
     `This configures what the ${SERVICE_USER} desktop session opens automatically:
 normal client, Guerilla client, or no client autostart.`,
@@ -644,7 +675,7 @@ normal client, Guerilla client, or no client autostart.`,
     async () => verifyAutostart(setupState.autostartMode)
   );
 
-  await runStep(
+  addStep(
     "9. Enable SSH",
     "This uses raspi-config non-interactive commands when available.",
     async () => {
@@ -666,7 +697,7 @@ normal client, Guerilla client, or no client autostart.`,
     }
   );
 
-  await runStep(
+  addStep(
     "10. Install RustDesk",
     `This installs RustDesk through Pi-Apps for remote support.
 
@@ -700,7 +731,27 @@ ${RUSTDESK_APP_NAME}`,
     })
   );
 
-  console.log("\nInitial setup finished.");
+  if (runAll) {
+    for (const step of steps) {
+      await step.run();
+    }
+  } else {
+    const choice = await chooseSetupStep(steps);
+    if (choice === null) {
+      console.log("Setup cancelled.");
+      return;
+    }
+
+    if (choice === "all") {
+      for (const step of steps) {
+        await step.run();
+      }
+    } else {
+      await steps[choice].run();
+    }
+  }
+
+  console.log("\nSetup finished.");
   console.log("Useful URLs:");
   console.log("  https://localhost");
   console.log("  https://scanmeister01.local");
