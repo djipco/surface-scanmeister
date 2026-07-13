@@ -233,7 +233,7 @@ async function chooseSetupStep(steps) {
   printHeader("Setup menu");
   for (const [index, step] of steps.entries()) {
     const status = await getStepMenuStatus(step);
-    console.log(`  ${index + 1}. ${status} ${step.title}`);
+    console.log(`  ${String(index + 1).padStart(2, "0")}. ${status} ${step.title}`);
   }
   console.log("  A. Run all steps");
   console.log("  Q. Quit");
