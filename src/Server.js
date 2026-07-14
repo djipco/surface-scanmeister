@@ -10,6 +10,7 @@ import express from 'express';
 // Application imports
 import {logError, logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
+import {AuthUsers} from "./AuthUsers.js";
 import Client from "./Client.js";
 
 export class Server extends EventEmitter {
@@ -158,9 +159,9 @@ export class Server extends EventEmitter {
   }
 
   async #loadRemoteAuthUsers(authUsersPath = this.#authUsersPath(), mtimeMs = undefined) {
-    let content;
+    let entries;
     try {
-      content = await readFile(authUsersPath, "utf8");
+      entries = await new AuthUsers(authUsersPath).readEntries();
     } catch (err) {
       logWarn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
       this.#remoteAuthUsers.clear();
@@ -168,18 +169,12 @@ export class Server extends EventEmitter {
       return;
     }
 
+    entries.invalidEntries.forEach(entry => {
+      logWarn(`Ignoring invalid remote auth entry at ${authUsersPath}:${entry.lineNumber}.`);
+    });
+
     const users = new Map();
-    const lines = content.split(/\r?\n/);
-    lines.forEach((line, index) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) return;
-
-      const [username, algorithm, salt, hash] = trimmed.split(":");
-      if (!username || algorithm !== "scrypt" || !salt || !hash) {
-        logWarn(`Ignoring invalid remote auth entry at ${authUsersPath}:${index + 1}.`);
-        return;
-      }
-
+    entries.users.forEach(({username, algorithm, salt, hash}) => {
       users.set(username, {algorithm, salt, hash});
     });
 

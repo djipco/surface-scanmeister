@@ -14,7 +14,7 @@ import {
   formatWritableDirectoryError,
   getCurrentUserInfo
 } from "../src/Permissions.js";
-import {DEFAULT_USERS_FILE, parseCommonArguments, parseUsers, readUsersFile} from "../src/auth-users.js";
+import {AuthUsers} from "../src/AuthUsers.js";
 
 function printHelp() {
   console.log(`Usage: ./tools/check [--file PATH]
@@ -22,7 +22,7 @@ function printHelp() {
 Checks common ScanMeister runtime requirements without starting the daemon.
 
 Options:
-  --file PATH   Remote users file path. Default: ${DEFAULT_USERS_FILE}
+  --file PATH   Remote users file path. Default: ${AuthUsers.DEFAULT_USERS_FILE}
 `);
 }
 
@@ -49,7 +49,7 @@ async function checkUsersFile(file) {
   if (!readable.ok) return {...readable, users: []};
 
   try {
-    const users = parseUsers(await readUsersFile(file));
+    const users = await new AuthUsers(file).list();
     return {
       ok: users.length > 0,
       users,
@@ -61,7 +61,7 @@ async function checkUsersFile(file) {
 }
 
 async function main() {
-  const {options, positional} = parseCommonArguments(process.argv.slice(2));
+  const {options, positional} = AuthUsers.parseCommonArguments(process.argv.slice(2));
   if (options.help) {
     printHelp();
     return;
@@ -96,7 +96,7 @@ async function main() {
   const scanimageVersion = await checkScanImageVersion();
   report(scanimageVersion.ok, "scanimage version", scanimageVersion.ok ? scanimageVersion.version : scanimageVersion.error);
 
-  const usersFile = await checkUsersFile(options.file || DEFAULT_USERS_FILE);
+  const usersFile = await checkUsersFile(options.file || AuthUsers.DEFAULT_USERS_FILE);
   report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);
 
   const tlsKey = await checkReadableFile(config.paths.httpsKey);
