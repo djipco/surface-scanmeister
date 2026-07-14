@@ -55,6 +55,8 @@ export class App {
   static TOP_INFO_LOG_LIMIT = 50;
   static SENSOR_TOUCH_ADDRESS_PATTERN = /^\/sensor\/touch\/\d+$/;
   static SKIP_MAIN_CANVAS_IN_WALL_MODE = true;
+  static STORAGE_NAMESPACE_NORMAL = "normal";
+  static STORAGE_NAMESPACE_GUERILLA = "guerilla";
 
   constructor() {
     this.canvas = document.getElementById('canvas');
@@ -99,6 +101,9 @@ export class App {
     this.wallRowBandContext = this.wallRowBandCanvas.getContext("2d");
     this.wallRowBandImageData = undefined;
     this.wallOutputs = [];
+    this.storageNamespace = this.getLaunchBooleanOverride("guerilla") === true
+      ? App.STORAGE_NAMESPACE_GUERILLA
+      : App.STORAGE_NAMESPACE_NORMAL;
 
     this.reset();
     this.setUpUi();
@@ -1772,7 +1777,7 @@ export class App {
     }
     if (persist) {
       try {
-        localStorage.setItem(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
+        this.writeStorageValue(App.STORAGE_UI_OVERLAY_VISIBLE, isVisible ? "true" : "false");
       } catch (err) {
         // Keep the interface usable if localStorage is unavailable.
       }
@@ -2522,7 +2527,7 @@ export class App {
 
   restorePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     try {
-      const position = JSON.parse(localStorage.getItem(storageKey)) || {};
+      const position = JSON.parse(this.readStorageValue(storageKey)) || {};
 
       requestAnimationFrame(() => {
         const rect = panel.getBoundingClientRect();
@@ -2645,7 +2650,7 @@ export class App {
   savePanelPosition(panel, storageKey = App.STORAGE_PARAMETERS_POSITION) {
     try {
       const rect = panel.getBoundingClientRect();
-      localStorage.setItem(storageKey, JSON.stringify({
+      this.writeStorageValue(storageKey, JSON.stringify({
         left: Math.round(rect.left),
         top: Math.round(rect.top),
         width: Math.round(panel.offsetWidth),
@@ -2861,9 +2866,24 @@ export class App {
     return Math.min(step.length - decimalIndex - 1, 1);
   }
 
+  storageKey(storageKey) {
+    return storageKey.replace(/^scanmeister\./, `scanmeister.${this.storageNamespace}.`);
+  }
+
+  readStorageValue(storageKey) {
+    const value = localStorage.getItem(this.storageKey(storageKey));
+    if (value !== null || this.storageNamespace !== App.STORAGE_NAMESPACE_NORMAL) return value;
+
+    return localStorage.getItem(storageKey);
+  }
+
+  writeStorageValue(storageKey, value) {
+    localStorage.setItem(this.storageKey(storageKey), value);
+  }
+
   restoreSelectValue(select, storageKey) {
     try {
-      const value = localStorage.getItem(storageKey);
+      const value = this.readStorageValue(storageKey);
       if (!value) return;
 
       const hasOption = Array.from(select.options).some(option => option.value === value);
@@ -2875,14 +2895,14 @@ export class App {
 
   restoreNumericValue(input, storageKey) {
     try {
-      const value = localStorage.getItem(storageKey);
+      const value = this.readStorageValue(storageKey);
       if (value === null) return;
 
       const parsedValue = parseFloat(value);
       if (isNaN(parsedValue)) return;
 
       input.value = this.clampInputValue(input, parsedValue);
-      localStorage.setItem(storageKey, input.value);
+      this.writeStorageValue(storageKey, input.value);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -2890,10 +2910,10 @@ export class App {
 
   restoreWallGap() {
     try {
-      const value = localStorage.getItem(App.STORAGE_WALL_GAP);
+      const value = this.readStorageValue(App.STORAGE_WALL_GAP);
       const parsedValue = value === null ? parseFloat(App.DEFAULT_WALL_GAP) : parseFloat(value);
       this.ui.wallGap.value = this.clampWallGapValue(isNaN(parsedValue) ? 0 : parsedValue);
-      localStorage.setItem(App.STORAGE_WALL_GAP, this.ui.wallGap.value);
+      this.writeStorageValue(App.STORAGE_WALL_GAP, this.ui.wallGap.value);
     } catch (err) {
       this.ui.wallGap.value = App.DEFAULT_WALL_GAP;
       // Keep the interface usable if localStorage is unavailable.
@@ -2902,9 +2922,9 @@ export class App {
 
   restoreTextValue(input, storageKey, defaultValue = "") {
     try {
-      const value = localStorage.getItem(storageKey);
+      const value = this.readStorageValue(storageKey);
       input.value = value || defaultValue;
-      localStorage.setItem(storageKey, input.value);
+      this.writeStorageValue(storageKey, input.value);
     } catch (err) {
       if (!input.value) input.value = defaultValue;
       // Keep the interface usable if localStorage is unavailable.
@@ -2913,7 +2933,7 @@ export class App {
 
   saveControlValue(input, storageKey) {
     try {
-      localStorage.setItem(storageKey, input.value);
+      this.writeStorageValue(storageKey, input.value);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -2921,7 +2941,7 @@ export class App {
 
   saveTextValue(input, storageKey, defaultValue = "") {
     try {
-      localStorage.setItem(storageKey, input.value.trim() || defaultValue);
+      this.writeStorageValue(storageKey, input.value.trim() || defaultValue);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -2936,7 +2956,7 @@ export class App {
         ? this.clampInputValue(input, value)
         : this.roundInputValue(input, value);
       if (options.normalize) input.value = storedValue;
-      localStorage.setItem(storageKey, storedValue);
+      this.writeStorageValue(storageKey, storedValue);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -2947,7 +2967,7 @@ export class App {
       const value = parseFloat(this.ui.wallGap.value);
       if (isNaN(value)) return;
 
-      localStorage.setItem(App.STORAGE_WALL_GAP, String(this.clampWallGapValue(value)));
+      this.writeStorageValue(App.STORAGE_WALL_GAP, String(this.clampWallGapValue(value)));
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -2955,7 +2975,7 @@ export class App {
 
   restoreCheckboxValue(input, storageKey, defaultValue = false) {
     try {
-      const value = localStorage.getItem(storageKey);
+      const value = this.readStorageValue(storageKey);
       input.checked = value === null ? defaultValue : value === "true";
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
@@ -2964,15 +2984,15 @@ export class App {
 
   restoreDrawMode() {
     try {
-      const value = localStorage.getItem(App.STORAGE_DRAW_MODE);
+      const value = this.readStorageValue(App.STORAGE_DRAW_MODE);
       if (value === "clear" || value === "overlay") {
         this.ui.drawMode.value = value;
         return;
       }
 
-      const oldValue = localStorage.getItem(App.STORAGE_CLEAR_CANVAS);
+      const oldValue = this.readStorageValue(App.STORAGE_CLEAR_CANVAS);
       this.ui.drawMode.value = oldValue === "false" ? "overlay" : "clear";
-      localStorage.setItem(App.STORAGE_DRAW_MODE, this.ui.drawMode.value);
+      this.writeStorageValue(App.STORAGE_DRAW_MODE, this.ui.drawMode.value);
     } catch (err) {
       this.ui.drawMode.value = "clear";
       // Keep the interface usable if localStorage is unavailable.
@@ -2981,9 +3001,9 @@ export class App {
 
   restoreRenderMode() {
     try {
-      const value = localStorage.getItem(App.STORAGE_RENDER_MODE);
+      const value = this.readStorageValue(App.STORAGE_RENDER_MODE);
       this.ui.renderMode.value = value === "speed" || value === "smooth" ? "speed" : "live";
-      localStorage.setItem(App.STORAGE_RENDER_MODE, this.ui.renderMode.value);
+      this.writeStorageValue(App.STORAGE_RENDER_MODE, this.ui.renderMode.value);
     } catch (err) {
       this.ui.renderMode.value = "live";
       // Keep the interface usable if localStorage is unavailable.
@@ -2992,13 +3012,13 @@ export class App {
 
   restoreDisplayLayout() {
     try {
-      const value = localStorage.getItem(App.STORAGE_DISPLAY_LAYOUT);
+      const value = this.readStorageValue(App.STORAGE_DISPLAY_LAYOUT);
       if (value === "wall-4-horizontal" || value === "wall-8-horizontal") {
         this.ui.displayLayout.value = value;
       } else {
         this.ui.displayLayout.value = "single";
       }
-      localStorage.setItem(App.STORAGE_DISPLAY_LAYOUT, this.ui.displayLayout.value);
+      this.writeStorageValue(App.STORAGE_DISPLAY_LAYOUT, this.ui.displayLayout.value);
     } catch (err) {
       this.ui.displayLayout.value = "single";
       // Keep the interface usable if localStorage is unavailable.
@@ -3008,9 +3028,9 @@ export class App {
 
   restoreDirectionMode() {
     try {
-      const value = localStorage.getItem(App.STORAGE_DIRECTION_MODE);
+      const value = this.readStorageValue(App.STORAGE_DIRECTION_MODE);
       this.ui.directionMode.value = value === "rotated" ? "rotated" : "normal";
-      localStorage.setItem(App.STORAGE_DIRECTION_MODE, this.ui.directionMode.value);
+      this.writeStorageValue(App.STORAGE_DIRECTION_MODE, this.ui.directionMode.value);
     } catch (err) {
       this.ui.directionMode.value = "normal";
       // Keep the interface usable if localStorage is unavailable.
@@ -3019,9 +3039,9 @@ export class App {
 
   restoreRevealMode() {
     try {
-      const value = localStorage.getItem(App.STORAGE_REVEAL_MODE);
+      const value = this.readStorageValue(App.STORAGE_REVEAL_MODE);
       this.ui.revealMode.value = this.isValidRevealMode(value) ? value : "immediate";
-      localStorage.setItem(App.STORAGE_REVEAL_MODE, this.ui.revealMode.value);
+      this.writeStorageValue(App.STORAGE_REVEAL_MODE, this.ui.revealMode.value);
     } catch (err) {
       this.ui.revealMode.value = "immediate";
       // Keep the interface usable if localStorage is unavailable.
@@ -3034,7 +3054,7 @@ export class App {
 
   saveCheckboxValue(input, storageKey) {
     try {
-      localStorage.setItem(storageKey, input.checked ? "true" : "false");
+      this.writeStorageValue(storageKey, input.checked ? "true" : "false");
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -3048,7 +3068,7 @@ export class App {
     }
 
     try {
-      const storedValue = localStorage.getItem(App.STORAGE_UI_OVERLAY_VISIBLE);
+      const storedValue = this.readStorageValue(App.STORAGE_UI_OVERLAY_VISIBLE);
       if (storedValue !== null) this.setUiOverlayVisible(storedValue === "true");
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
@@ -3077,7 +3097,7 @@ export class App {
     this.setGuerillaRotation(rotation);
 
     try {
-      localStorage.setItem(App.STORAGE_GUERILLA_ROTATION, String(rotation));
+      this.writeStorageValue(App.STORAGE_GUERILLA_ROTATION, String(rotation));
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -3085,7 +3105,7 @@ export class App {
 
   restoreGuerillaRotation() {
     try {
-      this.setGuerillaRotation(parseInt(localStorage.getItem(App.STORAGE_GUERILLA_ROTATION), 10) || 0);
+      this.setGuerillaRotation(parseInt(this.readStorageValue(App.STORAGE_GUERILLA_ROTATION), 10) || 0);
     } catch (err) {
       this.setGuerillaRotation(0);
       // Keep the interface usable if localStorage is unavailable.
@@ -3114,11 +3134,11 @@ export class App {
 
   restoreScanWidth() {
     try {
-      const width = localStorage.getItem(App.STORAGE_SCAN_WIDTH) ||
+      const width = this.readStorageValue(App.STORAGE_SCAN_WIDTH) ||
         this.ui.width.value ||
         App.DEFAULT_SCAN_WIDTH;
       this.ui.width.value = this.clampScanDimensionValue(this.ui.width, parseFloat(width));
-      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.ui.width.value);
+      this.writeStorageValue(App.STORAGE_SCAN_WIDTH, this.ui.width.value);
     } catch (err) {
       if (!this.ui.width.value) this.ui.width.value = App.DEFAULT_SCAN_WIDTH;
       // Keep the interface usable if localStorage is unavailable.
@@ -3127,7 +3147,7 @@ export class App {
 
   saveScanWidth() {
     try {
-      localStorage.setItem(App.STORAGE_SCAN_WIDTH, this.scanWidth ?? App.DEFAULT_SCAN_WIDTH);
+      this.writeStorageValue(App.STORAGE_SCAN_WIDTH, this.scanWidth ?? App.DEFAULT_SCAN_WIDTH);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
@@ -3135,11 +3155,11 @@ export class App {
 
   restoreScanHeight() {
     try {
-      const height = localStorage.getItem(App.STORAGE_SCAN_HEIGHT) ||
+      const height = this.readStorageValue(App.STORAGE_SCAN_HEIGHT) ||
         this.ui.height.value ||
         App.DEFAULT_SCAN_HEIGHT;
       this.ui.height.value = this.clampScanDimensionValue(this.ui.height, parseFloat(height));
-      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.ui.height.value);
+      this.writeStorageValue(App.STORAGE_SCAN_HEIGHT, this.ui.height.value);
     } catch (err) {
       if (!this.ui.height.value) this.ui.height.value = App.DEFAULT_SCAN_HEIGHT;
       // Keep the interface usable if localStorage is unavailable.
@@ -3148,7 +3168,7 @@ export class App {
 
   saveScanHeight() {
     try {
-      localStorage.setItem(App.STORAGE_SCAN_HEIGHT, this.scanHeight ?? App.DEFAULT_SCAN_HEIGHT);
+      this.writeStorageValue(App.STORAGE_SCAN_HEIGHT, this.scanHeight ?? App.DEFAULT_SCAN_HEIGHT);
     } catch (err) {
       // Keep the interface usable if localStorage is unavailable.
     }
