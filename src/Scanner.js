@@ -91,10 +91,13 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
     const args = this.getScanCommandArgs(config, options);
-    Logger.info(`scanimage command for channel ${this.channel}: ${this.#formatShellCommand("scanimage", args)}`);
+    Logger.info(
+      `${config.scan.command} command for channel ${this.channel}: ` +
+      this.#formatShellCommand(config.scan.command, args)
+    );
 
     this.scanImageSpawner.execute(
-      "scanimage",
+      config.scan.command,
       args,
       {
         detached: false,
@@ -105,7 +108,10 @@ export class Scanner extends EventEmitter {
         closeCallback: this.#onScanImageClose.bind(this)
       }
     );
-    Logger.info(`scanimage started for channel ${this.channel} with PID ${this.scanImageSpawner.pid}.`);
+    Logger.info(
+      `${config.scan.command} started for channel ${this.channel} ` +
+      `with PID ${this.scanImageSpawner.pid}.`
+    );
 
     if (options.pipe) {
       this.scanImageSpawner.pipe(options.pipe, "stdout");
@@ -206,7 +212,7 @@ export class Scanner extends EventEmitter {
 
   async #abort(reason) {
 
-    // Kill 'scanimage' process if running
+    // Kill the scanner command if it is running.
     if (this.scanImageSpawner) {
 
       const durationMs = this.#scanStartedAt ? Date.now() - this.#scanStartedAt : null;
@@ -278,7 +284,7 @@ export class Scanner extends EventEmitter {
 
   #onScanImageClose({code, signal}) {
     Logger.info(
-      `scanimage process for channel ${this.channel} closed ` +
+      `${config.scan.command} process for channel ${this.channel} closed ` +
       `with code ${code ?? "none"} and signal ${signal ?? "none"}.`
     );
   }

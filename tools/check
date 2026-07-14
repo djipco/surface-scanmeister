@@ -4,16 +4,7 @@ import {constants} from "node:fs";
 import process from "node:process";
 
 import {Configuration as config} from "../config/Configuration.js";
-import {
-  checkScannerAccessGroups,
-  checkScanImageCommand,
-  checkScanImageVersion,
-  checkWritableDirectory,
-  formatScannerAccessGroupWarning,
-  formatUserInfo,
-  formatWritableDirectoryError,
-  getCurrentUserInfo
-} from "../src/Permissions.js";
+import {Permissions} from "../src/Permissions.js";
 import {AuthUsers} from "../src/AuthUsers.js";
 
 function printHelp() {
@@ -77,24 +68,24 @@ async function main() {
     printResult(ok, label, details);
   };
 
-  const user = getCurrentUserInfo();
-  printResult(true, "Current user", formatUserInfo(user));
+  const user = Permissions.getCurrentUserInfo();
+  printResult(true, "Current user", Permissions.formatUserInfo(user));
   report(Number(process.versions.node.split(".")[0]) >= 20, "Node version", process.version);
 
-  const logs = checkWritableDirectory("Logs", config.paths.logs);
-  report(logs.ok, "Logs directory writable", logs.ok ? logs.absolutePath : formatWritableDirectoryError(logs));
+  const logs = Permissions.ensureWritableDirectory("Logs", config.paths.logs);
+  report(logs.ok, "Logs directory writable", logs.ok ? logs.absolutePath : Permissions.formatWritableDirectoryError(logs));
 
-  const scans = checkWritableDirectory("Scans", config.paths.scans);
-  report(scans.ok, "Scans directory writable", scans.ok ? scans.absolutePath : formatWritableDirectoryError(scans));
+  const scans = Permissions.ensureWritableDirectory("Scans", config.paths.scans);
+  report(scans.ok, "Scans directory writable", scans.ok ? scans.absolutePath : Permissions.formatWritableDirectoryError(scans));
 
-  const groups = checkScannerAccessGroups();
-  report(groups.ok, "Scanner access groups", groups.ok ? "scanner/lp and plugdev look available" : formatScannerAccessGroupWarning(groups));
+  const groups = Permissions.checkScannerAccessGroups();
+  report(groups.ok, "Scanner access groups", groups.ok ? "scanner/lp and plugdev look available" : Permissions.formatScannerAccessGroupWarning(groups));
 
-  const scanimage = checkScanImageCommand();
-  report(scanimage.ok, "scanimage command", scanimage.ok ? scanimage.executable : "not found in PATH");
+  const scanimage = Permissions.checkScanImageCommand();
+  report(scanimage.ok, `${config.scan.command} command`, scanimage.ok ? scanimage.executable : "not found in PATH");
 
-  const scanimageVersion = await checkScanImageVersion();
-  report(scanimageVersion.ok, "scanimage version", scanimageVersion.ok ? scanimageVersion.version : scanimageVersion.error);
+  const scanimageVersion = await Permissions.checkScanImageVersion();
+  report(scanimageVersion.ok, `${config.scan.command} version`, scanimageVersion.ok ? scanimageVersion.version : scanimageVersion.error);
 
   const usersFile = await checkUsersFile(options.file || AuthUsers.DEFAULT_USERS_FILE);
   report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);

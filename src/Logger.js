@@ -3,7 +3,7 @@ import "winston-daily-rotate-file";
 import {readFile} from 'fs/promises';
 
 import {Configuration as config} from "../config/Configuration.js";
-import {checkWritableDirectory, formatWritableDirectoryError} from "./Permissions.js";
+import {Permissions} from "./Permissions.js";
 
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
@@ -39,7 +39,7 @@ export class Logger {
   }
 
   static #createTransports() {
-    const logDirectoryStatus = checkWritableDirectory("Logs", config.paths.logs);
+    const logDirectoryStatus = Permissions.ensureWritableDirectory("Logs", config.paths.logs);
     const activeTransports = [
       new transports.Console({
         format: format.combine(
@@ -62,7 +62,7 @@ export class Logger {
         })
       );
     } else {
-      console.error(formatWritableDirectoryError(logDirectoryStatus));
+      console.error(Permissions.formatWritableDirectoryError(logDirectoryStatus));
     }
 
     return activeTransports;

@@ -372,7 +372,7 @@ export class Server extends EventEmitter {
     } else if (parsed.command === "preview-command") {
       const args = scanner.getScanCommandArgs(config, parsed);
       response.writeHead(200, {'Content-Type': 'text/plain'});
-      response.end(this.#formatShellCommand("scanimage", args));
+      response.end(this.#formatShellCommand(config.scan.command, args));
       return;
     } else if (scanner.scanning) {
       Logger.warn(

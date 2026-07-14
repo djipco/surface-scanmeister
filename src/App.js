@@ -10,15 +10,7 @@ import {Logger} from "./Logger.js";
 import {Scanner} from './Scanner.js';
 import {Server} from "./Server.js";
 import {Spawner} from "./Spawner.js";
-import {
-  checkScannerAccessGroups,
-  checkScanImageCommand,
-  checkScanImageVersion,
-  checkWritableDirectory,
-  formatScannerAccessGroupWarning,
-  formatUserInfo,
-  formatWritableDirectoryError
-} from "./Permissions.js";
+import {Permissions} from "./Permissions.js";
 import {
   getScannerDescriptors,
   isSupportedScannerDescriptor
@@ -151,41 +143,44 @@ export default class App {
       ["Logs", config.paths.logs],
       ["Scans", config.paths.scans]
     ].forEach(([label, directory]) => {
-      const result = checkWritableDirectory(label, directory);
+      const result = Permissions.ensureWritableDirectory(label, directory);
 
       if (result.ok) {
         Logger.info(`${label} directory is writable: ${result.absolutePath}`);
       } else {
-        Logger.warn(formatWritableDirectoryError(result));
+        Logger.warn(Permissions.formatWritableDirectoryError(result));
       }
     });
   }
 
   async #checkScannerAccessPermissions() {
-    const result = checkScannerAccessGroups();
+    const result = Permissions.checkScannerAccessGroups();
 
-    Logger.info(`Service user: ${formatUserInfo(result.user)}`);
+    Logger.info(`Service user: ${Permissions.formatUserInfo(result.user)}`);
 
     if (!result.ok) {
-      Logger.warn(formatScannerAccessGroupWarning(result));
+      Logger.warn(Permissions.formatScannerAccessGroupWarning(result));
     }
 
-    const scanImageCommand = checkScanImageCommand();
+    const scanImageCommand = Permissions.checkScanImageCommand();
     if (!scanImageCommand.ok) {
-      Logger.warn(`scanimage was not found in PATH for service user ${formatUserInfo(result.user)}.`);
+      Logger.warn(
+        `${config.scan.command} was not found in PATH for service user ` +
+        `${Permissions.formatUserInfo(result.user)}.`
+      );
       return;
     }
 
     try {
-      const scanImage = await checkScanImageVersion();
+      const scanImage = await Permissions.checkScanImageVersion();
 
       if (scanImage.ok) {
-        Logger.info(`scanimage version: ${scanImage.version}`);
+        Logger.info(`${config.scan.command} version: ${scanImage.version}`);
       } else {
-        Logger.warn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
+        Logger.warn(`Could not read ${config.scan.command} version. Error: ${scanImage.error || "none"}.`);
       }
     } catch (error) {
-      Logger.warn(`scanimage version check failed unexpectedly: ${error.message}`);
+      Logger.warn(`${config.scan.command} version check failed unexpectedly: ${error.message}`);
     }
   }
 

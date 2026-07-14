@@ -28,6 +28,7 @@ export const Configuration = {
   },
 
   scan: {
+    command: "scanimage",
     // Above 600dpi, the web client's page can become very memory hungry. For reference, at 1200dpi
     // a large scan can yield a PNM file hundreds of MB in size.
     resolutions: [75, 100, 150, 300, 600, 1200, 2400, 4800],
