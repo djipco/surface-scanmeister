@@ -1026,6 +1026,8 @@ export class App {
 
   setUpUi() {
 
+    this.updateVersionLabels();
+
     this.ui.controlsPanel = document.getElementById("controls-panel");
     this.ui.controlsPanelHeader = document.getElementById("controls-panel-header");
     this.ui.controlsPanelClose = document.getElementById("controls-panel-close");
@@ -1427,6 +1429,20 @@ export class App {
     this.scheduleDisplayFrameMonitor();
     this.scheduleUiAutoHide();
 
+  }
+
+  updateVersionLabels() {
+    fetch(`${this.serverUrl}/about`)
+      .then(response => response.ok ? response.json() : undefined)
+      .then(data => {
+        if (!data?.version) return;
+        document.querySelectorAll("[data-app-version]").forEach(element => {
+          element.innerText = `v${data.version}`;
+        });
+      })
+      .catch(() => {
+        // Keep the interface usable if the version endpoint is temporarily unavailable.
+      });
   }
 
   connectEventStream() {
@@ -3239,6 +3255,37 @@ export class App {
     this.updateScanButtonState();
   }
 
+  async failActiveScan(message) {
+    const reader = this.reader;
+    this.reader = undefined;
+
+    if (this.scanAbortController) this.scanAbortController.abort();
+    if (reader) {
+      try {
+        await reader.cancel();
+      } catch {
+        // The reader can already be closed by the aborted fetch.
+      }
+    }
+
+    if (this.parseRequest !== undefined) {
+      cancelAnimationFrame(this.parseRequest);
+      this.parseRequest = undefined;
+    }
+
+    this.parseQueue = [];
+    this.rgbRemainder = new Uint8Array();
+    this.response = undefined;
+    this.scanAbortController = undefined;
+    this.streamComplete = true;
+    this.scanFinalized = true;
+    this.state = App.STATE_STANDBY;
+    this.ui.channelInput.disabled = false;
+    this.cancelCanvasClearFade();
+    this.setCommandPreviewText(message, true);
+    this.updateScanButtonState();
+  }
+
   async getImage() {
     if (!this.isChannelValid || this.channelOutOfBounds) {
       this.updateCommandPreview();
@@ -3327,11 +3374,9 @@ export class App {
           this.format = tokens[0];
           this.width = parseInt(tokens[1]);
           this.height = parseInt(tokens[2]);
-          console.log(this.width, this.height);
 
           if (this.format !== 'P6') {
-            console.error('Unsupported PNM format:', this.format);
-            this.cancelCanvasClearFade();
+            await this.failActiveScan(`Unsupported PNM format: ${this.format || "unknown"}`);
             return;
           }
 

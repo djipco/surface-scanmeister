@@ -22,6 +22,7 @@ export class Server extends EventEmitter {
   #eventClients = new Map();        // Long-lived SSE clients
   #express = undefined;             // Express app, for API and static files
   #httpsServer = undefined;
+  #packageInfo = {};
   #redirectServer = undefined;
   #remoteAuth = new RemoteAuth();
   #scanStorage = new ScanStorage();
@@ -61,6 +62,11 @@ export class Server extends EventEmitter {
 
     if (parsed.command === "events") {
       this.#startEventStream(request, response);
+      return;
+    }
+
+    if (parsed.command === "about") {
+      this.#handleAbout(response);
       return;
     }
 
@@ -123,6 +129,15 @@ export class Server extends EventEmitter {
         systemName: scanner.systemName,
         scanning: scanner.scanning
       }))
+    }));
+  }
+
+  #handleAbout(response) {
+    response.writeHead(200, {'Content-Type': 'application/json'});
+    response.end(JSON.stringify({
+      name: this.#packageInfo.name,
+      title: this.#packageInfo.title,
+      version: this.#packageInfo.version
     }));
   }
 
@@ -406,6 +421,10 @@ export class Server extends EventEmitter {
     });
   }
 
+  async #loadPackageInfo() {
+    this.#packageInfo = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
+  }
+
   async start(scanners) {
 
     if (!Array.isArray(scanners)) {
@@ -414,6 +433,7 @@ export class Server extends EventEmitter {
     }
 
     this.#scanners = scanners;
+    await this.#loadPackageInfo();
 
     // Set up server for API routes and static web client files.
     await this.#remoteAuth.refresh();

@@ -8,7 +8,10 @@ export class ApiRequest {
     const url = new URL(request.url, `http://${request.headers.host}`);
     const segments = url.pathname.split('/').slice(1);
 
-    if (segments[0] === "events" && segments.length === 1) {
+    if (segments[0] === "about" && segments.length === 1) {
+      ApiRequest.#requireMethod(request, "GET");
+      parsed.command = "about";
+    } else if (segments[0] === "events" && segments.length === 1) {
       ApiRequest.#requireMethod(request, "GET");
       parsed.command = "events";
     } else if (segments[0] === "scanners" && segments.length === 1) {
