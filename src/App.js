@@ -7,9 +7,9 @@ import { usb } from 'usb';
 // Import project classes
 import {Configuration as config} from "../config/Configuration.js";
 import {Logger} from "./Logger.js";
+import {ProcessRunner} from "./ProcessRunner.js";
 import {Scanner} from './Scanner.js';
 import {Server} from "./Server.js";
-import {Spawner} from "./Spawner.js";
 import {Permissions} from "./Permissions.js";
 import {ScannerDiscovery} from "./ScannerDiscovery.js";
 
@@ -432,8 +432,8 @@ export default class App {
 
       // Call quit without actually exiting the Node.js process (reboot will force this)
       await this.quit(0, false);
-      const spawner = new Spawner();
-      spawner.execute("reboot");
+      const processRunner = new ProcessRunner();
+      processRunner.execute("reboot");
 
     }
 

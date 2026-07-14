@@ -4,8 +4,8 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 // Project classes
 import {Configuration as config} from "../config/Configuration.js";
 import {Logger} from "./Logger.js";
+import {ProcessRunner} from "./ProcessRunner.js";
 import {ShellCommand} from "./ShellCommand.js";
-import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
@@ -19,7 +19,7 @@ export class Scanner extends EventEmitter {
   #systemName;          // System name (e.g. genesys:libusb:001:071)
   #abortPromise = undefined;
   #scanStartedAt = null;
-  #scanImageSpawner = undefined;
+  #scanImageProcess = undefined;
 
   constructor(osc, descriptor = {}) {
 
@@ -86,14 +86,14 @@ export class Scanner extends EventEmitter {
       `forceCalibration=${options.forceCalibration === true}`
     );
     // Initiate scanning
-    this.#scanImageSpawner = new Spawner();
+    this.#scanImageProcess = new ProcessRunner();
     const args = this.getScanCommandArgs(options);
     Logger.info(
       `${config.scan.command} command for channel ${this.channel}: ` +
       ShellCommand.formatForDisplay(config.scan.command, args)
     );
 
-    this.#scanImageSpawner.execute(
+    this.#scanImageProcess.execute(
       config.scan.command,
       args,
       {
@@ -107,11 +107,11 @@ export class Scanner extends EventEmitter {
     );
     Logger.info(
       `${config.scan.command} started for channel ${this.channel} ` +
-      `with PID ${this.#scanImageSpawner.pid}.`
+      `with PID ${this.#scanImageProcess.pid}.`
     );
 
     if (options.pipe) {
-      this.#scanImageSpawner.pipe(options.pipe, "stdout");
+      this.#scanImageProcess.pipe(options.pipe, "stdout");
     }
 
   }
@@ -203,13 +203,13 @@ export class Scanner extends EventEmitter {
   async #abort(reason) {
 
     // Kill the scanner command if it is running.
-    if (this.#scanImageSpawner) {
+    if (this.#scanImageProcess) {
 
       const durationMs = this.#getScanDurationMs();
       Logger.info(`Stopping scanner on channel ${this.channel}...`);
 
-      await this.#scanImageSpawner.destroy();
-      this.#scanImageSpawner = undefined;
+      await this.#scanImageProcess.destroy();
+      this.#scanImageProcess = undefined;
       Logger.info(
         `Scan ${reason} on channel ${this.channel}` +
         (durationMs === null ? "" : ` after ${this.#formatDuration(durationMs)}`) +
@@ -252,7 +252,7 @@ export class Scanner extends EventEmitter {
 
   #onScanImageEnd() {
     const durationMs = this.#getScanDurationMs();
-    this.#scanImageSpawner = undefined;
+    this.#scanImageProcess = undefined;
     this.#setScanning(false);
     this.emit("scancompleted", {target: this});
     Logger.info(

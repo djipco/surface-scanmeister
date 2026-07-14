@@ -59,6 +59,10 @@ export const Configuration = {
     systemStatusInterval: 1000
   },
 
+  process: {
+    killTimeout: 10000
+  },
+
   logging: {
     level: "debug",
     fileLevel: "debug",
