@@ -75,7 +75,7 @@ export default class App {
     // Set up OSC. This must be done before updating the scanner list because scanners need a
     // reference to the OSC object to send status.
     try {
-      await this.setupOsc()
+      await this.#setupOsc()
     } catch (e) {
       logError(e.message);
       await this.quit(1);
@@ -94,11 +94,14 @@ export default class App {
 
     // Start HTTPS server and call its start() method passing a reference to the list of available
     // scanners.
-    await this.#startHtttpServer();
+    await this.#startHttpServer();
 
     // Start sending OSC status messages (on a regular interval)
     this.#callbacks.onStatusInterval = this.#onStatusInterval.bind(this);
-    this.#intervals.status = setInterval(this.#callbacks.onStatusInterval, 1000);
+    this.#intervals.status = setInterval(
+      this.#callbacks.onStatusInterval,
+      config.diagnostics.systemStatusInterval
+    );
 
     // Add callbacks for USB hotplug events
     this.#callbacks.onUsbAttach = this.#onUsbAttach.bind(this);
@@ -112,7 +115,7 @@ export default class App {
 
   }
 
-  async #startHtttpServer() {
+  async #startHttpServer() {
 
     this.#server = new Server();
 
@@ -177,16 +180,22 @@ export default class App {
   }
 
   #onStatusInterval() {
-    this.sendOscMessage("/system/status", [{type: "i", value: 1}]);
+    this.#sendOscMessage("/system/status", [{type: "i", value: 1}]);
   }
 
   async #updateScanners() {
+    await this.#destroyScanners();
+    const scannerDescriptors = this.#getScannerDescriptors();
+    this.#createScannersFromDescriptors(scannerDescriptors);
+    this.#logScanners();
+  }
 
-    // Stop in progress scans and destroy any previous scanner objects
-    this.#scanners.forEach(async scanner => await scanner.destroy());
-    this.#scanners.length = 0; // me must not destroy the reference
+  async #destroyScanners() {
+    await Promise.all(this.#scanners.map(scanner => scanner.destroy()));
+    this.#scanners.length = 0; // we must not destroy the reference
+  }
 
-    // Retrieve list of objects describing scanner ports and device numbers
+  #getScannerDescriptors() {
     const {scanners: scannerDescriptors, mapping} = getScannerDescriptors();
 
     if (mapping) {
@@ -195,14 +204,18 @@ export default class App {
       logInfo("Assigning channels according to port hierarchy (no mapping used)");
     }
 
-    // Create new scanner objects
+    return scannerDescriptors;
+  }
+
+  #createScannersFromDescriptors(scannerDescriptors) {
     scannerDescriptors.forEach(descriptor => {
       const scanner = new Scanner(this.#oscPort, descriptor);
       scanner.addListener("oscmessage", this.#onScannerOscMessage.bind(this));
       this.#scanners.push(scanner);
     });
+  }
 
-    // Report number of scanners found
+  #logScanners() {
     if (this.scanners.length === 0) {
       logWarn("Updating scanners list... No scanners found.");
     } else if (this.scanners.length === 1) {
@@ -260,7 +273,7 @@ export default class App {
     App.EXIT_SIGNALS.forEach(s => process.off(s, this.#callbacks.onExitRequest));
 
     // Destroy scanners and remove callbacks
-    this.scanners.forEach(async device => await device.destroy());
+    await this.#destroyScanners();
     this.#removeOscCallbacks();
 
     // Send final notification and close OSC
@@ -270,7 +283,7 @@ export default class App {
       this.#intervals.status = undefined;
       this.#callbacks.onStatusInterval = undefined;
 
-      this.sendOscMessage("/system/status", [{type: "i", value: 0}]);
+      this.#sendOscMessage("/system/status", [{type: "i", value: 0}]);
       await new Promise(resolve => setTimeout(resolve, 25));
       this.#oscPort.close();
       this.#oscPort = undefined;
@@ -305,7 +318,7 @@ export default class App {
     return this.#scanners;
   }
 
-  async setupOsc() {
+  async #setupOsc() {
 
     // Instantiate OSC UDP port
     this.#oscPort = new osc.UDPPort({
@@ -348,7 +361,7 @@ export default class App {
 
   }
 
-  sendOscMessage(address, args = []) {
+  #sendOscMessage(address, args = []) {
     if (!this.#oscPort || !this.#oscPort.socket) {
       logWarn("Impossible to send OSC, no socket available.")
       return;

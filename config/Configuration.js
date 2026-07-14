@@ -53,7 +53,8 @@ export const Configuration = {
   },
 
   diagnostics: {
-    scanImageVersionTimeout: 5000
+    scanImageVersionTimeout: 5000,
+    systemStatusInterval: 1000
   },
 
   devices: {
