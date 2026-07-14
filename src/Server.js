@@ -11,7 +11,7 @@ import express from 'express';
 import {logError, logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {AuthUsers} from "./AuthUsers.js";
-import Client from "./Client.js";
+import {Client} from "./Client.js";
 
 export class Server extends EventEmitter {
 

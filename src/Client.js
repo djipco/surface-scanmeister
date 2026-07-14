@@ -1,6 +1,6 @@
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 
-export default class Client extends EventEmitter {
+export class Client extends EventEmitter {
 
   #callbacks = {};
 
