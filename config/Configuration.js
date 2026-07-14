@@ -57,6 +57,16 @@ export const Configuration = {
     systemStatusInterval: 1000
   },
 
+  logging: {
+    level: "debug",
+    fileLevel: "debug",
+    datePattern: "YYYY-MM-DD",
+    timestampFormat: "YYYY-MM-DD HH:mm:ss.SSS",
+    maxSize: "20m",
+    maxFiles: "60d",
+    zippedArchive: true
+  },
+
   devices: {
 
     // Whether to use a custom mapping for the channels assigned to each scanner. The value can be

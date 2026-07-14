@@ -3,7 +3,7 @@ import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.m
 
 // Project classes
 import {Configuration as config} from "../config/Configuration.js";
-import {logInfo, logError, logWarn} from "./Logger.js"
+import {Logger} from "./Logger.js";
 import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
@@ -72,15 +72,15 @@ export class Scanner extends EventEmitter {
 
     // Ignore if already scanning
     if (this.scanning) {
-      logWarn(`Already scanning with device ${this.nameAndPort}. Ignoring scan request.`)
+      Logger.warn(`Already scanning with device ${this.nameAndPort}. Ignoring scan request.`)
       return;
     }
 
     // Start scan
     this.#scanning = true;
     this.#scanStartedAt = Date.now();
-    logInfo(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
-    logInfo(
+    Logger.info(`Initiating scan on channel ${this.channel} with ${this.nameAndPort}...`);
+    Logger.info(
       `Scan parameters for channel ${this.channel}: ` +
       `resolution=${options.resolution}, width=${options.width}, height=${options.height}, ` +
       `brightness=${options.brightness}, contrast=${options.contrast}, ` +
@@ -91,7 +91,7 @@ export class Scanner extends EventEmitter {
     // Initiate scanning
     this.scanImageSpawner = new Spawner();
     const args = this.getScanCommandArgs(config, options);
-    logInfo(`scanimage command for channel ${this.channel}: ${this.#formatShellCommand("scanimage", args)}`);
+    Logger.info(`scanimage command for channel ${this.channel}: ${this.#formatShellCommand("scanimage", args)}`);
 
     this.scanImageSpawner.execute(
       "scanimage",
@@ -105,7 +105,7 @@ export class Scanner extends EventEmitter {
         closeCallback: this.#onScanImageClose.bind(this)
       }
     );
-    logInfo(`scanimage started for channel ${this.channel} with PID ${this.scanImageSpawner.pid}.`);
+    Logger.info(`scanimage started for channel ${this.channel} with PID ${this.scanImageSpawner.pid}.`);
 
     if (options.pipe) {
       this.scanImageSpawner.pipe(options.pipe, "stdout");
@@ -193,10 +193,10 @@ export class Scanner extends EventEmitter {
 
   }
 
-  async abort() {
+  async abort(reason = "cancelled") {
     if (this.#abortPromise) return this.#abortPromise;
 
-    this.#abortPromise = this.#abort();
+    this.#abortPromise = this.#abort(reason);
     try {
       await this.#abortPromise;
     } finally {
@@ -204,15 +204,21 @@ export class Scanner extends EventEmitter {
     }
   }
 
-  async #abort() {
+  async #abort(reason) {
 
     // Kill 'scanimage' process if running
     if (this.scanImageSpawner) {
 
-      logInfo(`Stopping scanner on channel ${this.channel}...`);
+      const durationMs = this.#scanStartedAt ? Date.now() - this.#scanStartedAt : null;
+      Logger.info(`Stopping scanner on channel ${this.channel}...`);
 
       await this.scanImageSpawner.destroy();
       this.scanImageSpawner = undefined;
+      Logger.info(
+        `Scan ${reason} on channel ${this.channel}` +
+        (durationMs === null ? "" : ` after ${this.#formatDuration(durationMs)}`) +
+        "."
+      );
 
       // Leave some time for the scanner to go back to 'ready' position before marking it as
       // available.
@@ -229,27 +235,27 @@ export class Scanner extends EventEmitter {
   }
 
   async destroy() {
-    await this.abort();
+    await this.abort("destroyed");
     this.removeListener();
   }
 
   async #onScanImageStderr(data) {
 
     if (data.includes("Device busy")) {
-      logWarn(`Device busy, cannot open: ${this.description}`);
+      Logger.warn(`Device busy, cannot open: ${this.description}`);
     } else {
-      logError(`STDERR with ${this.description}: ${data}.`);
+      Logger.error(`STDERR with ${this.description}: ${data}.`);
     }
 
     this.emit("error", data);
-    await this.abort();
+    await this.abort("failed");
 
   }
 
   #onScanImageError(error) {
-    logWarn(error);
+    Logger.warn(error);
     this.emit("warning", error);
-    this.abort();
+    this.abort("failed");
   }
 
   #onScanImageEnd() {
@@ -259,15 +265,19 @@ export class Scanner extends EventEmitter {
     this.scanImageSpawner = undefined;
     this.#sendOscMessage(`/device/${this.channel}/scanning`, [{type: "i", value: 0}]);
     this.emit("scancompleted", {target: this});
-    logInfo(
+    Logger.info(
       `Scan completed with ${this.nameAndPort}` +
-      (durationMs === null ? "" : ` in ${(durationMs / 1000).toFixed(1)}s`) +
+      (durationMs === null ? "" : ` in ${this.#formatDuration(durationMs)}`) +
       "."
     );
   }
 
+  #formatDuration(durationMs) {
+    return `${(durationMs / 1000).toFixed(1)}s`;
+  }
+
   #onScanImageClose({code, signal}) {
-    logInfo(
+    Logger.info(
       `scanimage process for channel ${this.channel} closed ` +
       `with code ${code ?? "none"} and signal ${signal ?? "none"}.`
     );
@@ -275,7 +285,7 @@ export class Scanner extends EventEmitter {
 
   #sendOscMessage(address, args = []) {
     if (!this.#osc || !this.#osc.socket) {
-      logWarn("Impossible to send OSC, no socket available.")
+      Logger.warn("Impossible to send OSC, no socket available.")
       return;
     }
     this.#osc.send({address: address, args: args});

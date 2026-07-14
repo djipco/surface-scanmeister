@@ -6,7 +6,7 @@ import { usb } from 'usb';
 
 // Import project classes
 import {Configuration as config} from "../config/Configuration.js";
-import {logInfo, logError, logWarn} from "./Logger.js"
+import {Logger} from "./Logger.js";
 import {Scanner} from './Scanner.js';
 import {Server} from "./Server.js";
 import {Spawner} from "./Spawner.js";
@@ -56,15 +56,16 @@ export default class App {
     const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 
     // Log start details
-    logInfo(
+    Logger.info(
       `Starting ${pkg.title} v${pkg.version} ` +
       `(runtime: Node ${process.version} on ${process.platform}/${process.arch})...`
     );
     this.#logRuntimeContext();
+    this.#logNetworkConfiguration();
 
     // Check platform
     if (process.platform !== "linux") {
-      logError(`This platform (${process.platform}) is not supported.`);
+      Logger.error(`This platform (${process.platform}) is not supported.`);
       await this.quit(1);
       return;
     }
@@ -77,13 +78,13 @@ export default class App {
     try {
       await this.#setupOsc()
     } catch (e) {
-      logError(e.message);
+      Logger.error(e.message);
       await this.quit(1);
       return;
     }
 
     // Report OSC status (we only report it after the scanners are ready because scanners use OSC)
-    logInfo(
+    Logger.info(
       `OSC ready. Listening on ` +
       config.network.osc_server.address + ":" + config.network.osc_server.port + ", sending to " +
       config.network.osc_client.address  + ":" + config.network.osc_client.port  + "."
@@ -111,7 +112,7 @@ export default class App {
 
     // Quitting by closing the window is not a problem, but it leaves little time for logging
     // information to be written. In that sense, CTRL-C is better.
-    logInfo("Press CTRL-C to properly exit.")
+    Logger.info("Press CTRL-C to properly exit.")
 
   }
 
@@ -127,13 +128,22 @@ export default class App {
   }
 
   async #onHttpServerError(err) {
-    logError(err);
+    Logger.error(err);
     await this.quit(1);
   }
 
   #logRuntimeContext() {
-    logInfo(`Working directory: ${process.cwd()}`);
-    logInfo(`PATH: ${process.env.PATH || "not set"}`);
+    Logger.info(`Working directory: ${process.cwd()}`);
+    Logger.info(`PATH: ${process.env.PATH || "not set"}`);
+  }
+
+  #logNetworkConfiguration() {
+    Logger.info(
+      `Network: HTTPS ${config.network.https_server.address}:${config.network.https_server.port}, ` +
+      `HTTP redirect ${config.network.http_server.address}:${config.network.http_server.port}, ` +
+      `OSC ${config.network.osc_server.address}:${config.network.osc_server.port} -> ` +
+      `${config.network.osc_client.address}:${config.network.osc_client.port}.`
+    );
   }
 
   #checkPathPermissions() {
@@ -144,9 +154,9 @@ export default class App {
       const result = checkWritableDirectory(label, directory);
 
       if (result.ok) {
-        logInfo(`${label} directory is writable: ${result.absolutePath}`);
+        Logger.info(`${label} directory is writable: ${result.absolutePath}`);
       } else {
-        logWarn(formatWritableDirectoryError(result));
+        Logger.warn(formatWritableDirectoryError(result));
       }
     });
   }
@@ -154,15 +164,15 @@ export default class App {
   async #checkScannerAccessPermissions() {
     const result = checkScannerAccessGroups();
 
-    logInfo(`Service user: ${formatUserInfo(result.user)}`);
+    Logger.info(`Service user: ${formatUserInfo(result.user)}`);
 
     if (!result.ok) {
-      logWarn(formatScannerAccessGroupWarning(result));
+      Logger.warn(formatScannerAccessGroupWarning(result));
     }
 
     const scanImageCommand = checkScanImageCommand();
     if (!scanImageCommand.ok) {
-      logWarn(`scanimage was not found in PATH for service user ${formatUserInfo(result.user)}.`);
+      Logger.warn(`scanimage was not found in PATH for service user ${formatUserInfo(result.user)}.`);
       return;
     }
 
@@ -170,12 +180,12 @@ export default class App {
       const scanImage = await checkScanImageVersion();
 
       if (scanImage.ok) {
-        logInfo(`scanimage version: ${scanImage.version}`);
+        Logger.info(`scanimage version: ${scanImage.version}`);
       } else {
-        logWarn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
+        Logger.warn(`Could not read scanimage version. Error: ${scanImage.error || "none"}.`);
       }
     } catch (error) {
-      logWarn(`scanimage version check failed unexpectedly: ${error.message}`);
+      Logger.warn(`scanimage version check failed unexpectedly: ${error.message}`);
     }
   }
 
@@ -199,9 +209,9 @@ export default class App {
     const {scanners: scannerDescriptors, mapping} = getScannerDescriptors();
 
     if (mapping) {
-      logInfo(`Assigning channels according to map '${mapping}'.`);
+      Logger.info(`Assigning channels according to map '${mapping}'.`);
     } else {
-      logInfo("Assigning channels according to port hierarchy (no mapping used)");
+      Logger.info("Assigning channels according to port hierarchy (no mapping used)");
     }
 
     return scannerDescriptors;
@@ -217,16 +227,16 @@ export default class App {
 
   #logScanners() {
     if (this.scanners.length === 0) {
-      logWarn("Updating scanners list... No scanners found.");
+      Logger.warn("Updating scanners list... No scanners found.");
     } else if (this.scanners.length === 1) {
-      logInfo(`Updating scanners list... One scanner detected:`);
+      Logger.info(`Updating scanners list... One scanner detected:`);
     } else {
-      logInfo(`Updating scanners list... ${this.scanners.length} scanners detected:`);
+      Logger.info(`Updating scanners list... ${this.scanners.length} scanners detected:`);
     }
 
     // Log scanner details to console
     this.scanners.forEach(scanner => {
-      logInfo(
+      Logger.info(
         `\tChannel ${scanner.channel.toString().padStart(2, " ")}. ${scanner.description}`,
         true
       );
@@ -238,7 +248,7 @@ export default class App {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
     if (isSupportedScannerDescriptor(descriptor)) {
-      logInfo(
+      Logger.info(
         `Scanner attached to bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`
       );
@@ -251,7 +261,7 @@ export default class App {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
     if (isSupportedScannerDescriptor(descriptor)) {
-      logInfo(
+      Logger.info(
         `Scanner detached from bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`
       );
@@ -262,7 +272,7 @@ export default class App {
 
   async quit(status = 0, exit = true) {
 
-    logInfo("Exiting...");
+    Logger.info("Exiting...");
 
     // Remove USB listeners
     usb.unrefHotplugEvents();
@@ -296,7 +306,7 @@ export default class App {
       this.#server = undefined;
     }
 
-    logInfo(`ScanMeister stopped with status ${status}.`);
+    Logger.info(`ScanMeister stopped with status ${status}.`);
 
     // Exit
     if (exit) {
@@ -305,7 +315,7 @@ export default class App {
       setTimeout(() => process.exit(status), 100);
 
       setTimeout(() => {
-        logError("Application did not terminate properly, forcefully quitting.");
+        Logger.error("Application did not terminate properly, forcefully quitting.");
         // Wait a little for log files to be properly written
         setTimeout(() => process.exit(1), 100);
       }, 10000);
@@ -334,11 +344,11 @@ export default class App {
     this.#callbacks.onInitialOscError = async err => {
 
       if (err.code === "EADDRINUSE") {
-        logError(
+        Logger.error(
           `Unable to start OSC server. Network address already in use (${err.address}:${err.port})`
         );
       } else {
-        logError(`Unable to start OSC server (${err})`);
+        Logger.error(`Unable to start OSC server (${err})`);
       }
 
       await this.quit(1);
@@ -363,7 +373,7 @@ export default class App {
 
   #sendOscMessage(address, args = []) {
     if (!this.#oscPort || !this.#oscPort.socket) {
-      logWarn("Impossible to send OSC, no socket available.")
+      Logger.warn("Impossible to send OSC, no socket available.")
       return;
     }
     this.#oscPort.send({address: address, args: args});
@@ -375,12 +385,12 @@ export default class App {
   }
 
   async #onExitRequest(signal) {
-    logInfo(`Termination signal received: ${signal}`);
+    Logger.info(`Termination signal received: ${signal}`);
     await this.quit();
   }
 
   async #onOscError(error) {
-    logWarn(error);
+    Logger.warn(error);
   }
 
   #removeOscCallbacks() {
@@ -417,14 +427,14 @@ export default class App {
     // Filter out invalid commands
     const command = segments[0].toLowerCase()
     if (!App.OSC_COMMANDS.includes(command)) {
-      logWarn(`Invalid OSC command received (${command}).`)
+      Logger.warn(`Invalid OSC command received (${command}).`)
       return;
     }
 
     // Execute command
     if (command === "reboot") {
 
-      logInfo("Reboot requested by remote...");
+      Logger.info("Reboot requested by remote...");
 
       // Call quit without actually exiting the Node.js process (reboot will force this)
       await this.quit(0, false);

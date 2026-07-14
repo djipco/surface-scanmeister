@@ -8,7 +8,7 @@ import {mkdir, readFile, readdir, stat, writeFile} from 'node:fs/promises';
 import express from 'express';
 
 // Application imports
-import {logError, logInfo, logWarn} from "./Logger.js";
+import {Logger} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {AuthUsers} from "./AuthUsers.js";
 import {Client} from "./Client.js";
@@ -147,7 +147,7 @@ export class Server extends EventEmitter {
       authUsersStat = await stat(authUsersPath);
     } catch (err) {
       if (this.#remoteAuthUsers.size > 0 || this.#remoteAuthUsersMtimeMs !== undefined) {
-        logWarn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
+        Logger.warn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
       }
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
@@ -163,14 +163,14 @@ export class Server extends EventEmitter {
     try {
       entries = await new AuthUsers(authUsersPath).readEntries();
     } catch (err) {
-      logWarn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
+      Logger.warn(`Remote HTTPS access is disabled because ${authUsersPath} could not be read.`);
       this.#remoteAuthUsers.clear();
       this.#remoteAuthUsersMtimeMs = undefined;
       return;
     }
 
     entries.invalidEntries.forEach(entry => {
-      logWarn(`Ignoring invalid remote auth entry at ${authUsersPath}:${entry.lineNumber}.`);
+      Logger.warn(`Ignoring invalid remote auth entry at ${authUsersPath}:${entry.lineNumber}.`);
     });
 
     const users = new Map();
@@ -181,7 +181,7 @@ export class Server extends EventEmitter {
     this.#remoteAuthUsers = users;
     this.#remoteAuthUsersMtimeMs = mtimeMs;
     this.#remoteAuthConfigurationWarningShown = false;
-    logInfo(`Loaded ${users.size} remote HTTPS user(s) from ${authUsersPath}.`);
+    Logger.info(`Loaded ${users.size} remote HTTPS user(s) from ${authUsersPath}.`);
   }
 
   #verifyPassword(username, password) {
@@ -212,14 +212,14 @@ export class Server extends EventEmitter {
     try {
       await this.#refreshRemoteAuthUsers();
     } catch (err) {
-      logWarn(`Could not refresh remote HTTPS users. Error: ${err}`);
+      Logger.warn(`Could not refresh remote HTTPS users. Error: ${err}`);
       response.status(403).send("Remote access is not configured");
       return;
     }
 
     if (!this.#hasRemoteAuthConfiguration()) {
       if (!this.#remoteAuthConfigurationWarningShown) {
-        logWarn(
+        Logger.warn(
           "Remote HTTPS access is disabled because ScanMeister authentication is not configured."
         );
         this.#remoteAuthConfigurationWarningShown = true;
@@ -274,7 +274,7 @@ export class Server extends EventEmitter {
     try {
       parsed = this.#parseApiRequest(request);
     } catch (err) {
-      logInfo(
+      Logger.info(
         `Invalid request from ${request.socket.remoteAddress}:${request.socket.remotePort}: ` +
         err +
         ` Closing connection.`
@@ -308,7 +308,7 @@ export class Server extends EventEmitter {
         response.writeHead(200, {'Content-Type': 'application/json'});
         response.end(JSON.stringify({scans: await this.#listSavedScans()}));
       } catch (err) {
-        logWarn(`Could not list scans. Error: ${err}`);
+        Logger.warn(`Could not list scans. Error: ${err}`);
         response.writeHead(500, {'Content-Type': 'text/plain'});
         response.end('Could not list scans');
       }
@@ -324,7 +324,7 @@ export class Server extends EventEmitter {
         });
         response.end(image);
       } catch (err) {
-        logWarn(`Could not read scan ${parsed.filename}. Error: ${err}`);
+        Logger.warn(`Could not read scan ${parsed.filename}. Error: ${err}`);
         response.writeHead(404, {'Content-Type': 'text/plain'});
         response.end('Scan not found');
       }
@@ -337,13 +337,13 @@ export class Server extends EventEmitter {
         await mkdir(config.paths.scans, {recursive: true});
         const filename = parsed.filename.endsWith('.png') ? parsed.filename : parsed.filename + '.png';
         const filePath = path.join(config.paths.scans, filename);
-        logInfo(`Saving scan (${body.length} bytes) to ${filePath}.`);
+        Logger.info(`Saving scan (${body.length} bytes) to ${filePath}.`);
         await writeFile(filePath, body);
-        logInfo(`Saved scan to ${filePath}.`);
+        Logger.info(`Saved scan to ${filePath}.`);
         response.writeHead(200, {'Content-Type': 'application/json'});
         response.end(JSON.stringify({filename, path: filePath}));
       } catch (err) {
-        logWarn(`Could not save scan as ${parsed.filename}. Error: ${err}`);
+        Logger.warn(`Could not save scan as ${parsed.filename}. Error: ${err}`);
         response.writeHead(500, {'Content-Type': 'text/plain'});
         response.end('Could not save scan');
       }
@@ -352,7 +352,7 @@ export class Server extends EventEmitter {
 
     const scanner = this.getScannerByChannel(parsed.channel);
     if (!scanner) {
-      logWarn(
+      Logger.warn(
         `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
         `was canceled because channel ${parsed.channel} is out of bounds.`
       );
@@ -361,7 +361,7 @@ export class Server extends EventEmitter {
       return;
     } else if (parsed.command === "cancel-scan") {
       const wasScanning = scanner.scanning;
-      logInfo(
+      Logger.info(
         `Cancel request received for channel ${parsed.channel} from ` +
         `${request.socket.remoteAddress}:${request.socket.remotePort}. Scanning: ${wasScanning}.`
       );
@@ -375,7 +375,7 @@ export class Server extends EventEmitter {
       response.end(this.#formatShellCommand("scanimage", args));
       return;
     } else if (scanner.scanning) {
-      logWarn(
+      Logger.warn(
         `The scanning request from ${request.socket.remoteAddress}:${request.socket.remotePort} `+
         `was canceled because channel ${parsed.channel} is already in use.`
       );
@@ -392,8 +392,9 @@ export class Server extends EventEmitter {
 
     // If we make it here, the request is valid and so we create a new Client. A client corresponds
     // to a single, valid, remote connection which will be closed as soon as download is complete.
-    logInfo(
-      `Valid request received from ${request.socket.remoteAddress}:${request.socket.remotePort}.`
+    Logger.info(
+      `Scan request from ${request.socket.remoteAddress}:${request.socket.remotePort} ` +
+      `for channel ${parsed.channel}.`
     );
     const client = new Client(request.socket, {channel: parsed.channel});
     this.#clients[client.id] = client;
@@ -412,7 +413,7 @@ export class Server extends EventEmitter {
     });
     scanner.addOneTimeListener("error", err => {
       response.end();
-      logWarn("Could not complete the scan. Error: " + err);
+      Logger.warn("Could not complete the scan. Error: " + err);
       request.removeAllListeners();
       scanner.removeListener("scancompleted");
       scanner.removeListener("error");
@@ -433,8 +434,8 @@ export class Server extends EventEmitter {
     // Watch if the client unexpectedly closes the request, in which case we must clean up.
     request.once('close', () => {
       response.end();
-      logInfo(`Client unexpectedly closed the request. Terminating.`);
-      scanner.abort();
+      Logger.info(`Client unexpectedly closed the request. Terminating.`);
+      scanner.abort("client disconnected");
     });
 
   }
@@ -466,11 +467,11 @@ export class Server extends EventEmitter {
     response.write(': connected\n\n');
 
     this.#eventClients.set(id, response);
-    logInfo(`Event stream connected: ${id}.`);
+    Logger.info(`Event stream connected: ${id}.`);
 
     request.once('close', () => {
       this.#eventClients.delete(id);
-      logInfo(`Event stream disconnected: ${id}.`);
+      Logger.info(`Event stream disconnected: ${id}.`);
     });
   }
 
@@ -486,7 +487,7 @@ export class Server extends EventEmitter {
       try {
         this.#sendEvent(response, 'osc', data);
       } catch (err) {
-        logWarn(`Could not send event stream update to ${id}. Error: ${err}`);
+        Logger.warn(`Could not send event stream update to ${id}. Error: ${err}`);
         this.#eventClients.delete(id);
       }
     });
@@ -538,10 +539,12 @@ export class Server extends EventEmitter {
 
   async #loadTlsOptions() {
     try {
-      return {
+      const tlsOptions = {
         key: await readFile(config.paths.httpsKey),
         cert: await readFile(config.paths.httpsCert)
       };
+      Logger.info("HTTPS certificate loaded.");
+      return tlsOptions;
     } catch (err) {
       throw new Error(
         `Could not read HTTPS certificate files. ` +
@@ -578,14 +581,14 @@ export class Server extends EventEmitter {
     // Remove all listeners from the Server class
     this.removeListener();
     // Destroy all clients
-    this.#clients.forEach(async client => await client.destroy());
+    await Promise.all(Object.values(this.#clients).map(client => client.destroy()));
 
     // Close all event streams
     this.#eventClients.forEach(response => response.end());
     this.#eventClients.clear();
 
     // Stop all scanning processes
-    this.#scanners.forEach(async scanner => await scanner.abort());
+    await Promise.all(this.#scanners.map(scanner => scanner.abort("server stopped")));
 
     // Stop HTTP redirect server
     if (this.#redirectServer) {
@@ -609,7 +612,7 @@ export class Server extends EventEmitter {
         config.network.http_server.port,
         config.network.http_server.address,
         () => {
-          logInfo(
+          Logger.info(
             `HTTP redirect server is ready. Listening on ` +
             `${config.network.http_server.address}:${config.network.http_server.port}.`
           );
@@ -622,7 +625,7 @@ export class Server extends EventEmitter {
   async start(scanners) {
 
     if (!Array.isArray(scanners)) {
-      logError("An array of Scanner objects must be specified to start the Server.");
+      Logger.error("An array of Scanner objects must be specified to start the Server.");
       return;
     }
 
@@ -638,9 +641,12 @@ export class Server extends EventEmitter {
     this.#express.use(express.static('webclient'));
 
     if (this.#hasRemoteAuthConfiguration()) {
-      logInfo(`Remote HTTPS access requires authentication (${this.#remoteAuthUsers.size} user(s)).`);
+      Logger.info(
+        `Remote HTTPS auth enabled: ${this.#authUsersPath()} ` +
+        `(${this.#remoteAuthUsers.size} user(s)).`
+      );
     } else {
-      logWarn(
+      Logger.warn(
         `Remote HTTPS access is disabled until ${this.#authUsersPath()} contains at least ` +
         "one valid user."
       );
@@ -657,7 +663,7 @@ export class Server extends EventEmitter {
             config.network.https_server.port,
             config.network.https_server.address,
             () => {
-              logInfo(
+              Logger.info(
                 `HTTPS server is ready. Listening on ` +
                 `${config.network.https_server.address}:${config.network.https_server.port}.`
               );
