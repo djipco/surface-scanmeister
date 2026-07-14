@@ -6,6 +6,7 @@ import process from "node:process";
 import {Configuration as config} from "../config/Configuration.js";
 import {Permissions} from "../src/Permissions.js";
 import {AuthUsers} from "../src/AuthUsers.js";
+import {ToolCli} from "../src/ToolCli.js";
 
 function printHelp() {
   console.log(`Usage: ./tools/check [--file PATH]
@@ -52,7 +53,10 @@ async function checkUsersFile(file) {
 }
 
 async function main() {
-  const {options, positional} = AuthUsers.parseCommonArguments(process.argv.slice(2));
+  const {options, positional} = ToolCli.parseCommonArguments(
+    process.argv.slice(2),
+    {defaultFile: AuthUsers.DEFAULT_USERS_FILE}
+  );
   if (options.help) {
     printHelp();
     return;

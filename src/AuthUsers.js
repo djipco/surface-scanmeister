@@ -13,97 +13,21 @@ export class AuthUsers {
     this.file = file;
   }
 
-  static parseCommonArguments(args) {
-    const options = {
-      file: process.env.SCANMEISTER_AUTH_USERS_FILE || AuthUsers.DEFAULT_USERS_FILE,
-      replace: false
-    };
-    const positional = [];
-
-    for (let index = 0; index < args.length; index += 1) {
-      const arg = args[index];
-      if (arg === "--file") {
-        index += 1;
-        if (!args[index]) throw new Error("--file requires a path");
-        options.file = args[index];
-      } else if (arg.startsWith("--file=")) {
-        options.file = arg.slice("--file=".length);
-      } else if (arg === "--replace") {
-        options.replace = true;
-      } else if (arg === "--help" || arg === "-h") {
-        options.help = true;
-      } else {
-        positional.push(arg);
-      }
-    }
-
-    return {options, positional};
-  }
-
-  static async readHidden(prompt) {
-    if (!process.stdin.isTTY || !process.stdout.isTTY) {
-      throw new Error("Password prompt requires an interactive terminal");
-    }
-
-    return new Promise((resolve, reject) => {
-      const stdin = process.stdin;
-      const stdout = process.stdout;
-      let value = "";
-
-      const cleanup = () => {
-        stdin.setRawMode(false);
-        stdin.pause();
-        stdin.removeListener("data", onData);
-      };
-
-      const onData = data => {
-        const text = data.toString("utf8");
-
-        for (const character of text) {
-          if (character === "\u0003") {
-            cleanup();
-            stdout.write("\n");
-            reject(new Error("Cancelled"));
-            return;
-          }
-
-          if (character === "\r" || character === "\n") {
-            cleanup();
-            stdout.write("\n");
-            resolve(value);
-            return;
-          }
-
-          if (character === "\b" || character === "\u007f") {
-            value = value.slice(0, -1);
-            continue;
-          }
-
-          value += character;
-        }
-      };
-
-      stdout.write(prompt);
-      stdin.setRawMode(true);
-      stdin.resume();
-      stdin.on("data", onData);
-    });
-  }
-
-  static fail(error) {
-    console.error(`Error: ${error.message || error}`);
-    process.exit(1);
-  }
-
   static validateUsername(username) {
     if (!/^[A-Za-z0-9_.-]+$/.test(username)) {
       throw new Error("Username must contain only letters, numbers, dots, dashes, and underscores");
     }
   }
 
-  static hashPassword(username, password) {
-    const salt = randomBytes(16).toString("hex");
-    const hash = scryptSync(password, salt, 64).toString("hex");
+  static validatePassword(password) {
+    if (password.length < config.auth.minimumPasswordLength) {
+      throw new Error(`Password must be at least ${config.auth.minimumPasswordLength} characters`);
+    }
+  }
+
+  static formatPasswordEntry(username, password) {
+    const salt = randomBytes(config.auth.saltBytes).toString("hex");
+    const hash = scryptSync(password, salt, config.auth.hashBytes).toString("hex");
     return `${username}:scrypt:${salt}:${hash}`;
   }
 
@@ -120,11 +44,24 @@ export class AuthUsers {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return;
 
-      const [username, algorithm, salt, hash] = trimmed.split(":");
-      if (username && algorithm === "scrypt" && salt && hash) {
+      const parts = trimmed.split(":");
+      const [username, algorithm, salt, hash] = parts;
+      const valid =
+        parts.length === 4 &&
+        username &&
+        AuthUsers.#isValidUsername(username) &&
+        algorithm === "scrypt" &&
+        AuthUsers.#isHex(salt) &&
+        salt.length === config.auth.saltBytes * 2 &&
+        AuthUsers.#isHex(hash) &&
+        hash.length === config.auth.hashBytes * 2;
+
+      if (valid && users.some(user => user.username === username)) {
+        invalidEntries.push({lineNumber: index + 1, line, reason: "Duplicate username"});
+      } else if (valid) {
         users.push({username, algorithm, salt, hash, line});
       } else {
-        invalidEntries.push({lineNumber: index + 1, line});
+        invalidEntries.push({lineNumber: index + 1, line, reason: "Invalid entry"});
       }
     });
 
@@ -142,7 +79,7 @@ export class AuthUsers {
 
   async writeFile(lines) {
     const directory = path.dirname(this.file);
-    const temporaryFile = path.join(directory, `.users.${process.pid}.tmp`);
+    const temporaryFile = path.join(directory, `.users.${process.pid}.${randomBytes(4).toString("hex")}.tmp`);
     const content = lines.length > 0 ? `${lines.join("\n")}\n` : "";
     let existingFile;
 
@@ -171,6 +108,7 @@ export class AuthUsers {
 
   async add(username, password, options = {}) {
     AuthUsers.validateUsername(username);
+    AuthUsers.validatePassword(password);
 
     const content = await this.readFile();
     const users = AuthUsers.parseUsers(content);
@@ -180,13 +118,13 @@ export class AuthUsers {
     }
 
     const keptLines = this.#withoutUser(content, username);
-    keptLines.push(AuthUsers.hashPassword(username, password));
+    keptLines.push(AuthUsers.formatPasswordEntry(username, password));
     await this.writeFile(keptLines);
 
     return {created: !exists, updated: exists};
   }
 
-  async delete(username) {
+  async remove(username) {
     AuthUsers.validateUsername(username);
 
     const content = await this.readFile();
@@ -209,7 +147,19 @@ export class AuthUsers {
   }
 
   #trimTrailingEmptyLines(lines) {
-    return lines.filter((line, index) => line.trim() !== "" || index < lines.length - 1);
+    const trimmedLines = [...lines];
+    while (trimmedLines.length > 0 && trimmedLines[trimmedLines.length - 1].trim() === "") {
+      trimmedLines.pop();
+    }
+    return trimmedLines;
+  }
+
+  static #isValidUsername(username) {
+    return /^[A-Za-z0-9_.-]+$/.test(username);
+  }
+
+  static #isHex(value) {
+    return typeof value === "string" && value.length > 0 && value.length % 2 === 0 && /^[0-9a-f]+$/i.test(value);
   }
 
 }

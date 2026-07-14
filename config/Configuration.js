@@ -63,6 +63,12 @@ export const Configuration = {
     killTimeout: 10000
   },
 
+  auth: {
+    hashBytes: 64,
+    minimumPasswordLength: 8,
+    saltBytes: 16
+  },
+
   logging: {
     level: "debug",
     fileLevel: "debug",

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {AuthUsers} from '../src/AuthUsers.js';
+import {ToolCli} from '../src/ToolCli.js';
 
 function printHelp() {
   console.log(`Usage: ./tools/useradd [--file PATH] [--replace] USERNAME
@@ -13,7 +14,10 @@ Options:
 }
 
 async function main() {
-  const {options, positional} = AuthUsers.parseCommonArguments(process.argv.slice(2));
+  const {options, positional} = ToolCli.parseCommonArguments(
+    process.argv.slice(2),
+    {allowReplace: true, defaultFile: AuthUsers.DEFAULT_USERS_FILE}
+  );
   if (options.help) {
     printHelp();
     return;
@@ -25,14 +29,13 @@ async function main() {
     process.exit(1);
   }
 
-  const password = await AuthUsers.readHidden("Password: ");
-  const confirmation = await AuthUsers.readHidden("Confirm password: ");
+  const password = await ToolCli.readHidden("Password: ");
+  const confirmation = await ToolCli.readHidden("Confirm password: ");
   if (password !== confirmation) throw new Error("Passwords do not match");
-  if (password.length === 0) throw new Error("Password cannot be empty");
 
   const users = new AuthUsers(options.file);
   const result = await users.add(username, password, {replace: options.replace});
   console.log(`${result.updated ? "Updated" : "Added"} user '${username}' in ${options.file}.`);
 }
 
-main().catch(AuthUsers.fail);
+main().catch(ToolCli.fail);

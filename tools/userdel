@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {AuthUsers} from '../src/AuthUsers.js';
+import {ToolCli} from '../src/ToolCli.js';
 
 function printHelp() {
   console.log(`Usage: ./tools/userdel [--file PATH] USERNAME
@@ -12,7 +13,10 @@ Options:
 }
 
 async function main() {
-  const {options, positional} = AuthUsers.parseCommonArguments(process.argv.slice(2));
+  const {options, positional} = ToolCli.parseCommonArguments(
+    process.argv.slice(2),
+    {defaultFile: AuthUsers.DEFAULT_USERS_FILE}
+  );
   if (options.help) {
     printHelp();
     return;
@@ -25,8 +29,8 @@ async function main() {
   }
 
   const users = new AuthUsers(options.file);
-  await users.delete(username);
+  await users.remove(username);
   console.log(`Deleted user '${username}' from ${options.file}.`);
 }
 
-main().catch(AuthUsers.fail);
+main().catch(ToolCli.fail);

@@ -88,7 +88,10 @@ export class RemoteAuth {
     }
 
     entries.invalidEntries.forEach(entry => {
-      Logger.warn(`Ignoring invalid remote auth entry at ${authUsersPath}:${entry.lineNumber}.`);
+      Logger.warn(
+        `Ignoring invalid remote auth entry at ${authUsersPath}:${entry.lineNumber} ` +
+        `(${entry.reason}).`
+      );
     });
 
     const users = new Map();
