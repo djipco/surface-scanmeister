@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  DEFAULT_USERS_FILE,
   fail,
   parseCommonArguments,
   readUsersFile,
@@ -13,7 +14,7 @@ function printHelp() {
 Deletes a remote web client user from the ScanMeister users file.
 
 Options:
-  --file PATH   Users file path. Default: /etc/scanmeister/users
+  --file PATH   Users file path. Default: ${DEFAULT_USERS_FILE}
 `);
 }
 

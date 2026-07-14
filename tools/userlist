@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  DEFAULT_USERS_FILE,
   fail,
   parseCommonArguments,
   parseUsers,
@@ -12,7 +13,7 @@ function printHelp() {
 Lists remote web client users from the ScanMeister users file.
 
 Options:
-  --file PATH   Users file path. Default: /etc/scanmeister/users
+  --file PATH   Users file path. Default: ${DEFAULT_USERS_FILE}
 `);
 }
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  DEFAULT_USERS_FILE,
   fail,
   hashPassword,
   parseCommonArguments,
@@ -16,7 +17,7 @@ function printHelp() {
 Adds a remote web client user to the ScanMeister users file.
 
 Options:
-  --file PATH   Users file path. Default: /etc/scanmeister/users
+  --file PATH   Users file path. Default: ${DEFAULT_USERS_FILE}
   --replace     Replace the user if it already exists
 `);
 }

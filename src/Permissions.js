@@ -3,6 +3,8 @@ import {execFile, execFileSync} from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 
+import {Configuration as config} from "../config/Configuration.js";
+
 function getAbsolutePath(directory) {
   return path.resolve(process.cwd(), directory);
 }
@@ -151,7 +153,7 @@ export function checkScanImageVersion() {
       ["-V"],
       {
         encoding: "utf8",
-        timeout: 5000,
+        timeout: config.diagnostics.scanImageVersionTimeout,
         windowsHide: true
       },
       (error, stdout, stderr) => {

@@ -8,9 +8,7 @@ import {Spawner} from "./Spawner.js";
 
 export class Scanner extends EventEmitter {
 
-  // Above 600dpi, the web client's page crashes. For reference, at 1200dpi, it yields a 240MB pnm
-  // file (10224x14173).
-  static RESOLUTIONS = [75, 100, 150, 300, 600, 1200, 2400, 4800];
+  static RESOLUTIONS = config.scan.resolutions;
 
   #bus;                 // USB bus the scanner is connected to
   #channel;             // Channel number (identifies the device in OSC and over TCP)
@@ -130,13 +128,13 @@ export class Scanner extends EventEmitter {
     if (this.systemName) args.push(`--device-name=${this.systemName}`);
 
     // File format
-    args.push('--format=pnm');
+    args.push(`--format=${config.scan.format}`);
 
     // Color mode
-    args.push('--mode=Color');
+    args.push(`--mode=${config.scan.mode}`);
 
     // Scanning bit depth (8-bit per channel, RGB)
-    args.push('--depth=8');
+    args.push(`--depth=${config.scan.depth}`);
 
     // Scanning resolution
     if (Scanner.RESOLUTIONS.includes(options.resolution)) {
@@ -144,22 +142,22 @@ export class Scanner extends EventEmitter {
     }
 
     // Brightness (-100...100)
-    if (options.brightness >= -100 && options.brightness <= 100) {
+    if (options.brightness >= config.scan.brightness.min && options.brightness <= config.scan.brightness.max) {
       args.push('--brightness=' + options.brightness);
     }
 
     // Contrast (-100...100)
-    if (options.contrast >= -100 && options.contrast <= 100) {
+    if (options.contrast >= config.scan.contrast.min && options.contrast <= config.scan.contrast.max) {
       args.push('--contrast=' + options.contrast);
     }
 
     // Scan height in the physical installation maps to SANE's x-axis.
-    if (options.height >= 0 && options.height <= 216) {
+    if (options.height >= 0 && options.height <= config.scan.maxHeight) {
       args.push('-x', options.height.toString());
     }
 
     // Scan width in the physical installation maps to SANE's y-axis.
-    if (options.width >= 0 && options.width <= 5000) {
+    if (options.width >= 0 && options.width <= config.scan.maxWidth) {
       args.push('-y', options.width.toString());
     }
 
@@ -179,16 +177,16 @@ export class Scanner extends EventEmitter {
     args.push('--lamp-off-time=' + config.devices.lampOffTime);
 
     // Prevent cached calibration from expiring (not sure what it does!)
-    args.push('--expiration-time=-1');
+    args.push(`--expiration-time=${config.scan.expirationTime}`);
 
     // We make the buffer proportional to the scanning resolution so the data is sent as fast as
     // it's coming from the scanner but not faster.
     if (Scanner.RESOLUTIONS.includes(options.resolution)) {
-      const multiplier = parseInt(options.resolution / 75);
-      const res = multiplier * multiplier * 8;
+      const multiplier = parseInt(options.resolution / config.scan.bufferBaseResolution);
+      const res = multiplier * multiplier * config.scan.bufferBaseSize;
       args.push(`--buffer-size=${res}`);
     } else {
-      args.push('--buffer-size=16');
+      args.push(`--buffer-size=${config.scan.fallbackBufferSize}`);
     }
 
     // Geometry

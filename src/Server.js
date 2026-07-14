@@ -11,7 +11,6 @@ import express from 'express';
 import {logError, logInfo, logWarn} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import Client from "./Client.js";
-import {Scanner} from "./Scanner.js";
 
 export class Server extends EventEmitter {
 
@@ -83,19 +82,23 @@ export class Server extends EventEmitter {
 
     // Parse query string for valid resolution
     const resolution = parseInt(url.searchParams.get('resolution'));
-    if (Scanner.RESOLUTIONS.includes(resolution)) parsed.resolution = resolution;
+    if (config.scan.resolutions.includes(resolution)) parsed.resolution = resolution;
 
     const brightness = parseInt(url.searchParams.get('brightness'));
-    if (brightness >= -100 && brightness <= 100) parsed.brightness = brightness;
+    if (brightness >= config.scan.brightness.min && brightness <= config.scan.brightness.max) {
+      parsed.brightness = brightness;
+    }
 
     const contrast = parseInt(url.searchParams.get('contrast'));
-    if (contrast >= -100 && contrast <= 100) parsed.contrast = contrast;
+    if (contrast >= config.scan.contrast.min && contrast <= config.scan.contrast.max) {
+      parsed.contrast = contrast;
+    }
 
     const width = parseFloat(url.searchParams.get('width'));
-    if (width >= 0 && width <= 5000) parsed.width = width;
+    if (width >= 0 && width <= config.scan.maxWidth) parsed.width = width;
 
     const height = parseFloat(url.searchParams.get('height'));
-    if (height >= 0 && height <= 216) parsed.height = height;
+    if (height >= 0 && height <= config.scan.maxHeight) parsed.height = height;
 
     parsed.forceCalibration = url.searchParams.get('forceCalibration') === 'true';
 
@@ -128,7 +131,7 @@ export class Server extends EventEmitter {
   }
 
   #authUsersPath() {
-    return process.env.SCANMEISTER_AUTH_USERS_FILE || "/etc/scanmeister/users";
+    return process.env.SCANMEISTER_AUTH_USERS_FILE || config.paths.authUsers;
   }
 
   #hasRemoteAuthConfiguration() {
@@ -541,14 +544,14 @@ export class Server extends EventEmitter {
   async #loadTlsOptions() {
     try {
       return {
-        key: await readFile(config.network.files_server.key),
-        cert: await readFile(config.network.files_server.cert)
+        key: await readFile(config.paths.httpsKey),
+        cert: await readFile(config.paths.httpsCert)
       };
     } catch (err) {
       throw new Error(
         `Could not read HTTPS certificate files. ` +
-        `Key: ${config.network.files_server.key}. ` +
-        `Certificate: ${config.network.files_server.cert}. ` +
+        `Key: ${config.paths.httpsKey}. ` +
+        `Certificate: ${config.paths.httpsCert}. ` +
         `Error: ${err.message || err}`
       );
     }
@@ -608,12 +611,12 @@ export class Server extends EventEmitter {
       this.#redirectServer = http.createServer(this.#onRedirectRequest.bind(this));
       this.#redirectServer.once("error", reject);
       this.#redirectServer.listen(
-        config.network.redirect_server.port,
-        config.network.redirect_server.address,
+        config.network.http_server.port,
+        config.network.http_server.address,
         () => {
           logInfo(
             `HTTP redirect server is ready. Listening on ` +
-            `${config.network.redirect_server.address}:${config.network.redirect_server.port}.`
+            `${config.network.http_server.address}:${config.network.http_server.port}.`
           );
           resolve();
         }
@@ -656,12 +659,12 @@ export class Server extends EventEmitter {
           this.#filesServer.once("error", reject);
 
           this.#filesServer.listen(
-            config.network.files_server.port,
-            config.network.files_server.address,
+            config.network.https_server.port,
+            config.network.https_server.address,
             () => {
               logInfo(
                 `HTTPS server is ready. Listening on ` +
-                `${config.network.files_server.address}:${config.network.files_server.port}.`
+                `${config.network.https_server.address}:${config.network.https_server.port}.`
               );
 
               resolve();

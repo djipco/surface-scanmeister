@@ -3,7 +3,9 @@ import {chmod, chown, mkdir, readFile, rename, stat, writeFile} from 'node:fs/pr
 import path from 'node:path';
 import process from 'node:process';
 
-export const DEFAULT_USERS_FILE = "/etc/scanmeister/users";
+import {Configuration as config} from "../config/Configuration.js";
+
+export const DEFAULT_USERS_FILE = config.paths.authUsers;
 
 export function parseCommonArguments(args) {
   const options = {

@@ -22,7 +22,7 @@ function printHelp() {
 Checks common ScanMeister runtime requirements without starting the daemon.
 
 Options:
-  --file PATH   Remote users file path. Default: /etc/scanmeister/users
+  --file PATH   Remote users file path. Default: ${DEFAULT_USERS_FILE}
 `);
 }
 
@@ -99,14 +99,14 @@ async function main() {
   const usersFile = await checkUsersFile(options.file || DEFAULT_USERS_FILE);
   report(usersFile.ok, "Remote users file", usersFile.ok ? `${usersFile.users.length} user(s) in ${options.file}` : `${options.file} (${usersFile.error})`);
 
-  const tlsKey = await checkReadableFile(config.network.files_server.key);
-  report(tlsKey.ok, "HTTPS key", tlsKey.ok ? config.network.files_server.key : `${config.network.files_server.key} (${tlsKey.error})`);
+  const tlsKey = await checkReadableFile(config.paths.httpsKey);
+  report(tlsKey.ok, "HTTPS key", tlsKey.ok ? config.paths.httpsKey : `${config.paths.httpsKey} (${tlsKey.error})`);
 
-  const tlsCert = await checkReadableFile(config.network.files_server.cert);
-  report(tlsCert.ok, "HTTPS certificate", tlsCert.ok ? config.network.files_server.cert : `${config.network.files_server.cert} (${tlsCert.error})`);
+  const tlsCert = await checkReadableFile(config.paths.httpsCert);
+  report(tlsCert.ok, "HTTPS certificate", tlsCert.ok ? config.paths.httpsCert : `${config.paths.httpsCert} (${tlsCert.error})`);
 
-  printResult(true, "HTTPS server", `${config.network.files_server.address}:${config.network.files_server.port}`);
-  printResult(true, "HTTP redirect server", `${config.network.redirect_server.address}:${config.network.redirect_server.port}`);
+  printResult(true, "HTTPS server", `${config.network.https_server.address}:${config.network.https_server.port}`);
+  printResult(true, "HTTP redirect server", `${config.network.http_server.address}:${config.network.http_server.port}`);
   printResult(true, "API base path", "/api");
   printResult(true, "OSC", `listening on ${config.network.osc_server.address}:${config.network.osc_server.port}, sending to ${config.network.osc_client.address}:${config.network.osc_client.port}`);
 

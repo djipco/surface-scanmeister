@@ -2,17 +2,18 @@ export const Configuration = {
 
   paths: {
     logs: "./logs",             // Directory where logfiles will be saved (in rotation)
-    scans: "./scans"            // Directory where scanned images will be saved
+    scans: "./scans",           // Directory where scanned images will be saved
+    authUsers: "/etc/scanmeister/users",
+    httpsKey: "/etc/scanmeister/certs/server.key",
+    httpsCert: "/etc/scanmeister/certs/server.crt"
   },
 
   network: {
-    files_server: {
+    https_server: {
       address: "0.0.0.0",       // IP address the HTTPS server will listen on
       port: 443,                // Port the HTTPS server will listen on
-      key: "/etc/scanmeister/certs/server.key",
-      cert: "/etc/scanmeister/certs/server.crt",
     },
-    redirect_server: {
+    http_server: {
       address: "0.0.0.0",       // IP address the HTTP redirect server will listen on
       port: 80,                 // Port the HTTP redirect server will listen on
     },
@@ -24,6 +25,33 @@ export const Configuration = {
       address: '10.0.0.200',    // Remote IP address to send OSC to
       port: 10000               // Remote port to send OSC to
     },
+  },
+
+  scan: {
+    // Above 600dpi, the web client's page can become very memory hungry. For reference, at 1200dpi
+    // a large scan can yield a PNM file hundreds of MB in size.
+    resolutions: [75, 100, 150, 300, 600, 1200, 2400, 4800],
+    maxWidth: 5000,
+    maxHeight: 216,
+    brightness: {
+      min: -100,
+      max: 100
+    },
+    contrast: {
+      min: -100,
+      max: 100
+    },
+    format: "pnm",
+    mode: "Color",
+    depth: 8,
+    expirationTime: -1,
+    fallbackBufferSize: 16,
+    bufferBaseResolution: 75,
+    bufferBaseSize: 8
+  },
+
+  diagnostics: {
+    scanImageVersionTimeout: 5000
   },
 
   devices: {
