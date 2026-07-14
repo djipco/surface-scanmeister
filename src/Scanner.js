@@ -90,7 +90,7 @@ export class Scanner extends EventEmitter {
     const args = this.getScanCommandArgs(options);
     Logger.info(
       `${config.scan.command} command for channel ${this.channel}: ` +
-      ShellCommand.format(config.scan.command, args)
+      ShellCommand.formatForDisplay(config.scan.command, args)
     );
 
     this.#scanImageSpawner.execute(

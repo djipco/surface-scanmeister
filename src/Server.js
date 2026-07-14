@@ -190,7 +190,7 @@ export class Server extends EventEmitter {
   #handlePreviewCommand(parsed, scanner, response) {
     const args = scanner.getScanCommandArgs(parsed);
     response.writeHead(200, {'Content-Type': 'text/plain'});
-    response.end(ShellCommand.format(config.scan.command, args));
+    response.end(ShellCommand.formatForDisplay(config.scan.command, args));
   }
 
   #handleBusyScanner(parsed, request, response) {
