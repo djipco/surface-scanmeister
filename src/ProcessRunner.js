@@ -67,8 +67,11 @@ export class ProcessRunner {
 
     await new Promise(resolve => {
       let forceKillTimeout;
+      let resolved = false;
 
       const onExit = () => {
+        if (resolved) return;
+        resolved = true;
         clearTimeout(forceKillTimeout);
         resolve();
       };
@@ -78,6 +81,8 @@ export class ProcessRunner {
       childProcess.kill('SIGTERM');
 
       forceKillTimeout = setTimeout(() => {
+        if (resolved) return;
+        resolved = true;
         childProcess.kill('SIGKILL');
         resolve();
       }, config.process.killTimeout);

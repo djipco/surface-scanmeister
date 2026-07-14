@@ -35,7 +35,7 @@ export class ApiRequest {
   }
 
   static #parseScannerRoute(request, segments, parsed) {
-    parsed.channel = parseInt(segments[1]) || 1;
+    parsed.channel = ApiRequest.#parseChannel(segments[1]);
 
     if (segments[2] === "command" && request.method === "GET") {
       parsed.command = "preview-command";
@@ -46,6 +46,14 @@ export class ApiRequest {
     } else {
       throw new Error("Invalid scanner route");
     }
+  }
+
+  static #parseChannel(value) {
+    if (!/^[1-9]\d*$/.test(value)) {
+      throw new Error("Invalid scanner channel");
+    }
+
+    return parseInt(value, 10);
   }
 
   static #parseScansRoute(request, parsed) {

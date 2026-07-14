@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 export class ToolCli {
 
   static parseCommonArguments(args, options = {}) {

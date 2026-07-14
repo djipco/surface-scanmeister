@@ -140,10 +140,7 @@ export class AuthUsers {
   #withoutUser(content, username) {
     return this.#trimTrailingEmptyLines(content
       .split(/\r?\n/)
-      .filter(line => {
-        const [lineUsername] = line.trim().split(":");
-        return lineUsername !== username;
-      }));
+      .filter(line => !AuthUsers.#isPasswordEntryForUser(line, username)));
   }
 
   #trimTrailingEmptyLines(lines) {
@@ -160,6 +157,14 @@ export class AuthUsers {
 
   static #isHex(value) {
     return typeof value === "string" && value.length > 0 && value.length % 2 === 0 && /^[0-9a-f]+$/i.test(value);
+  }
+
+  static #isPasswordEntryForUser(line, username) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return false;
+
+    const parts = trimmed.split(":");
+    return parts.length === 4 && parts[0] === username && parts[1] === "scrypt";
   }
 
 }
