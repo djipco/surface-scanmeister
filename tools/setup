@@ -412,7 +412,7 @@ async function main() {
   };
 
   addStep(
-    "Create 'scanmeister' user and assign necessary groups",
+    "Create 'scanmeister' user and assign groups",
     `The systemd service runs as ${SERVICE_USER}:${SERVICE_GROUP}. This step creates the user if missing and adds it to groups used for scanners, USB, graphics, GPIO, I2C and related hardware.
 
 Requested groups:
