@@ -230,7 +230,7 @@ async function runStep(title, description, action, verify) {
 }
 
 async function chooseSetupStep(steps) {
-  printHeader("Setup menu");
+  printHeader("ScanMeister Setup Menu");
   for (const [index, step] of steps.entries()) {
     const status = await getStepMenuStatus(step);
     console.log(`  ${String(index + 1).padStart(2, "0")}. ${status} ${step.title}`);
@@ -389,7 +389,6 @@ async function main() {
     return;
   }
 
-  console.log("ScanMeister initial setup");
   if (dryRun) console.log("Dry run: yes");
 
   if (!verifyEnvironment()) {
