@@ -4,7 +4,7 @@ import {
   parseCommonArguments,
   parseUsers,
   readUsersFile
-} from './auth-users.js';
+} from '../src/auth-users.js';
 
 function printHelp() {
   console.log(`Usage: ./tools/userlist [--file PATH]

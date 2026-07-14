@@ -14,7 +14,7 @@ import {
   formatWritableDirectoryError,
   getCurrentUserInfo
 } from "../src/Permissions.js";
-import {DEFAULT_USERS_FILE, parseCommonArguments, parseUsers, readUsersFile} from "./auth-users.js";
+import {DEFAULT_USERS_FILE, parseCommonArguments, parseUsers, readUsersFile} from "../src/auth-users.js";
 
 function printHelp() {
   console.log(`Usage: ./tools/check [--file PATH]

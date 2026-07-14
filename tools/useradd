@@ -8,7 +8,7 @@ import {
   readUsersFile,
   validateUsername,
   writeUsersFile
-} from './auth-users.js';
+} from '../src/auth-users.js';
 
 function printHelp() {
   console.log(`Usage: ./tools/useradd [--file PATH] [--replace] USERNAME
