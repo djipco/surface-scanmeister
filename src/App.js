@@ -11,10 +11,7 @@ import {Scanner} from './Scanner.js';
 import {Server} from "./Server.js";
 import {Spawner} from "./Spawner.js";
 import {Permissions} from "./Permissions.js";
-import {
-  getScannerDescriptors,
-  isSupportedScannerDescriptor
-} from "./ScannerDiscovery.js";
+import {ScannerDiscovery} from "./ScannerDiscovery.js";
 
 export default class App {
 
@@ -201,13 +198,15 @@ export default class App {
   }
 
   #getScannerDescriptors() {
-    const {scanners: scannerDescriptors, mapping} = getScannerDescriptors();
+    const {scanners: scannerDescriptors, mapping, warnings} = ScannerDiscovery.getScannerDescriptors();
 
     if (mapping) {
       Logger.info(`Assigning channels according to map '${mapping}'.`);
     } else {
       Logger.info("Assigning channels according to port hierarchy (no mapping used)");
     }
+
+    warnings.forEach(warning => Logger.warn(warning));
 
     return scannerDescriptors;
   }
@@ -242,7 +241,7 @@ export default class App {
   async #onUsbAttach(descriptor) {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
-    if (isSupportedScannerDescriptor(descriptor)) {
+    if (ScannerDiscovery.isSupportedScannerDescriptor(descriptor)) {
       Logger.info(
         `Scanner attached to bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`
@@ -255,7 +254,7 @@ export default class App {
   async #onUsbDetach(descriptor) {
 
     // Check if it is a supported scanner. If it is, rebuild the scanner list of objects and report
-    if (isSupportedScannerDescriptor(descriptor)) {
+    if (ScannerDiscovery.isSupportedScannerDescriptor(descriptor)) {
       Logger.info(
         `Scanner detached from bus ${descriptor.busNumber}, ` +
         `port ${descriptor.portNumbers.join("-")}.`

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import process from "node:process";
 
-import {getScannerDescriptors} from "../src/ScannerDiscovery.js";
+import {ScannerDiscovery} from "../src/ScannerDiscovery.js";
 
 function printHelp() {
   console.log(`Usage: ./tools/scanners
@@ -22,8 +22,10 @@ function main() {
     process.exit(1);
   }
 
-  const {scanners, mapping} = getScannerDescriptors();
+  const {scanners, mapping, warnings} = ScannerDiscovery.getScannerDescriptors();
   console.log(mapping ? `Channel mapping: ${mapping}` : "Channel mapping: port hierarchy");
+
+  warnings.forEach(warning => console.warn(`Warning: ${warning}`));
 
   if (scanners.length === 0) {
     console.log("No supported scanners found.");
