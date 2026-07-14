@@ -12,6 +12,7 @@ import {Logger} from "./Logger.js";
 import {EventEmitter} from "../node_modules/djipevents/dist/esm/djipevents.esm.min.js";
 import {AuthUsers} from "./AuthUsers.js";
 import {Client} from "./Client.js";
+import {ShellCommand} from "./ShellCommand.js";
 
 export class Server extends EventEmitter {
 
@@ -105,13 +106,6 @@ export class Server extends EventEmitter {
 
     return parsed;
 
-  }
-
-  #formatShellCommand(command, args) {
-    return [command, ...args].map(arg => {
-      if (/^[A-Za-z0-9_./:=+-]+$/.test(arg)) return arg;
-      return "'" + arg.replaceAll("'", "'\\''") + "'";
-    }).join(" ");
   }
 
   #isLocalAddress(address = "") {
@@ -370,9 +364,9 @@ export class Server extends EventEmitter {
       response.end(JSON.stringify({cancelled: wasScanning}));
       return;
     } else if (parsed.command === "preview-command") {
-      const args = scanner.getScanCommandArgs(config, parsed);
+      const args = scanner.getScanCommandArgs(parsed);
       response.writeHead(200, {'Content-Type': 'text/plain'});
-      response.end(this.#formatShellCommand(config.scan.command, args));
+      response.end(ShellCommand.format(config.scan.command, args));
       return;
     } else if (scanner.scanning) {
       Logger.warn(

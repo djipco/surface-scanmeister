@@ -48,6 +48,7 @@ export const Configuration = {
     lampOffScan: false,           // Whether to shut off lamp while scanning
     lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
     expirationTime: -1,
+    recoveryDelay: 4000,
     fallbackBufferSize: 16,
     bufferBaseResolution: 75,
     bufferBaseSize: 8

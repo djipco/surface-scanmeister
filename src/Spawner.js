@@ -21,7 +21,7 @@ export class Spawner extends EventEmitter {
     this.#options = options;
 
     // Save user-defined callbacks
-    this.#callbacks.onProcessSuccessUser = options.sucessCallback;
+    this.#callbacks.onProcessSuccessUser = options.successCallback;
     this.#callbacks.onProcessErrorUser = options.errorCallback;
     this.#callbacks.onProcessStderrUser = options.stderrCallback;
     this.#callbacks.onProcessDataUser = options.dataCallback;
@@ -70,7 +70,6 @@ export class Spawner extends EventEmitter {
       this.#callbacks.onProcessStderrUser(data.toString().trim());
     }
 
-    this.removeAllListeners();
     this.emit("stderr", data.toString().trim() + this.getDetails());
 
   }
@@ -106,13 +105,19 @@ export class Spawner extends EventEmitter {
 
   #onProcessEnd(code, signal) {
 
-    if (typeof this.#callbacks.onProcessSuccessUser === 'function') {
+    if (code === 0 && typeof this.#callbacks.onProcessSuccessUser === 'function') {
       this.#callbacks.onProcessSuccessUser(this.#buffer);
+    } else if (code !== 0 && typeof this.#callbacks.onProcessErrorUser === 'function') {
+      this.#callbacks.onProcessErrorUser(
+        new Error(`${this.#command} exited with code ${code ?? "none"} and signal ${signal ?? "none"}`)
+      );
     }
     if (typeof this.#callbacks.onProcessCloseUser === 'function') {
       this.#callbacks.onProcessCloseUser({code, signal});
     }
-    this.emit("complete", this.#buffer);
+    if (code === 0) {
+      this.emit("complete", this.#buffer);
+    }
     this.removeAllListeners();
     this.#buffer = "";
     this.#process = null;
@@ -145,20 +150,34 @@ export class Spawner extends EventEmitter {
     this.removeAllListeners();
 
     if (this.#process) {
+      const childProcess = this.#process;
+
+      if (childProcess.exitCode !== null || childProcess.signalCode !== null) {
+        this.#process = null;
+        return;
+      }
 
       await new Promise(resolve => {
+        let forceKillTimeout;
+
+        const onExit = () => {
+          clearTimeout(forceKillTimeout);
+          resolve();
+        };
 
         // Attempt to gracefully terminate the process.
-        this.#process.on('exit', resolve);
-        this.#process.kill('SIGTERM');
+        childProcess.on('exit', onExit);
+        childProcess.kill('SIGTERM');
 
         // If the process does not quit within a reasonable time, kill it.
-        setTimeout(() => {
-          this.#process.kill('SIGKILL');
+        forceKillTimeout = setTimeout(() => {
+          childProcess.kill('SIGKILL');
           resolve();
         }, 10000);
 
       });
+
+      this.#process = null;
 
     }
 
