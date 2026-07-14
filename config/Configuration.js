@@ -44,6 +44,8 @@ export const Configuration = {
     format: "pnm",
     mode: "Color",
     depth: 8,
+    lampOffScan: false,           // Whether to shut off lamp while scanning
+    lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
     expirationTime: -1,
     fallbackBufferSize: 16,
     bufferBaseResolution: 75,
@@ -62,9 +64,6 @@ export const Configuration = {
     // mapping: "Atolla16PortBus1Port1Dynex7PortBus3Port1",
     // mapping: "Atolla16PortBus1Port1",
     // mapping: "Pi4",
-
-    lampOffScan: false,           // Whether to shut off lamp while scanning
-    lampOffTime: 15,              // Delay after which the lamp is turned off (0...60 min.)
 
   }
 

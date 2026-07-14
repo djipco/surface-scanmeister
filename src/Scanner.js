@@ -167,14 +167,14 @@ export class Scanner extends EventEmitter {
     }
 
     // Lamp off scan
-    if (config.devices.lampOffScan) {
+    if (config.scan.lampOffScan) {
       args.push('--lamp-off-scan=yes');
     } else {
       args.push('--lamp-off-scan=no');
     }
 
     // Lamp off time
-    args.push('--lamp-off-time=' + config.devices.lampOffTime);
+    args.push('--lamp-off-time=' + config.scan.lampOffTime);
 
     // Prevent cached calibration from expiring (not sure what it does!)
     args.push(`--expiration-time=${config.scan.expirationTime}`);
@@ -188,12 +188,6 @@ export class Scanner extends EventEmitter {
     } else {
       args.push(`--buffer-size=${config.scan.fallbackBufferSize}`);
     }
-
-    // Geometry
-    // args.push('-l ' + config.devices.x);
-    // args.push('-t ' + config.devices.y);
-    // args.push('-x ' + config.devices.width);
-    // args.push('-y ' + config.devices.height);
 
     return args;
 
