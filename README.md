@@ -49,9 +49,10 @@ For guided Raspberry Pi setup and maintenance, run the interactive setup assista
 node tools/setup
 ```
 
-It checks the environment, makes sure the project command-line tools are executable, then shows a
-menu of setup actions. Pick a single action by number, choose `A` to run all actions, or choose `Q`
-to quit. Each action asks before making changes and verifies the result afterward.
+It checks the environment, makes sure the project command-line tools are executable, then shows the
+`ScanMeister Setup Menu`. Completed actions are marked with a checkmark. Pick a single action by
+number, choose `A` to run all actions, or choose `Q` to quit. Each action asks before making changes
+and verifies the result afterward.
 
 After that automatic preparation, this also works:
 
@@ -74,16 +75,16 @@ node tools/setup --all
 Current setup actions:
 
 ```text
-Create 'scanmeister' user and assign necessary groups
-Install required system packages
-Install customized SANE build
-Install Node.js and configure port binding permissions
-Prepare ScanMeister project and runtime files
-Create HTTPS certificate
-Install and enable systemd scanmeister.service
-Configure client autostart
-Enable SSH
-Install RustDesk and configure X11
+01. Create 'scanmeister' user and assign groups
+02. Install required system packages
+03. Install customized SANE build
+04. Install Node.js and configure port binding permissions
+05. Prepare ScanMeister project and runtime files
+06. Create HTTPS certificate
+07. Install and enable systemd scanmeister.service
+08. Configure client autostart
+09. Enable SSH
+10. Install RustDesk and configure X11
 ```
 
 The manual sections below describe the same pieces for reference and troubleshooting.
@@ -200,12 +201,24 @@ SSH can also be enabled from the setup menu when `raspi-config` is available.
 
 #### Client Launcher
 
-The graphical client is opened separately from the server. Use the `ScanMeister Client.desktop`
-launcher in the project folder. It opens Chromium in kiosk mode and points it to the local web
-client:
+The graphical client is opened separately from the server. The project includes two launchers:
+
+```text
+ScanMeister Client.desktop
+ScanMeister Guerilla.desktop
+```
+
+Both open Chromium in kiosk mode and point it to the local HTTPS web client. The normal launcher
+uses:
 
 ```sh
 https://localhost?kiosk=1
+```
+
+The Guerilla launcher uses:
+
+```sh
+https://localhost?kiosk=1&ui=0&guerilla=1
 ```
 
 The `kiosk=1` parameter tells the client to use kiosk-specific behavior. To override the regular UI
@@ -222,6 +235,17 @@ When `ui=0`, the Parameters panel, top strip, bottom command strip, and Stats pa
 When `ui=0&guerilla=1`, only the Guerilla panel is shown. When `ui=1`, the regular UI is shown,
 but the Guerilla panel is still shown only if `guerilla=1` is present.
 In Guerilla mode, moving the mouse does not reveal the regular UI. Press `P` to toggle it manually.
+
+The normal and Guerilla clients use separate browser `localStorage` namespaces even when launched
+from the same browser on the same Raspberry Pi:
+
+```text
+scanmeister.normal.*
+scanmeister.guerilla.*
+```
+
+This keeps scan/display settings, panel positions, and UI visibility independent between both
+clients.
 
 To open the client automatically when the `scanmeister` desktop session starts, add the launcher to
 the user's autostart folder:
@@ -263,6 +287,7 @@ redirects requests to HTTPS with `308 Permanent Redirect`. The **OSC server** li
 The main API routes are:
 
 ```text
+GET  /api/about
 GET  /api/scanners
 GET  /api/scanners/:channel/command
 POST /api/scanners/:channel/scan
@@ -274,6 +299,9 @@ POST /api/scans?filename=...
 
 GET  /api/events
 ```
+
+`GET /api/about` returns package metadata, including the version from `package.json`. The web client
+uses it to display the same version in the normal and Guerilla interfaces.
 
 Local browser access to the web client is allowed without a password when connecting from
 `localhost`, `127.0.0.1`, or `::1`. Remote access to the web client requires HTTP Basic Auth.
@@ -539,8 +567,10 @@ Custom ScanMeister SANE builds belong in `dependencies/sane/`. The current custo
 the custom `scanimage` binary, the patched `genesys` backend, and the source patches used to build
 them. Stock `libsane.so`, `dll.conf`, and `genesys.conf` are not included unless they are
 intentionally modified later. This keeps the custom scanner stack separate from source code while
-still making it part of the project install package. See `dependencies/sane/README.md` for the
-expected layout.
+still making it part of the project install package. The `dependencies/sane/VERSION` file should be
+filled with the exact upstream SANE version, backend version, architecture, build reference, patch
+list, expected `scanimage -V`, and expected maximum `-y` value for the custom build. See
+`dependencies/sane/README.md` for the expected layout.
 
 You can use it to list available devices:
 

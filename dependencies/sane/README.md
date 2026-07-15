@@ -17,7 +17,7 @@ dependencies/sane/
   patches/
     README.md
     sane-backends-1.2.1-genesys-max-scan-length.patch
-    sane-backends-1.2.1-scanimage.patch
+    sane-backends-1.2.1-scanimage-buffer-default.patch
 ```
 
 `tools/setup` can then install the custom SANE build from this folder.
@@ -47,6 +47,10 @@ Patch files
 
 Place the source patches used to build the committed binaries in `dependencies/sane/patches`.
 Name each patch after the upstream SANE version and the change it makes.
+
+The `VERSION` file should be completed with the exact upstream SANE version, backend version,
+target architecture, source commit/tag, patch list, expected `scanimage -V`, expected maximum `-y`,
+and build date for the committed binaries.
 
 The committed `scanimage` and `libsane-genesys.so.1.1.1` binaries should be rebuildable from:
 

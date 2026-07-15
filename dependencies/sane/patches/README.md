@@ -6,7 +6,7 @@ Suggested naming:
 
 ```text
 sane-backends-1.2.1-genesys-max-scan-length.patch
-sane-backends-1.2.1-scanimage.patch
+sane-backends-1.2.1-scanimage-buffer-default.patch
 ```
 
 Each patch should apply to the upstream SANE source version documented in `../VERSION`.
