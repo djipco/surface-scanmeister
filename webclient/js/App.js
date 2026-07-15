@@ -2871,10 +2871,7 @@ export class App {
   }
 
   readStorageValue(storageKey) {
-    const value = localStorage.getItem(this.storageKey(storageKey));
-    if (value !== null || this.storageNamespace !== App.STORAGE_NAMESPACE_NORMAL) return value;
-
-    return localStorage.getItem(storageKey);
+    return localStorage.getItem(this.storageKey(storageKey));
   }
 
   writeStorageValue(storageKey, value) {
